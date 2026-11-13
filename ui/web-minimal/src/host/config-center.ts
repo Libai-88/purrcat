@@ -12,8 +12,8 @@ import { HOST } from './state.js';
   ];
   export const MODEL_SDKS = ['openai'];
   export const DEPLOY_ITEMS = ['uv', 'node', 'sandbox', 'embedding'];
-  export const DEPLOY_LABEL: Record<string, string> = { uv: 'uv', node: 'node', sandbox: 'Docker 沙盒', embedding: 'embedding' };
-  const DEPLOY_DESC: Record<string, string> = { uv: 'Python 依赖与运行环境', node: '前端宿主与插件构建', sandbox: 'Docker 隔离执行环境', embedding: '本地向量化模型' };
+  export const DEPLOY_LABEL: Record<string, string> = { uv: 'uv', node: 'node', sandbox: '执行环境', embedding: 'embedding' };
+  const DEPLOY_DESC: Record<string, string> = { uv: 'Python 依赖与运行环境', node: '前端宿主与插件构建', sandbox: '本地 shell（Docker 可选）', embedding: '本地向量化模型' };
   const DEPLOY_CHIP: Record<string, string> = { missing: '未安装', failed: '失败', running: '部署中', installed: '待重启', ready: '已就绪' };
   export const cfgState: {
     data: Record<string, any>;
@@ -1397,6 +1397,7 @@ import { HOST } from './state.js';
     function renderDisk(d: any) {
       diskWrap.innerHTML = '';
       if (!d) return;
+      if (d.backend === 'local') return; // 本地执行没有容器磁盘，整块隐藏
       const card = HOST.document.createElement('div');
       card.className = 'cfg-card';
       const head = HOST.document.createElement('div');
@@ -1520,7 +1521,10 @@ import { HOST } from './state.js';
           let chipText = DEPLOY_CHIP[st.state];
           let chipTone = st.state === 'ready' ? 'ok' : st.state === 'failed' || st.state === 'missing' ? 'bad' : 'warn';
           if (it === 'sandbox' && st.item && st.state !== 'running' && st.state !== 'failed') {
-            if (!st.item.docker_installed) {
+            if (st.item.backend === 'local') {
+              chipText = '本地执行';
+              chipTone = 'ok';
+            } else if (!st.item.docker_installed) {
               chipText = 'Docker 缺';
               chipTone = 'bad';
             } else if (!st.item.image_ready) {

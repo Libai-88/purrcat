@@ -189,6 +189,17 @@ def _wait_docker(docker: str, timeout: float) -> bool:
 
 
 def install_sandbox(item: str) -> bool:
+    from src.tool.bash.backends import resolve_backend_name, resolve_shell
+
+    if resolve_backend_name() != "docker":
+        try:
+            spec = resolve_shell()
+        except Exception as e:
+            append_log(item, f"[!] 未找到可用的本地 shell：{e}")
+            return False
+        append_log(item, f"[+] 本地执行就绪: {spec.kind} ({spec.path})，无需 Docker")
+        return True
+
     from src.utils.sandbox_setup import (
         SANDBOX_IMAGE_TAG,
         check_docker_running,

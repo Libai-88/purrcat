@@ -54,10 +54,21 @@ def get_overview() -> dict:
     """前端轮询视图：各依赖项就绪状态 + 部署任务进度与日志"""
     items = check_all()
     tasks = snapshot()
-    try:
-        from src.utils.disk_maintenance import get_disk_status
+    from src.tool.bash.backends import resolve_backend_name
 
-        disk = get_disk_status()
-    except Exception as e:
-        disk = {"supported": False, "detail": f"磁盘状态检测失败: {e}"}
+    if resolve_backend_name() != "docker":
+        # 本地执行没有容器可写层，容器磁盘维护整块不适用
+        disk = {
+            "supported": False,
+            "backend": "local",
+            "detail": "本地执行不使用容器数据盘，无需磁盘维护",
+        }
+    else:
+        try:
+            from src.utils.disk_maintenance import get_disk_status
+
+            disk = get_disk_status()
+            disk["backend"] = "docker"
+        except Exception as e:
+            disk = {"supported": False, "detail": f"磁盘状态检测失败: {e}"}
     return {"items": items, "tasks": tasks, "disk": disk}

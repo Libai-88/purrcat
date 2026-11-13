@@ -150,35 +150,9 @@ ensure_node() {
   ok "Node.js installed: $(node -v)"
 }
 
-# ---------- Docker (failure is non-fatal; retry later from the app's Deploy page) ----------
-docker_fail_hint() {
-  warn "Docker installation failed — PurrCat itself is fine, but the sandboxed Bash tool requires it."
-  warn "Retry later from the app's Config Center -> Deploy page, or install manually: https://docs.docker.com/get-docker/"
-}
-
-ensure_docker() {
-  if command -v docker >/dev/null 2>&1; then
-    info "Docker detected: $(docker --version)"
-    return
-  fi
-  info "Installing Docker ..."
-  if is_mac; then
-    if command -v brew >/dev/null 2>&1 && brew install --cask docker; then
-      open -a Docker 2>/dev/null || true
-      ok "Docker Desktop installed (finish first-run setup in the window that opens)"
-    else
-      docker_fail_hint
-    fi
-  else
-    if curl -fsSL https://get.docker.com | $SUDO sh; then
-      $SUDO systemctl enable --now docker 2>/dev/null || true
-      $SUDO usermod -aG docker "$USER" 2>/dev/null || true
-      ok "Docker installed ($USER added to the docker group; re-login to use it without sudo)"
-    else
-      docker_fail_hint
-    fi
-  fi
-}
+# ---------- Execution backend: local shell (no Docker required) ----------
+# The Bash tool runs on the host shell (bash on macOS/Linux, Git Bash or PowerShell on Windows).
+# Docker is optional: set PURRCAT_EXEC_BACKEND=docker to use the container sandbox.
 
 # ---------- Embedding model (follows app logic: skip while data root unconfigured) ----------
 ensure_embedding() {
@@ -246,9 +220,8 @@ info "Syncing Python dependencies (uv sync) ..."
 info "Installing desktop dependencies (npm install) ..."
 ( cd "$INSTALL_DIR" && npm install ) || fail "npm install failed"
 
-# ---- 4. Embedding model / Docker ----
+# ---- 4. Embedding model (Bash runs on the host shell; Docker not required) ----
 ensure_embedding
-ensure_docker
 
 # ---- 5. Register purrcat command ----
 mkdir -p "$BIN_DIR"

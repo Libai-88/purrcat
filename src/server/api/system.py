@@ -89,33 +89,66 @@ def _check_engine_running(engine: str) -> bool:
         return False
 
 
+def _local_shell_info() -> dict:
+    """探测本机 shell 是否可用（本地执行后端的就绪判定）。"""
+    from src.tool.bash.backends import resolve_shell
+
+    try:
+        spec = resolve_shell()
+        return {"ready": True, "kind": spec.kind, "path": spec.path}
+    except Exception as e:
+        return {"ready": False, "error": str(e)}
+
+
 @router.get("/env/detect", response_model=DetectResponse)
 def detect_environment():
+    from src.tool.bash.backends import resolve_backend_name
+
     os_name = platform.system()
-
     has_docker = shutil.which("docker") is not None
+    local = _local_shell_info()
+    backend = resolve_backend_name()
 
-    if has_docker:
-        recommend_engine = "docker"
-        recommend_reason = "检测到已安装 Docker。"
-    else:
+    if local.get("ready"):
+        recommend_engine = "local"
+        recommend_reason = (
+            f"默认使用本机 {local['kind']} 执行命令，无需 Docker。"
+            "如需容器隔离，可设置 PURRCAT_EXEC_BACKEND=docker。"
+        )
+    elif has_docker:
         recommend_engine = "docker"
         recommend_reason = (
-            "未检测到 Docker。请先安装 Docker Desktop：\n"
-            "https://docs.docker.com/get-docker/\n"
-            "Windows 需启用 WSL2，安装后重启系统。"
+            "未找到可用的本机 shell，已检测到 Docker；"
+            "可设置 PURRCAT_EXEC_BACKEND=docker 使用沙盒。"
         )
+    else:
+        recommend_engine = "local"
+        recommend_reason = f"未找到可用的本机 shell：{local.get('error', '未知原因')}"
 
     return DetectResponse(
         os=os_name,
-        installed={"docker": has_docker},
+        installed={"docker": has_docker, "local": bool(local.get("ready"))},
         recommend=recommend_engine,
-        recommend_reason=recommend_reason,
+        recommend_reason=f"当前执行后端: {backend}。{recommend_reason}",
     )
 
 
 @router.get("/env-status", response_model=EnvStatusResponse)
 def get_environment_status():
+    from src.tool.bash.backends import resolve_backend_name
+
+    if resolve_backend_name() != "docker":
+        local = _local_shell_info()
+        if local.get("ready"):
+            return EnvStatusResponse(
+                is_ready=True,
+                engine="local",
+                engine_version=f"{local['kind']}: {local['path']}",
+            )
+        return EnvStatusResponse(
+            is_ready=False, engine="local", error=local.get("error")
+        )
+
     try:
         engine = get_container_engine()
         version = _get_engine_version(engine)
@@ -133,16 +166,31 @@ def get_environment_status():
 
 @router.get("/env/status")
 def get_env_status_simple():
+    from src.tool.bash.backends import resolve_backend_name
+
+    backend = resolve_backend_name()
     has_docker = shutil.which("docker") is not None
+    local = _local_shell_info()
+    ready = has_docker if backend == "docker" else bool(local.get("ready"))
     return {
-        "ready": has_docker,
-        "engine": "docker" if has_docker else None,
+        "ready": ready,
+        "engine": "docker" if backend == "docker" else "local",
         "has_docker": has_docker,
+        "exec_backend": backend,
+        "shell": f"{local.get('kind')}: {local.get('path')}"
+        if local.get("ready")
+        else local.get("error"),
     }
 
 
 @router.get("/image-status", response_model=ImageStatusResponse)
 def get_image_status(image_name: str = "my_agent_env:latest"):
+    from src.tool.bash.backends import resolve_backend_name
+
+    if resolve_backend_name() != "docker":
+        # 本地执行不依赖镜像，直接报告就绪，避免部署页一直显示“镜像未拉取”
+        return ImageStatusResponse(exists=True, image_name=image_name)
+
     try:
         get_container_engine()  # 校验 docker 存在，缺失时抛 RuntimeError
         client = docker.from_env()
@@ -176,6 +224,11 @@ def _pull_image_task(image_name: str):
 
 @router.post("/image/pull", response_model=PullImageResponse)
 def pull_image(request: PullImageRequest, background_tasks: BackgroundTasks):
+    from src.tool.bash.backends import resolve_backend_name
+
+    if resolve_backend_name() != "docker":
+        return PullImageResponse(status="completed", message="本地执行无需拉取镜像。")
+
     try:
         get_container_engine()  # 校验 docker 存在，缺失时抛 RuntimeError
         background_tasks.add_task(_pull_image_task, request.image_name)
@@ -196,6 +249,15 @@ def _install_task(engine: str):
     global _install_progress, _install_status, _install_error, _selected_engine
 
     _selected_engine = engine
+
+    from src.tool.bash.backends import resolve_backend_name
+
+    if resolve_backend_name() != "docker":
+        # 本地执行不需要安装容器引擎
+        _install_status = "completed"
+        _install_progress = 100
+        _install_error = None
+        return
 
     try:
         _install_status = "installing"
@@ -252,6 +314,22 @@ def get_install_status():
 
 @router.get("/container-engine")
 def get_container_engine_info():
+    from src.tool.bash.backends import resolve_backend_name
+
+    backend = resolve_backend_name()
+    if backend != "docker":
+        local = _local_shell_info()
+        return {
+            "engine": "local",
+            "version": None,
+            "available_engines": {
+                "docker": shutil.which("docker") is not None,
+                "local": bool(local.get("ready")),
+            },
+            "selected_engine": _selected_engine,
+            "exec_backend": backend,
+        }
+
     try:
         engine = get_container_engine()
         version = _get_engine_version(engine)
@@ -261,8 +339,10 @@ def get_container_engine_info():
             "version": version,
             "available_engines": {
                 "docker": shutil.which("docker") is not None,
+                "local": bool(_local_shell_info().get("ready")),
             },
             "selected_engine": _selected_engine,
+            "exec_backend": backend,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

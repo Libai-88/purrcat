@@ -1622,8 +1622,8 @@
     { key: "vision", title: "\u89C6\u89C9\u987E\u95EE" }
   ];
   var DEPLOY_ITEMS = ["uv", "node", "sandbox", "embedding"];
-  var DEPLOY_LABEL = { uv: "uv", node: "node", sandbox: "Docker \u6C99\u76D2", embedding: "embedding" };
-  var DEPLOY_DESC = { uv: "Python \u4F9D\u8D56\u4E0E\u8FD0\u884C\u73AF\u5883", node: "\u524D\u7AEF\u5BBF\u4E3B\u4E0E\u63D2\u4EF6\u6784\u5EFA", sandbox: "Docker \u9694\u79BB\u6267\u884C\u73AF\u5883", embedding: "\u672C\u5730\u5411\u91CF\u5316\u6A21\u578B" };
+  var DEPLOY_LABEL = { uv: "uv", node: "node", sandbox: "\u6267\u884C\u73AF\u5883", embedding: "embedding" };
+  var DEPLOY_DESC = { uv: "Python \u4F9D\u8D56\u4E0E\u8FD0\u884C\u73AF\u5883", node: "\u524D\u7AEF\u5BBF\u4E3B\u4E0E\u63D2\u4EF6\u6784\u5EFA", sandbox: "\u672C\u5730 shell\uFF08Docker \u53EF\u9009\uFF09", embedding: "\u672C\u5730\u5411\u91CF\u5316\u6A21\u578B" };
   var DEPLOY_CHIP = { missing: "\u672A\u5B89\u88C5", failed: "\u5931\u8D25", running: "\u90E8\u7F72\u4E2D", installed: "\u5F85\u91CD\u542F", ready: "\u5DF2\u5C31\u7EEA" };
   var cfgState = {
     data: {},
@@ -3246,6 +3246,7 @@
     function renderDisk(d) {
       diskWrap.innerHTML = "";
       if (!d) return;
+      if (d.backend === "local") return;
       const card = HOST.document.createElement("div");
       card.className = "cfg-card";
       const head = HOST.document.createElement("div");
@@ -3366,7 +3367,10 @@
           let chipText = DEPLOY_CHIP[st.state];
           let chipTone = st.state === "ready" ? "ok" : st.state === "failed" || st.state === "missing" ? "bad" : "warn";
           if (it === "sandbox" && st.item && st.state !== "running" && st.state !== "failed") {
-            if (!st.item.docker_installed) {
+            if (st.item.backend === "local") {
+              chipText = "\u672C\u5730\u6267\u884C";
+              chipTone = "ok";
+            } else if (!st.item.docker_installed) {
               chipText = "Docker \u7F3A";
               chipTone = "bad";
             } else if (!st.item.image_ready) {

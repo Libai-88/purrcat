@@ -266,7 +266,7 @@ def change_data_root(payload: Dict[str, Any]) -> dict:
         "status": "ok",
         "data_root": new_root,
         "moved": moved,
-        "message": "数据已就绪（agent_vm 已在新位置全新初始化，沙盒容器已销毁，重启后自动重建）",
+        "message": "数据已就绪（agent_vm 已在新位置全新初始化，重启后生效）",
     }
 
 
@@ -276,6 +276,11 @@ def _destroy_sandbox_container():
     容器内的系统变更（apt 安装的包等）会随销毁丢失——这是预期行为：
     换根即换盘，旧挂载已无意义。
     """
+    from src.tool.bash.backends import resolve_backend_name
+
+    if resolve_backend_name() != "docker":
+        return  # 本地执行后端没有容器
+
     try:
         import docker
         from docker.errors import NotFound

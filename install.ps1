@@ -224,30 +224,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 Pop-Location
 
-# ---------- Docker Desktop (failure is non-fatal; retry later from the app's Deploy page) ----------
-if (Get-Command docker -ErrorAction SilentlyContinue) {
-    Info "Docker detected: $(docker --version)"
-} else {
-    $dockerInstalled = $false
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        Info "Installing Docker Desktop (large download, may take several minutes) ..."
-        $dockerInstalled = Install-ByWinget "Docker.DockerDesktop"
-        Update-SessionPath
-    }
-    if ($dockerInstalled -and (Get-Command docker -ErrorAction SilentlyContinue)) {
-        # Launch Docker Desktop to finish first-run setup (accept agreement, enable WSL2 backend)
-        $dockerDesktop = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
-        if (Test-Path $dockerDesktop) {
-            Start-Process $dockerDesktop
-            Ok "Docker Desktop installed (launched; finish first-run setup in the window that opens)"
-        } else {
-            Ok "Docker Desktop installed (launch it once manually to finish initialization)"
-        }
-    } else {
-        Warn "Docker installation failed — PurrCat itself is fine, but the sandboxed Bash tool requires it."
-        Warn "Retry later from the app's Config Center -> Deploy page, or install manually: https://docs.docker.com/desktop/install/windows-install/"
-    }
-}
+# ---------- Execution backend: local shell (no Docker required) ----------
+Info "Execution backend: local shell. Docker is optional (set PURRCAT_EXEC_BACKEND=docker to use the container sandbox)."
 
 # ---------- Register purrcat command ----------
 New-Item -ItemType Directory -Force -Path $BinDir | Out-Null

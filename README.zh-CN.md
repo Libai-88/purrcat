@@ -43,7 +43,7 @@ purrcat desktop start # 启动 Electron 桌面端
 purrcat desktop update # 更新源码并刷新依赖
 ```
 
-> **安装说明：** 目前仅提供源码安装方式，不提供预打包的桌面安装包。Windows 安装流程验证较充分；macOS / Linux 的测试覆盖相对有限。Windows 下安装 Docker Desktop 后，需要手动启动一次以完成初始化并接受相关协议。
+> **安装说明：** 目前仅提供源码安装方式，不提供预打包的桌面安装包。Windows 安装流程验证较充分；macOS / Linux 的测试覆盖相对有限。**不需要安装 Docker**：命令直接在本机 shell 执行（Windows 优先 Git Bash，其次 PowerShell；macOS / Linux 使用 bash）。想用容器隔离时设置 `PURRCAT_EXEC_BACKEND=docker`。
 
 ### API 端口
 
@@ -92,7 +92,7 @@ PurrCat 将能力生成与评估结合起来，让 Agent 的扩展过程不仅�
 
 PurrCat 将 Agent 的执行环境与宿主机隔离，让它能够持续工作，同时明确限制宿主机文件的访问边界。
 
-- **独立执行沙箱**：Agent 在专属 Docker 容器中执行命令、操作文件，并持久保存工作区与日志。
+- **本地执行，容器可选**：Agent 在本机 shell 中执行命令、操作文件，并持久保存工作区与日志。设置 `PURRCAT_EXEC_BACKEND=docker` 可切换为独立的容器沙盒。
 - **受控的宿主机文件交互**：对文件导入进行大小与路径校验；文件导出可触发 Git 快照，便于审计和回溯；通过目录黑白名单限制访问范围。
 - **Heartbeat + Goal**：`GOAL.md` 提供长期目标。Agent 可在空闲时通过心跳周期自主执行巡查、信息收集与汇报等工作，心跳间隔支持热重载。
 

@@ -43,7 +43,7 @@ purrcat desktop start # Launch the Electron desktop app
 purrcat desktop update # Update the source and refresh dependencies
 ```
 
-> **Installation notes:** Only source installation is currently offered — there are no pre-packaged desktop installers. The Windows flow is well tested; macOS / Linux have more limited test coverage. On Windows, Docker Desktop must be launched manually once after installation to complete setup and accept its agreement.
+> **Installation notes:** Only source installation is currently offered — there are no pre-packaged desktop installers. The Windows flow is well tested; macOS / Linux have more limited test coverage. Docker is **not** required: commands run on the host shell (Git Bash or PowerShell on Windows, bash on macOS/Linux). Set `PURRCAT_EXEC_BACKEND=docker` if you prefer the container sandbox.
 
 ### API port
 
@@ -92,7 +92,7 @@ PurrCat combines capability generation with evaluation, so the Agent's own exten
 
 PurrCat isolates the Agent's execution environment from the host, letting it keep working while clearly limiting the boundary of host-file access.
 
-- **Isolated execution sandbox**: The Agent runs commands and manipulates files in a dedicated Docker container, persistently keeping its workspace and logs.
+- **Local execution, container optional**: The Agent runs commands on the host shell and keeps its workspace and logs persistent. Enabling `PURRCAT_EXEC_BACKEND=docker` switches to an isolated container instead.
 - **Controlled host-file interaction**: File imports are validated for size and path; file exports can trigger a Git snapshot for auditing and traceability; directory allow/deny lists limit the access scope.
 - **Heartbeat + Goal**: `GOAL.md` provides long-term goals. When idle, the Agent can autonomously perform patrols, information gathering, and reporting on a heartbeat cycle, and the heartbeat interval supports hot reload.
 

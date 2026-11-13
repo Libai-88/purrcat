@@ -4,7 +4,7 @@
 
 ## 技术栈
 
-- 后端：Python 3.10+、FastAPI、uvicorn、Docker SDK、ONNX；ChromaDB + BM25/jieba。
+- 后端：Python 3.10+、FastAPI、uvicorn、ONNX；ChromaDB + BM25/jieba。命令执行默认走本机 shell（Git Bash / PowerShell / bash），Docker SDK 仅在选择容器后端时需要。
 - 前端：TypeScript + esbuild，无框架；极简宿主 + iframe 插件。
 - 桌面：Electron 31（`contextIsolation: true`）、electron-builder、NSIS。
 - 工具链：uv、npm、PyInstaller。

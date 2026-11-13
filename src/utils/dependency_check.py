@@ -1,6 +1,6 @@
 """
 启动时依赖就绪检查
-每次启动时检查：git / 嵌入模型 / 沙盒容器 / uv / node
+每次启动时检查：git / 嵌入模型 / 本地执行能力 / uv / node
 若任一缺失或未就绪，向 requests.json 写入一条 dependency_check 类型 pending 请求，
 前端 ChatPage 的 pending 队列会自动渲染，用户可点「前往部署」直达配置中心部署页、取消或静默忽略。
 """
@@ -60,22 +60,36 @@ def _check_embedding() -> bool:
     return False
 
 
-def _check_sandbox():
-    """返回 (is_ready: bool, reason: str)"""
-    from src.utils.sandbox_setup import (
-        SANDBOX_IMAGE_TAG,
-        check_docker_running,
-        check_image_exists,
-        docker_cmd,
-    )
+def _check_execution():
+    """返回 (is_ready: bool, reason: str)。
 
-    docker = docker_cmd()
-    if not docker:
-        return False, "未检测到 Docker，沙盒（Bash 执行）将不可用。"
-    if not check_docker_running(docker):
-        return False, "Docker daemon 未启动，请先启动 Docker Desktop。"
-    if not check_image_exists(docker, SANDBOX_IMAGE_TAG):
-        return False, f"沙盒镜像 {SANDBOX_IMAGE_TAG} 不存在（首次启动会后台拉取）。"
+    本地执行只要求存在一个可用 shell；只有显式选择 Docker 后端时才检查容器。
+    """
+    from src.tool.bash.backends import resolve_backend_name
+
+    if resolve_backend_name() == "docker":
+        from src.utils.sandbox_setup import (
+            SANDBOX_IMAGE_TAG,
+            check_docker_running,
+            check_image_exists,
+            docker_cmd,
+        )
+
+        docker = docker_cmd()
+        if not docker:
+            return False, "已选择 Docker 后端，但未检测到 docker 命令。"
+        if not check_docker_running(docker):
+            return False, "Docker daemon 未启动，请先启动 Docker Desktop。"
+        if not check_image_exists(docker, SANDBOX_IMAGE_TAG):
+            return False, f"沙盒镜像 {SANDBOX_IMAGE_TAG} 不存在。"
+        return True, ""
+
+    try:
+        from src.tool.bash.backends import resolve_shell
+
+        resolve_shell()
+    except Exception as exc:
+        return False, f"未找到可用的本地 shell：{exc}"
     return True, ""
 
 
@@ -107,9 +121,9 @@ def _collect_missing() -> list:
         else:
             reason = "嵌入模型未就绪（数据根目录尚未配置，请先完成数据盘设置）。"
         missing.append({"name": "embedding", "reason": reason})
-    sandbox_ok, sandbox_reason = _check_sandbox()
-    if not sandbox_ok:
-        missing.append({"name": "sandbox", "reason": sandbox_reason})
+    exec_ok, exec_reason = _check_execution()
+    if not exec_ok:
+        missing.append({"name": "execution", "reason": exec_reason})
     return missing
 
 

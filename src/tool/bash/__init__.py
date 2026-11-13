@@ -1,5 +1,5 @@
 """
-在沙盒里执行命令行
+在工作目录执行命令行（默认本机 shell，Docker 后端可选）
 """
 
 from .bash import Bash, close_session

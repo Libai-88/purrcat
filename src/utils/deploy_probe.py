@@ -65,6 +65,26 @@ def check_node() -> dict:
 
 
 def check_sandbox() -> dict:
+    from src.tool.bash.backends import resolve_backend_name, resolve_shell
+
+    if resolve_backend_name() != "docker":
+        result = {
+            "ready": False,
+            "docker_installed": False,
+            "docker_running": False,
+            "image_ready": False,
+            "backend": "local",
+            "detail": "本地执行：未找到可用的 shell",
+        }
+        try:
+            spec = resolve_shell()
+        except Exception as e:
+            result["detail"] = f"本地执行：未找到可用的 shell（{e}）"
+            return result
+        result["ready"] = True
+        result["detail"] = f"本地执行：{spec.kind}（{spec.path}），无需 Docker"
+        return result
+
     from src.utils.sandbox_setup import (
         SANDBOX_IMAGE_TAG,
         check_docker_running,
@@ -76,6 +96,7 @@ def check_sandbox() -> dict:
         "docker_installed": False,
         "docker_running": False,
         "image_ready": False,
+        "backend": "docker",
         "detail": "未检测到 Docker",
     }
     docker = which_enriched("docker")

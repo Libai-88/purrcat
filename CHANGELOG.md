@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Execution backend is pluggable and local by default**: the Bash tool now runs commands on the host shell (Git Bash or PowerShell on Windows, bash on macOS/Linux) instead of requiring a Docker sandbox. Set `PURRCAT_EXEC_BACKEND=docker` (or `exec_backend` in `settings.json`) to switch back to the container backend. The installers no longer install Docker, Docker is no longer a startup dependency, and no sandbox image is pulled on startup.
+- Commands always start in `agent_vm`; output is capped at 100 KB, and a timeout terminates the whole process tree while returning the partial output.
+
+### Added
+
+- `tests/specs/SPEC-024-local-execution-backend.md` documenting the local backend, its acceptance criteria, and the rollback switch.
+
 ## [1.1.1]
 
 A follow-up to 1.1.0 with project workspaces, sidebar and chat-header improvements, a graphical installer, a local rendered-fetch path, and a deep internal refactor: the backend packages are split into focused modules, and the HTTP API reference is now generated from the FastAPI schema instead of being maintained by hand.
