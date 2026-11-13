@@ -682,6 +682,35 @@ ACP 接入状态：relay 部署情况 / 端口 / uv 可用性
 | 200 | Successful Response | - |
 | 422 | Validation Error | HTTPValidationError |
 
+### `GET /api/config/exec`
+
+**标题**：Api Get Exec Backend
+
+当前执行后端与可用性（部署页切换开关的数据源）。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `PUT /api/config/exec`
+
+**标题**：Api Set Exec Backend
+
+切换执行后端；写 settings.json 后立即生效，不需要重启。
+
+#### 请求体
+
+**Schema**：`Payload`
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
 ### `GET /api/config/file`
 
 **标题**：Api Get File Config

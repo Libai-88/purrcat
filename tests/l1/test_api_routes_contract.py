@@ -106,6 +106,8 @@ EXPECTED_ROUTES = {
         ("/api/config/deploy/disk/rebuild", "POST", "api_rebuild_sandbox"),
         ("/api/config/sandbox-registry", "GET", "api_get_sandbox_registry"),
         ("/api/config/sandbox-registry", "PUT", "api_update_sandbox_registry"),
+        ("/api/config/exec", "GET", "api_get_exec_backend"),
+        ("/api/config/exec", "PUT", "api_set_exec_backend"),
         ("/api/config/markdown/{filename}", "GET", "api_get_markdown_file"),
         ("/api/config/markdown/{filename}", "PUT", "api_update_markdown_file"),
         ("/api/config/info", "GET", "api_get_info_config"),

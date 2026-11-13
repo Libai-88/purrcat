@@ -3209,12 +3209,72 @@
     const list = HOST.document.createElement("div");
     list.className = "cfg-deploy-grid";
     sec.appendChild(list);
+    const backendRow = HOST.document.createElement("div");
+    backendRow.className = "cfg-card";
+    backendRow.style.marginBottom = "10px";
+    sec.insertBefore(backendRow, list);
     const diskTitle = HOST.document.createElement("div");
     diskTitle.className = "settings-subgroup";
     diskTitle.textContent = "\u78C1\u76D8\u7EF4\u62A4";
     sec.appendChild(diskTitle);
     const diskWrap = HOST.document.createElement("div");
     sec.appendChild(diskWrap);
+    function renderBackend() {
+      fetch("/api/config/exec").then(function(r) {
+        return r.json();
+      }).then(function(b) {
+        backendRow.innerHTML = "";
+        const head = HOST.document.createElement("div");
+        head.className = "cfg-card-head";
+        const left = HOST.document.createElement("div");
+        left.className = "cfg-card-head-l";
+        const title = HOST.document.createElement("div");
+        title.className = "cfg-card-title";
+        const nm = HOST.document.createElement("div");
+        nm.className = "cfg-card-name";
+        nm.textContent = "\u6267\u884C\u540E\u7AEF";
+        const chip = HOST.document.createElement("span");
+        chip.className = "cfg-chip " + (b.backend === "docker" ? "warn" : "ok");
+        chip.textContent = b.backend === "docker" ? "Docker \u6C99\u76D2" : "\u672C\u5730\u6267\u884C";
+        title.appendChild(nm);
+        title.appendChild(chip);
+        left.appendChild(title);
+        const sub = HOST.document.createElement("div");
+        sub.className = "cfg-card-sub";
+        sub.textContent = b.env_override ? "\u5DF2\u7531\u73AF\u5883\u53D8\u91CF PURRCAT_EXEC_BACKEND \u6307\u5B9A\uFF0C\u5220\u9664\u8BE5\u53D8\u91CF\u540E\u624D\u80FD\u5728\u754C\u9762\u5207\u6362" : "\u547D\u4EE4\u9ED8\u8BA4\u5728\u672C\u673A\u6267\u884C\uFF08" + (b.shell || "\u672A\u77E5 shell") + "\uFF09\uFF1B\u5207\u6362\u5230 Docker \u9700\u8981\u672C\u673A\u5DF2\u5B89\u88C5\u5E76\u542F\u52A8 Docker\u3002";
+        left.appendChild(sub);
+        head.appendChild(left);
+        const act = HOST.document.createElement("div");
+        act.className = "cfg-card-act";
+        const modes = [["local", "\u672C\u5730\u6267\u884C"], ["docker", "Docker \u6C99\u76D2"]];
+        modes.forEach(function(pair) {
+          const btn = HOST.document.createElement("button");
+          btn.className = "btn";
+          btn.textContent = pair[1];
+          btn.disabled = !!b.env_override || b.backend === pair[0] || pair[0] === "docker" && !b.docker_ready;
+          if (pair[0] === "docker" && !b.docker_ready) btn.title = "\u672A\u68C0\u6D4B\u5230 docker \u547D\u4EE4";
+          btn.addEventListener("click", function() {
+            btn.disabled = true;
+            fetch("/api/config/exec", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ backend: pair[0] }) }).then(function(r) {
+              if (!r.ok) return r.json().then(function(d) {
+                throw new Error(d.detail || "\u5207\u6362\u5931\u8D25");
+              });
+            }).then(function() {
+              delete cfgState.data.deploy;
+              renderBackend();
+              draw();
+            }).catch(function(e) {
+              btn.disabled = false;
+              HOST.alert("\u5931\u8D25\uFF1A" + (e && e.message || ""));
+            });
+          });
+          act.appendChild(btn);
+        });
+        head.appendChild(act);
+        backendRow.appendChild(head);
+      }).catch(function() {
+      });
+    }
     function fmtBytes(n) {
       n = Number(n) || 0;
       const units = ["B", "KB", "MB", "GB", "TB"];
@@ -3438,6 +3498,7 @@
       });
     }
     draw();
+    renderBackend();
     if (deployPollT) clearInterval(deployPollT);
     setDeployPollT(setInterval(function() {
       if (!HOST.document.body.classList.contains("settings-open")) return;

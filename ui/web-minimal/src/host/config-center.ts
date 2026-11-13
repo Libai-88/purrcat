@@ -1369,6 +1369,11 @@ import { HOST } from './state.js';
     const list = HOST.document.createElement('div');
     list.className = 'cfg-deploy-grid';
     sec.appendChild(list);
+    // 执行后端开关：默认本地 shell，Docker 可选
+    const backendRow = HOST.document.createElement('div');
+    backendRow.className = 'cfg-card';
+    backendRow.style.marginBottom = '10px';
+    sec.insertBefore(backendRow, list);
     // 磁盘维护卡片：只读展示 vhdx 空洞，用户点按钮才执行回收
     const diskTitle = HOST.document.createElement('div');
     diskTitle.className = 'settings-subgroup';
@@ -1376,6 +1381,53 @@ import { HOST } from './state.js';
     sec.appendChild(diskTitle);
     const diskWrap = HOST.document.createElement('div');
     sec.appendChild(diskWrap);
+    function renderBackend() {
+      fetch('/api/config/exec').then(function (r) { return r.json(); }).then(function (b: any) {
+        backendRow.innerHTML = '';
+        const head = HOST.document.createElement('div');
+        head.className = 'cfg-card-head';
+        const left = HOST.document.createElement('div');
+        left.className = 'cfg-card-head-l';
+        const title = HOST.document.createElement('div');
+        title.className = 'cfg-card-title';
+        const nm = HOST.document.createElement('div');
+        nm.className = 'cfg-card-name';
+        nm.textContent = '执行后端';
+        const chip = HOST.document.createElement('span');
+        chip.className = 'cfg-chip ' + (b.backend === 'docker' ? 'warn' : 'ok');
+        chip.textContent = b.backend === 'docker' ? 'Docker 沙盒' : '本地执行';
+        title.appendChild(nm);
+        title.appendChild(chip);
+        left.appendChild(title);
+        const sub = HOST.document.createElement('div');
+        sub.className = 'cfg-card-sub';
+        sub.textContent = b.env_override
+          ? '已由环境变量 PURRCAT_EXEC_BACKEND 指定，删除该变量后才能在界面切换'
+          : '命令默认在本机执行（' + (b.shell || '未知 shell') + '）；切换到 Docker 需要本机已安装并启动 Docker。';
+        left.appendChild(sub);
+        head.appendChild(left);
+        const act = HOST.document.createElement('div');
+        act.className = 'cfg-card-act';
+        const modes: Array<[string, string]> = [['local', '本地执行'], ['docker', 'Docker 沙盒']];
+        modes.forEach(function (pair) {
+          const btn = HOST.document.createElement('button');
+          btn.className = 'btn';
+          btn.textContent = pair[1];
+          btn.disabled = !!b.env_override || b.backend === pair[0] || (pair[0] === 'docker' && !b.docker_ready);
+          if (pair[0] === 'docker' && !b.docker_ready) btn.title = '未检测到 docker 命令';
+          btn.addEventListener('click', function () {
+            btn.disabled = true;
+            fetch('/api/config/exec', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ backend: pair[0] }) })
+              .then(function (r) { if (!r.ok) return r.json().then(function (d) { throw new Error(d.detail || '切换失败'); }); })
+              .then(function () { delete cfgState.data.deploy; renderBackend(); draw(); })
+              .catch(function (e) { btn.disabled = false; HOST.alert('失败：' + (e && e.message || '')); });
+          });
+          act.appendChild(btn);
+        });
+        head.appendChild(act);
+        backendRow.appendChild(head);
+      }).catch(function () { /* 后端不可用时保留空白卡片，不打断部署页 */ });
+    }
     function fmtBytes(n: any) {
       n = Number(n) || 0;
       const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -1582,6 +1634,7 @@ import { HOST } from './state.js';
       });
     }
     draw();
+    renderBackend();
     if (deployPollT) clearInterval(deployPollT);
     setDeployPollT(setInterval(function () {
       if (!HOST.document.body.classList.contains('settings-open')) return;

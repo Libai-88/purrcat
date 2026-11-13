@@ -269,6 +269,50 @@ def api_update_sandbox_registry(payload: Dict[str, Any]):
     return config_services.update_sandbox_registry(payload.get("sandbox_registry"))
 
 
+# ── 执行后端（本地 shell / Docker 沙盒，写入 settings.json 的 exec_backend）──
+@router.get("/exec")
+def api_get_exec_backend():
+    """当前执行后端与可用性（部署页切换开关的数据源）。"""
+    import shutil
+
+    from src.tool.bash.backends import resolve_backend_name, resolve_shell
+
+    backend = resolve_backend_name()
+    try:
+        spec = resolve_shell()
+        shell = f"{spec.kind}: {spec.path}"
+        local_ready = True
+    except Exception as e:
+        shell = str(e)
+        local_ready = False
+    return {
+        "backend": backend,
+        "shell": shell,
+        "local_ready": local_ready,
+        "docker_ready": shutil.which("docker") is not None,
+        "env_override": bool(os.environ.get("PURRCAT_EXEC_BACKEND")),
+    }
+
+
+@router.put("/exec")
+def api_set_exec_backend(payload: Dict[str, Any]):
+    """切换执行后端；写 settings.json 后立即生效，不需要重启。"""
+    backend = str(payload.get("backend") or "").strip().lower()
+    if backend not in ("local", "docker"):
+        raise HTTPException(status_code=400, detail="backend 必须是 local 或 docker")
+    if os.environ.get("PURRCAT_EXEC_BACKEND"):
+        raise HTTPException(
+            status_code=409,
+            detail="环境变量 PURRCAT_EXEC_BACKEND 已指定后端，请先删除该变量",
+        )
+    if not save_global_setting("exec_backend", backend):
+        raise HTTPException(status_code=500, detail="保存 exec_backend 失败")
+    from src.tool.bash.backends import reset_backend
+
+    reset_backend()
+    return {"status": "ok", "backend": backend}
+
+
 # ── Markdown Files (SOUL.md / GOAL.md) ──
 @router.get("/markdown/{filename}")
 def api_get_markdown_file(filename: str):

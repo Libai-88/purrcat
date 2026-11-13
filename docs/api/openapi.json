@@ -1604,6 +1604,66 @@
         ]
       }
     },
+    "/api/config/exec": {
+      "get": {
+        "description": "当前执行后端与可用性（部署页切换开关的数据源）。",
+        "operationId": "api_get_exec_backend_api_config_exec_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Get Exec Backend",
+        "tags": [
+          "Configuration"
+        ]
+      },
+      "put": {
+        "description": "切换执行后端；写 settings.json 后立即生效，不需要重启。",
+        "operationId": "api_set_exec_backend_api_config_exec_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Set Exec Backend",
+        "tags": [
+          "Configuration"
+        ]
+      }
+    },
     "/api/config/file": {
       "get": {
         "operationId": "api_get_file_config_api_config_file_get",
