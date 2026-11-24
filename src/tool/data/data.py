@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.data import chart as chart_module
 from src.data import library, query as query_module
 from src.data.inspect import InspectionError, inspect_asset
 from src.tool.filesystem.utils import can_read
@@ -110,6 +111,42 @@ def _render_result(result: dict, receipt: dict, sample_limit: int = SAMPLE_ROWS)
     return "\n".join(lines)
 
 
+def _render_chart(document: dict) -> str:
+    """把一份图表规格渲染成可读的文字说明。"""
+    chart = document.get("chart") or {}
+    source = document.get("source") or {}
+    rows = document.get("rows") or []
+    lines = [
+        f"# {document.get('title', '')}",
+        "",
+        f"- 图表类型：{chart.get('type')}（横轴 {chart.get('x')}，纵轴 {chart.get('y')}"
+        + (f"，聚合 {chart.get('aggregation')}" if chart.get("aggregation") else "")
+        + "）",
+        f"- 数据集：{source.get('datasetId')} · 版本 {source.get('versionLabel')}",
+        f"- SHA-256：{source.get('sha256', '')}",
+        f"- 数据点：{len(rows)} 个",
+    ]
+    for caveat in source.get("caveats") or []:
+        lines.append(f"- 说明：{caveat}")
+    lines += ["", "| 标签 | 值 | 来源行 |", "| --- | --- | --- |"]
+    for row in rows[:20]:
+        provenance = row.get("rowProvenance") or []
+        lines.append(
+            f"| {row.get('label', '')} | {row.get('value', row.get('y', ''))} | "
+            f"{len(provenance)} 行 |"
+        )
+    if len(rows) > 20:
+        lines.append("")
+        lines.append(f"（只列出前 20 个数据点，共 {len(rows)} 个）")
+    lines += [
+        "",
+        "---",
+        "",
+        document.get("method", "方法是声明，不是科学检查。"),
+    ]
+    return "\n".join(lines)
+
+
 def Data(
     action: str,
     path: str = None,
@@ -125,6 +162,10 @@ def Data(
     category: str = None,
     measure: str = None,
     aggregation: str = "count",
+    chart_type: str = None,
+    x: str = None,
+    y: str = None,
+    title: str = None,
     question: str = "",
     unit: str = "",
     grain: str = "",
@@ -215,6 +256,41 @@ def Data(
                 _render_result(outcome["result"], outcome["receipt"]),
                 f"📊 Data 查询 [{outcome['receipt']['query_id']}]",
             )
+
+        if action == "chart":
+            if not dataset_id:
+                return error_response("action=chart 需要提供 dataset_id")
+            if not x or not y:
+                return error_response("action=chart 需要提供 x（横轴列）与 y（纵轴列）")
+            document = chart_module.make_chart(
+                dataset_id,
+                asset_id or "",
+                chart_type=chart_type or "bar",
+                x_field=x,
+                y_field=y,
+                aggregation=aggregation or "sum",
+                interpretations=interpretations or {},
+                title=title or "",
+                unit=unit or "",
+                grain=grain or "",
+                denominator=denominator or "",
+            )
+            return text_response(
+                _render_chart(document),
+                f"📈 Data 图表 [{document['id'][:12]}]",
+            )
+
+        if action == "charts":
+            charts = chart_module.list_charts()
+            if not charts:
+                return text_response("还没有保存的图表。", "📈 Data | 0 张图")
+            lines = ["# 已保存的图表", ""]
+            for item in charts:
+                lines.append(
+                    f"- `{item['id'][:12]}` — {item.get('title', '')}"
+                    f"（{item['chart'].get('type')}，{len(item.get('rows', []))} 个数据点）"
+                )
+            return text_response("\n".join(lines), f"📈 Data | {len(charts)} 张图")
 
         if action == "receipts":
             receipts = query_module.list_receipts()

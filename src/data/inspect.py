@@ -105,7 +105,8 @@ def _parse_csv(
     blank_lines = 0
     try:
         for values in reader:
-            if not values or all(item == "" for item in values):
+            if not values:
+                # 真正空的一行才跳过；`,` 这种全空字段的行是一条记录，不是空行
                 blank_lines += 1
                 continue
             if len(values) != len(header):

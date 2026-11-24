@@ -12,10 +12,19 @@ DATA_TOOL_SCHEMA = {
             "properties": {
                 "action": {
                     "type": "string",
-                    "enum": ["import", "list", "inspect", "query", "receipts"],
+                    "enum": [
+                        "import",
+                        "list",
+                        "inspect",
+                        "query",
+                        "chart",
+                        "charts",
+                        "receipts",
+                    ],
                     "description": (
                         "import=导入数据文件；list=列出数据集；inspect=检查一个版本的结构与质量；"
-                        "query=查询与聚合并留下收据；receipts=列出已有查询收据"
+                        "query=查询与聚合并留下收据；chart=画一张图并保存图表规格；"
+                        "charts=列出已保存的图表；receipts=列出已有查询收据"
                     ),
                 },
                 "path": {
@@ -96,6 +105,25 @@ DATA_TOOL_SCHEMA = {
                     "type": "string",
                     "enum": ["count", "sum"],
                     "description": "action=query 的聚合方式，默认 count。",
+                },
+                "chart_type": {
+                    "type": "string",
+                    "enum": ["bar", "line", "area", "scatter"],
+                    "description": (
+                        "action=chart 时填写图表类型。bar/line/area 按类目聚合，"
+                        "scatter 逐行画点。数值列须已显式解释为数字。"
+                    ),
+                },
+                "x": {
+                    "type": "string",
+                    "description": (
+                        "action=chart 时填写横轴列。bar/line/area 是类目列，"
+                        "scatter 是数值列。"
+                    ),
+                },
+                "y": {
+                    "type": "string",
+                    "description": "action=chart 时填写纵轴列（必须是已解释为数字的数值列）。",
                 },
                 "question": {
                     "type": "string",

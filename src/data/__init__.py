@@ -1,5 +1,14 @@
 """数据集库：逻辑数据集 + 不可变版本，以及把版本读成表格的检查。"""
 
+from src.data.chart import (
+    AGGREGATE_TYPES,
+    CHART_TYPES,
+    ChartError,
+    build_chart,
+    list_charts,
+    make_chart,
+    read_chart,
+)
 from src.data.inspect import (
     INTERPRETATION_NUMBER,
     KIND_EMPTY,
@@ -29,9 +38,12 @@ from src.data.library import (
 )
 
 __all__ = [
+    "AGGREGATE_TYPES",
     "AVAILABLE_CHANGED",
     "AVAILABLE_MISSING",
     "AVAILABLE_PRESENT",
+    "CHART_TYPES",
+    "ChartError",
     "DataError",
     "INTERPRETATION_NUMBER",
     "InspectionError",
@@ -42,13 +54,17 @@ __all__ = [
     "KIND_STRING",
     "apply_interpretations",
     "availability",
+    "build_chart",
     "can_inspect",
     "get_asset",
     "get_dataset",
     "import_dataset",
     "inspect_asset",
+    "list_charts",
     "list_datasets",
+    "make_chart",
     "preview_interpretation",
+    "read_chart",
     "resolve_version",
     "set_archived",
     "version_label",
