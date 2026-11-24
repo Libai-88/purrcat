@@ -38,6 +38,7 @@ def imported(papers_home, sample_pdf):
 
 # ---------- AC-1 导入与分页原文 ----------
 
+
 def test_import_creates_library_entry(imported):
     """AC-1：导入后论文库里多出一条记录。"""
     papers = library.list_papers()
@@ -81,6 +82,7 @@ def test_import_missing_file_raises(papers_home):
 
 # ---------- AC-7 扫描件 ----------
 
+
 def test_scanned_pdf_without_text_layer_raises(papers_home, tmp_path):
     """AC-7：没有文本层的 PDF 明确报错，不产出空论文。"""
     scanned = write_pdf(tmp_path / "scanned.pdf", [[]])
@@ -93,6 +95,7 @@ def test_scanned_pdf_without_text_layer_raises(papers_home, tmp_path):
 
 
 # ---------- AC-4 引文定位 ----------
+
 
 def test_find_quote_tolerates_line_breaks():
     """AC-4：引文里的换行与空白差异不影响定位。"""
@@ -135,6 +138,7 @@ def test_locate_quote_across_pages(imported):
 
 # ---------- AC-5 未找到时给候选 ----------
 
+
 def test_verify_partial_when_quote_wording_differs(imported):
     """引文措辞不同但关键词高度重合时，判部分支持并指出最接近的页。"""
     result = verify.verify_claim(
@@ -172,6 +176,7 @@ def test_verify_without_any_overlap_has_no_candidates(imported):
 
 
 # ---------- AC-6 核对结论 ----------
+
 
 def test_verify_supported_by_quote(imported):
     """AC-6：引文在原文中找到时判定为支持，并给出证据位置。"""
@@ -231,6 +236,7 @@ def test_verify_unknown_paper_raises(papers_home):
 
 
 # ---------- AC-9 目录边界 ----------
+
 
 def test_library_writes_only_under_papers_root(papers_home, sample_pdf):
     """AC-9：论文库只在自己的目录里落盘。"""

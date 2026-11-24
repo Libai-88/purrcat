@@ -112,5 +112,7 @@ def verify_claim(paper_id: str, claim: str, quote: str = "") -> dict:
         "evidence": evidence,
         "quote_found": False,
         "coverage": best["coverage"],
-        "candidates": [] if verdict != NOT_FOUND else _candidate_pages(paper_id, subject),
+        "candidates": []
+        if verdict != NOT_FOUND
+        else _candidate_pages(paper_id, subject),
     }

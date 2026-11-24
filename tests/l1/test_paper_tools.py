@@ -43,9 +43,7 @@ def test_paper_tool_is_registered():
 
 def test_import_then_list(papers_home, sample_pdf, monkeypatch):
     """AC-2：导入后能在列表里看到。"""
-    monkeypatch.setattr(
-        "src.tool.paper.paper.can_read", lambda _path: True
-    )
+    monkeypatch.setattr("src.tool.paper.paper.can_read", lambda _path: True)
 
     imported = Paper(action="import", path=str(sample_pdf))
     assert "已导入" in _payload(imported)

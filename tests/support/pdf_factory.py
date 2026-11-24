@@ -44,7 +44,9 @@ def write_pdf(path: str | Path, pages: list[list[str]]) -> Path:
             ).encode("ascii")
         )
         objects.append(
-            b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n"
+            b"<< /Length "
+            + str(len(stream)).encode("ascii")
+            + b" >>\nstream\n"
             + stream
             + b"\nendstream"
         )
