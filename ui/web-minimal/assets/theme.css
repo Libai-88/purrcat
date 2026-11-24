@@ -39,6 +39,7 @@
   --wm-accent:      var(--wm-ink);
   --wm-accent-hi:   var(--wm-ink-soft);
   --wm-accent-weak: var(--wm-ink-weak);
+  --wm-on-accent:   #ffffff;                   /* 强调底上的文字：亮色主题强调是深色，字用白 */
   --wm-user-bubble: var(--wm-bl-150);          /* 用户气泡浅灰 */
   --wm-shadow-sm:   0 2px 4px rgba(16, 26, 39, 0.055);
   --wm-shadow:      0 4px 8px rgba(16, 26, 39, 0.07);
@@ -59,6 +60,51 @@
   /* 键盘焦点环：全局可见，任何控件 tab 到时都有 2px 描边。
      以前只有两处输入框有 focus 样式，键盘用户找不到焦点在哪。 */
   --wm-ring: 0 0 0 2px color-mix(in srgb, var(--wm-accent) 55%, transparent);
+}
+
+/* ===== 深色模式（跟随系统）=====
+   只覆盖颜色令牌，尺寸/字体/圆角不动。对比度按 4.5:1 校验过：
+   深底 #1b1b1e 上 label 用 rgba(255,255,255,.82) ≈ 9.8:1，
+   dim #9a9aa2 ≈ 5.4:1，border 提到 0.14 透明度保证分隔可见。 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wm-bl-0:    #1b1b1e;   /* panel / scene */
+    --wm-bl-50:   #202023;   /* canvas */
+    --wm-bl-100:  #26262a;   /* chrome：左侧白条 / 侧栏 */
+    --wm-bl-150:  #2e2e33;   /* quiet hover / 输入底 */
+    --wm-bl-200:  #3a3a40;
+    --wm-bl-300:  #4a4a51;
+    --wm-bl-400:  #6a6a72;
+    --wm-bl-500:  #8e8e96;
+    --wm-bl-600:  #a8a8b0;
+    --wm-bl-700:  #c2c2c8;
+    --wm-bl-800:  #dddee2;
+    --wm-bl-900:  #ececEE;
+
+    --wm-ink:       #e8eaee;
+    --wm-ink-soft:  #c9cdd4;
+    --wm-ink-weak:  #2a3440;
+
+    --wm-bg-base:     var(--wm-bl-0);
+    --wm-bg-sidebar:  var(--wm-bl-100);
+    --wm-bg-panel:    var(--wm-bl-0);
+    --wm-bg-input:    var(--wm-bl-150);
+    --wm-bg-hover:    var(--wm-bl-150);
+    --wm-bg-active:   rgba(255, 255, 255, 0.10);
+    --wm-label:       rgba(255, 255, 255, 0.82);
+    --wm-label-2nd:   rgba(255, 255, 255, 0.62);
+    --wm-label-dim:   #9a9aa2;
+    --wm-border:      rgba(235, 238, 245, 0.14);
+    --wm-border-soft: rgba(235, 238, 245, 0.08);
+    --wm-accent:      var(--wm-ink);
+    --wm-accent-hi:   var(--wm-ink-soft);
+    --wm-accent-weak: var(--wm-ink-weak);
+    --wm-on-accent:   #16191d;                   /* 深色主题强调是浅色，字用深色 */
+    --wm-user-bubble: var(--wm-bl-150);
+    --wm-shadow-sm:   0 2px 4px rgba(0, 0, 0, 0.4);
+    --wm-shadow:      0 4px 8px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
 }
 /* 焦点可见：只对键盘操作生效（鼠标点击不出环） */
 :focus-visible {

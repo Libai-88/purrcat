@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <title>论文</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root { color-scheme: light; }  /* 宿主仅亮色令牌；dark 会渲出深色控件贴白纸 */
   * { box-sizing: border-box; }
   body {
     margin: 0; height: 100vh; display: flex; overflow: hidden;
@@ -60,7 +60,7 @@
   }
   button:hover:not(:disabled) { background: var(--wm-bg-hover, #eef1f6); }
   button:disabled { opacity: .45; cursor: default; }
-  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: #fff; }
+  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: var(--wm-on-accent, #fff); }
   button.primary:hover:not(:disabled) { background: var(--wm-accent-hi, #2f5c8d); }
   button.link {
     border: none; background: none; color: var(--wm-accent, #3b6ea5);
@@ -159,6 +159,7 @@
     <div id="record" hidden></div>
     <div id="hint"><span id="status">选中正文里的一段，再点「发送给 Agent」</span><span id="quote"></span></div>
   </div>
+<script src="/minimal/assets/theme-sync.js"></script>
 <script src="/minimal/assets/async-state.js"></script>
 <script>
 (function () {

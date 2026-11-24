@@ -1,5 +1,5 @@
 // 宿主入口 boot 与 Electron 窗口控制
-import { broadcastAll, syncNativeCover } from './bus.js';
+import { broadcastAll, syncNativeCover, syncTheme } from './bus.js';
 import { openUrlInBrowserPanel } from './links.js';
 import { applyManifestState } from './manifest.js';
 import { buildSlotIndex, mountAll } from './mount.js';
@@ -59,6 +59,14 @@ import { HOST, groupState } from './state.js';
     // 在各开关点显式调用 syncNativeCover()（见 setSettingsOpen/applySlotHidden/菜单开合），
     // 不用 MutationObserver：浮窗拖拽会高频改内联样式，观察 style 会造成 getComputedStyle 抖动。
     syncNativeCover();
+
+    // 主题同步：启动时告诉面板当前主题；系统切换时再广播一次。
+    // 面板内的 theme-sync.js 收到 host.theme 后切换自己的令牌。
+    syncTheme();
+    const themeMq = HOST.matchMedia('(prefers-color-scheme: dark)');
+    // 旧引擎 MediaQueryList 只有 addListener；新引擎用 addEventListener('change', …)
+    if (themeMq.addEventListener) themeMq.addEventListener('change', function () { syncTheme(); });
+    else (themeMq as any).addListener(function () { syncTheme(); });
 
     try {
       const list = await (await fetch('/api/sessions')).json();

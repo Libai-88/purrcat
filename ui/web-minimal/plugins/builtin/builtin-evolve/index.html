@@ -24,7 +24,7 @@
   html, body { height: 100%; }
   body {
     font-family: var(--wm-font, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif);
-    font-size: 13px; color: var(--ink); background: #fff;
+    font-size: 13px; color: var(--ink); background: var(--wm-bg-panel, #fff);
     display: flex; flex-direction: column; overflow: hidden;
   }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -44,7 +44,7 @@
     background: transparent; border: none; border-radius: 7px; cursor: pointer; white-space: nowrap;
   }
   .tab:hover { background: var(--hover); }
-  .tab.on { background: var(--accent); color: #fff; font-weight: 600; }
+  .tab.on { background: var(--accent); color: var(--wm-on-accent, #fff); font-weight: 600; }
   .topright { margin-left: auto; flex: none; display: flex; align-items: center; gap: 4px; padding-bottom: 8px; }
   .hbtn {
     width: 26px; height: 26px; flex: none; display: flex; align-items: center; justify-content: center;
@@ -127,7 +127,7 @@
     background: transparent; border: 1px solid transparent; border-radius: 999px; cursor: pointer;
   }
   .subtab:hover { background: var(--hover); }
-  .subtab.on { background: var(--accent); color: #fff; font-weight: 600; }
+  .subtab.on { background: var(--accent); color: var(--wm-on-accent, #fff); font-weight: 600; }
   .subtabs .spacer { margin-left: auto; }
 
   .toolbar { flex: none; display: flex; align-items: center; gap: 6px; padding: 8px 12px 6px; }
@@ -137,14 +137,14 @@
   /* ---------- 按钮 ---------- */
   .btn {
     height: 30px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px;
-    font-size: 12px; color: var(--ink-2); background: #fff;
+    font-size: 12px; color: var(--ink-2); background: var(--wm-bg-panel, #fff);
     border: 1px solid var(--line); border-radius: 8px; cursor: pointer; white-space: nowrap;
   }
   .btn:hover { background: var(--hover); }
   .btn:disabled { opacity: .5; cursor: default; }
-  .btn.primary { background: var(--accent); border-color: transparent; color: #fff; }
+  .btn.primary { background: var(--accent); border-color: transparent; color: var(--wm-on-accent, #fff); }
   .btn.primary:hover { background: var(--accent); filter: brightness(1.15); }
-  .btn.danger { background: var(--err); border-color: transparent; color: #fff; }
+  .btn.danger { background: var(--err); border-color: transparent; color: var(--wm-on-accent, #fff); }
   .btn.danger:hover { background: var(--err); filter: brightness(1.08); }
   .btn.ghost { background: transparent; border-color: transparent; }
   .btn.ghost:hover { background: var(--hover); }
@@ -153,7 +153,7 @@
   .btn.sm svg { width: 13px; height: 13px; }
   .ibtn {
     width: 26px; height: 26px; flex: none; display: inline-flex; align-items: center; justify-content: center;
-    border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink-2); cursor: pointer;
+    border: 1px solid var(--line); border-radius: 7px; background: var(--wm-bg-panel, #fff); color: var(--ink-2); cursor: pointer;
   }
   .ibtn:hover { background: var(--hover); color: var(--ink); }
   .ibtn.danger:hover { background: rgba(191, 97, 106, .12); color: var(--err); border-color: transparent; }
@@ -171,12 +171,12 @@
     background: var(--field); border: 1px solid transparent; border-radius: 8px;
     padding: 7px 10px; outline: none;
   }
-  .input:focus, .textarea:focus, .select:focus { border-color: var(--accent); background: #fff; }
+  .input:focus, .textarea:focus, .select:focus { border-color: var(--accent); background: var(--wm-bg-panel, #fff); }
   .textarea { resize: vertical; min-height: 72px; line-height: 1.7; }
   .mono { font-family: var(--mono); font-size: 12px; line-height: 1.7; }
   .editor-area {
     flex: 1; min-height: 0; width: 100%; resize: none; border: none; outline: none;
-    background: #fff; padding: 12px 14px; font-family: var(--mono); font-size: 12px;
+    background: var(--wm-bg-panel, #fff); padding: 12px 14px; font-family: var(--mono); font-size: 12px;
     line-height: 1.75; color: var(--ink); white-space: pre; overflow: auto; tab-size: 2;
   }
   .row { display: flex; align-items: center; gap: 8px; }
@@ -254,7 +254,7 @@
   .dlg {
     display: flex; flex-direction: column; overflow: hidden; width: 100%;
     max-width: var(--dlg-w, 460px); max-height: 88%;
-    background: #fff; border-radius: 12px; box-shadow: 0 22px 55px rgba(15, 17, 21, .26);
+    background: var(--wm-bg-panel, #fff); border-radius: 12px; box-shadow: 0 22px 55px rgba(15, 17, 21, .26);
   }
   .dlg-head {
     flex: none; display: flex; align-items: center; gap: 8px; padding: 12px 14px;
@@ -268,7 +268,7 @@
   .toast {
     position: fixed; left: 50%; bottom: 18px; max-width: 82%; z-index: 90;
     padding: 7px 14px; border-radius: 999px; font-size: 12px;
-    background: rgba(22, 25, 29, .92); color: #fff; white-space: pre-wrap; text-align: center;
+    background: rgba(22, 25, 29, .92); color: var(--wm-on-accent, #fff); white-space: pre-wrap; text-align: center;
     opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(8px);
     transition: opacity .18s ease, transform .18s ease;
   }
@@ -285,6 +285,7 @@
   <div class="toast" id="toast"></div>
   <div id="modals"></div>
 
+<script src="/minimal/assets/theme-sync.js"></script>
 <script src="/minimal/shared/marked/12.0.2/marked.min.js"></script>
 <script>
 /* ============================================================================

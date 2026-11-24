@@ -72,7 +72,11 @@ import type { PluginDescriptor, PluginFrame, SlotDef } from './types.js';
     let o = Number(panelContainerCfg.opacity);
     if (!(o >= 0)) o = 1;
     o = Math.min(1, Math.max(0.15, o));
-    el.style.setProperty('--wm-panel-bg', 'rgba(255,255,255,' + o.toFixed(3) + ')');
+    el.style.setProperty(
+      // 从令牌派生：亮/深色主题自动跟随，透明度仍由面板容器配置控制
+      '--wm-panel-bg',
+      'color-mix(in srgb, var(--wm-bg-panel) ' + Math.round(o * 100) + '%, transparent)',
+    );
   }
   // 读取 CSS 变量数值。必须从 body 作用域读取：布局变量可能在 body 上被覆盖
   // （如 body.rail-1 把 --wm-rail-w 改为 196px），从 documentElement 读会一直得到

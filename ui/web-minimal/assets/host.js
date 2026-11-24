@@ -519,7 +519,11 @@
     let o = Number(panelContainerCfg.opacity);
     if (!(o >= 0)) o = 1;
     o = Math.min(1, Math.max(0.15, o));
-    el.style.setProperty("--wm-panel-bg", "rgba(255,255,255," + o.toFixed(3) + ")");
+    el.style.setProperty(
+      // 从令牌派生：亮/深色主题自动跟随，透明度仍由面板容器配置控制
+      "--wm-panel-bg",
+      "color-mix(in srgb, var(--wm-bg-panel) " + Math.round(o * 100) + "%, transparent)"
+    );
   }
   function cssNum(name, dflt) {
     const scope = HOST.document.body || HOST.document.documentElement;
@@ -4206,6 +4210,9 @@
     _nativeCover = v;
     broadcastAll("host.nativeCover", { covered: v });
   }
+  function syncTheme() {
+    broadcastAll("host.theme", { dark: HOST.matchMedia("(prefers-color-scheme: dark)").matches });
+  }
   HOST.addEventListener("message", (e) => {
     const msg = e.data;
     if (!msg || typeof msg !== "object") return;
@@ -4466,7 +4473,10 @@
     let o = typeof railState.opacity === "number" ? railState.opacity : 1;
     o = Math.min(1, Math.max(0, o));
     const rail = HOST.document.getElementById("rail");
-    if (rail) rail.style.setProperty("--wm-rail-bg", "rgba(248,248,249," + o.toFixed(3) + ")");
+    if (rail) rail.style.setProperty(
+      "--wm-rail-bg",
+      "color-mix(in srgb, var(--wm-bg-sidebar) " + Math.round(o * 100) + "%, transparent)"
+    );
   }
   function cycleRail() {
     railState.stage = (railState.stage + 1) % RAIL_STAGES;
@@ -4565,6 +4575,14 @@
       });
     }
     syncNativeCover();
+    syncTheme();
+    const themeMq = HOST.matchMedia("(prefers-color-scheme: dark)");
+    if (themeMq.addEventListener) themeMq.addEventListener("change", function() {
+      syncTheme();
+    });
+    else themeMq.addListener(function() {
+      syncTheme();
+    });
     try {
       const list = await (await fetch("/api/sessions")).json();
       if (Array.isArray(list) && list.length) {

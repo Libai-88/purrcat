@@ -47,6 +47,14 @@ import type { ActionOrigin, PluginFrame } from './types.js';
     broadcastAll('host.nativeCover', { covered: v });
   }
 
+  // ---- 主题同步：面板是独立 iframe，宿主 theme.css 够不到它们。
+  //      系统主题变化（或面板挂载）时广播 host.theme，由面板内引入的
+  //      theme-sync.js 切换自己的令牌。面板也可以只靠自己的
+  //      prefers-color-scheme 监听——广播只是让「宿主与面板永远一致」。 ----
+  export function syncTheme(): void {
+    broadcastAll('host.theme', { dark: HOST.matchMedia('(prefers-color-scheme: dark)').matches });
+  }
+
   // ---- 监听插件 iframe 消息 ----
   HOST.addEventListener('message', (e) => {
     const msg = e.data;

@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <title>笔记</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root { color-scheme: light; }  /* 宿主仅亮色令牌；dark 会渲出深色控件贴白纸 */
   * { box-sizing: border-box; }
   body {
     margin: 0; height: 100vh; display: flex; overflow: hidden;
@@ -96,7 +96,7 @@
   }
   button:hover:not(:disabled) { background: var(--wm-bg-hover, #eef1f6); }
   button:disabled { opacity: .45; cursor: default; }
-  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: #fff; }
+  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: var(--wm-on-accent, #fff); }
   button.primary:hover:not(:disabled) { background: var(--wm-accent-hi, #2f5c8d); }
   button.link {
     border: none; background: none; color: var(--wm-accent, #3b6ea5);
@@ -125,6 +125,7 @@
     <div id="doc"><div class="empty">从左边选一篇笔记，或点「新建」。</div></div>
     <div id="status">证据只说明引文出现在原文的哪一页，不说明结论在科学上成立。</div>
   </div>
+<script src="/minimal/assets/theme-sync.js"></script>
 <script src="/minimal/assets/async-state.js"></script>
 <script>
 (function () {

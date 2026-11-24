@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <title>连接器</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root { color-scheme: light; }  /* 宿主仅亮色令牌；dark 会渲出深色控件贴白纸 */
   * { box-sizing: border-box; }
   body {
     margin: 0; height: 100vh; display: flex; overflow: hidden;
@@ -43,7 +43,7 @@
   }
   button:hover:not(:disabled) { background: var(--wm-bg-hover, #eef1f6); }
   button:disabled { opacity: .45; cursor: default; }
-  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: #fff; }
+  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: var(--wm-on-accent, #fff); }
   button.primary:hover:not(:disabled) { background: var(--wm-accent-hi, #2f5c8d); }
   #query {
     display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--wm-border, #e3e6ec);
@@ -89,6 +89,7 @@
     </div>
     <div id="body"></div>
   </div>
+<script src="/minimal/assets/theme-sync.js"></script>
 <script src="/minimal/assets/async-state.js"></script>
 <script>
 (function () {

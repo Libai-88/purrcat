@@ -195,13 +195,13 @@
   .t2s h3 { font-size: 14px; font-weight: 600; }
   .t2s .seg { display: flex; gap: 6px; }
   .t2s .seg button { flex: 1; font: inherit; font-size: 12px; padding: 6px 0; border-radius: 8px; cursor: pointer; border: 1px solid var(--wm-border, rgba(15,17,21,.12)); background: var(--wm-bg-input, #f2f4f7); color: var(--wm-label-2nd, #4c5560); }
-  .t2s .seg button.on { background: var(--wm-accent, #16191d); color: #fff; border-color: transparent; }
+  .t2s .seg button.on { background: var(--wm-accent, #16191d); color: var(--wm-on-accent, #fff); border-color: transparent; }
   .t2s input, .t2s textarea { width: 100%; font: inherit; font-size: 13px; color: var(--wm-label, #16191d); background: var(--wm-bg-input, #f2f4f7); border: 1px solid transparent; border-radius: 8px; padding: 8px 10px; outline: none; resize: none; }
-  .t2s input:focus, .t2s textarea:focus { border-color: var(--wm-accent, #16191d); background: #fff; }
+  .t2s input:focus, .t2s textarea:focus { border-color: var(--wm-accent, #16191d); background: var(--wm-bg-panel, #fff); }
   .t2s textarea { min-height: 88px; }
   .t2s .foot { display: flex; justify-content: flex-end; gap: 8px; }
-  .t2s .foot button { font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 8px; cursor: pointer; border: 1px solid var(--wm-border, rgba(15,17,21,.12)); background: #fff; color: var(--wm-label-2nd, #4c5560); }
-  .t2s .foot button.primary { background: var(--wm-accent, #16191d); color: #fff; border-color: transparent; }
+  .t2s .foot button { font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 8px; cursor: pointer; border: 1px solid var(--wm-border, rgba(15,17,21,.12)); background: var(--wm-bg-panel, #fff); color: var(--wm-label-2nd, #4c5560); }
+  .t2s .foot button.primary { background: var(--wm-accent, #16191d); color: var(--wm-on-accent, #fff); border-color: transparent; }
   .t2s .foot button:disabled { opacity: .5; cursor: default; }
 
   /* 文件预览弹窗（图片 / 视频 / 文本），对齐完整模式的链接预览弹层 */
@@ -225,7 +225,7 @@
   /* 轻量提示（复制成功 / 操作结果） */
   .toast {
     position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(6px);
-    background: rgba(22,25,29,.92); color: #fff; font-size: 12.5px;
+    background: rgba(22,25,29,.92); color: var(--wm-on-accent, #fff); font-size: 12.5px;
     padding: 7px 14px; border-radius: 999px; opacity: 0; pointer-events: none;
     transition: opacity .18s ease, transform .18s ease; z-index: 40;
   }
@@ -262,7 +262,7 @@
   .md img { max-width: 100%; height: auto; border-radius: 8px; }
 
   /* 代码块外壳：语言标签 + 复制按钮的工具栏，代码区横向滚动 */
-  .code-block { margin: 12px 0; border-radius: 12px; overflow: hidden; background: #f7f8fa; border: 1px solid rgba(15,17,21,.06); }
+  .code-block { margin: 12px 0; border-radius: 12px; overflow: hidden; background: var(--wm-bg-sidebar, #f7f8fa); border: 1px solid rgba(15,17,21,.06); }
   .code-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; padding: 2px 6px 2px 14px; background: #f1f3f6; }
   .code-lang { font-size: 11px; letter-spacing: .02em; color: var(--wm-label-dim, #6a7380); user-select: none; }
   .code-copy { flex: none; width: 24px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; border-radius: 6px; background: transparent; color: var(--wm-label-dim, #6b7280); cursor: pointer; }
@@ -274,7 +274,7 @@
   .md .code-body pre code, .md .code-body pre code.hljs { display: block; overflow: visible; background: transparent; padding: 0; font-family: var(--wm-mono, ui-monospace, Consolas, monospace); font-size: 12.5px; line-height: 1.55; color: #24292f; }
 
   /* 表格外壳：圆角浅底 + 表头底色，去掉逐格描边 */
-  .table-wrap { margin: 12px 0; max-width: 100%; overflow-x: auto; overflow-y: hidden; border-radius: 12px; background: #f7f8fa; }
+  .table-wrap { margin: 12px 0; max-width: 100%; overflow-x: auto; overflow-y: hidden; border-radius: 12px; background: var(--wm-bg-sidebar, #f7f8fa); }
   .table-wrap table { width: 100%; margin: 0; border-collapse: collapse; border-spacing: 0; font-size: 13.5px; }
   .table-wrap th, .table-wrap td { border: 0; padding: 7px 14px; text-align: left; vertical-align: top; min-width: 8ch; }
   .table-wrap thead { background: #eef1f5; }
@@ -368,7 +368,7 @@
     background: var(--wm-bg-input, #f2f4f7); border: 1px solid transparent;
     border-radius: 8px; padding: 6px 9px; outline: none;
   }
-  .right-search:focus { border-color: var(--wm-accent, #16191d); background: #fff; }
+  .right-search:focus { border-color: var(--wm-accent, #16191d); background: var(--wm-bg-panel, #fff); }
   .right-search.hide { display: none; }
   .right-search::placeholder { color: var(--wm-label-dim, #6b7280); }
   .items { flex: 1; min-height: 0; overflow-y: auto; }
@@ -393,7 +393,7 @@
   }
   .sh-slider::before {
     content: ''; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px;
-    background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s;
+    background: var(--wm-bg-panel, #fff); border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s;
   }
   .sh-switch input:checked + .sh-slider { background: #2fa36b; }
   .sh-switch input:checked + .sh-slider::before { transform: translateX(18px); }
@@ -511,11 +511,11 @@
   .ctx-wrap:hover .ctx-tip { display: block; }
   .sendBtn {
     flex: none; width: 36px; height: 36px; border: none; border-radius: 12px; cursor: pointer;
-    background: var(--wm-accent, #16191d); color: #fff;
+    background: var(--wm-accent, #16191d); color: var(--wm-on-accent, #fff);
     display: flex; align-items: center; justify-content: center;
   }
   .sendBtn:hover { background: var(--wm-accent-hi, #679efe); }
-  .sendBtn:disabled { background: var(--wm-bl-200, #dfe4ea); color: #fff; cursor: default; }
+  .sendBtn:disabled { background: var(--wm-bl-200, #dfe4ea); color: var(--wm-on-accent, #fff); cursor: default; }
   .sendBtn svg { width: 17px; height: 17px; }
 </style>
 <link rel="stylesheet" href="/minimal/shared/katex/0.16.11/katex.min.css">
@@ -636,7 +636,8 @@
   <div class="toast" id="toast"></div>
 
   <!-- GFM markdown 引擎（宿主共享运行时，离线可用），暴露 window.marked -->
-  <script src="/minimal/shared/marked/12.0.2/marked.min.js"></script>
+  <script src="/minimal/assets/theme-sync.js"></script>
+<script src="/minimal/shared/marked/12.0.2/marked.min.js"></script>
   <script src="/minimal/shared/katex/0.16.11/katex.min.js"></script>
   <script src="/minimal/shared/highlight/11.11.1/highlight.min.js"></script>
 
@@ -692,7 +693,8 @@
   function applyPanel(cfg) {
     var o = cfg && typeof cfg.opacity === 'number' ? cfg.opacity : DEF_OP;
     o = Math.max(0, Math.min(1, o));
-    document.body.style.backgroundColor = 'rgba(255,255,255,' + o.toFixed(2) + ')';
+    // 底色从令牌派生（深色模式自动跟随），透明度仍由面板配置控制
+    document.body.style.backgroundColor = 'color-mix(in srgb, var(--wm-bl-0, #fff) ' + Math.round(o * 100) + '%, transparent)';
     show.tool = !cfg || cfg.show_tool_calls !== false;
     show.reasoning = !cfg || cfg.show_reasoning !== false;
     show.hint = !!(cfg && cfg.show_workflow_hint === true);

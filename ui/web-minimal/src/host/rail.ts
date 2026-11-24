@@ -103,7 +103,12 @@ import { slotOfPlugin } from './utils.js';
     let o = typeof railState.opacity === 'number' ? railState.opacity : 1;
     o = Math.min(1, Math.max(0, o));
     const rail = HOST.document.getElementById('rail');
-    if (rail) rail.style.setProperty('--wm-rail-bg', 'rgba(248,248,249,' + o.toFixed(3) + ')');
+    // 从 --wm-bg-sidebar 派生带透明度的底色：亮/深色自动跟随，
+    // 不再硬编码 rgba(248,248,249,…)（深色模式下白条会贴着深色界面变亮）
+    if (rail) rail.style.setProperty(
+      '--wm-rail-bg',
+      'color-mix(in srgb, var(--wm-bg-sidebar) ' + Math.round(o * 100) + '%, transparent)',
+    );
   }
   export function cycleRail() {
     railState.stage = ((railState.stage + 1) % RAIL_STAGES) as 0 | 1;   // 0→1→0

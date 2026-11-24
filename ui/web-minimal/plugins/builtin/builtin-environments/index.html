@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <title>环境</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root { color-scheme: light; }  /* 宿主仅亮色令牌；dark 会渲出深色控件贴白纸 */
   * { box-sizing: border-box; }
   body {
     margin: 0; height: 100vh; display: flex; overflow: hidden;
@@ -83,6 +83,7 @@
     </div>
     <div id="body"></div>
   </div>
+<script src="/minimal/assets/theme-sync.js"></script>
 <script src="/minimal/assets/async-state.js"></script>
 <script>
 (function () {
