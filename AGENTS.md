@@ -105,6 +105,7 @@ uv run pytest -m l3             # 静态红线
 | 研究笔记与公式引擎 | `src/notebook/`（库）+ `src/tool/notebook/`（工具）+ `src/server/api/notebook_api.py` |
 | 面板异步状态（词表 / 推导 / 渲染） | `ui/web-minimal/assets/async-state.{js,css}` + `src/utils/async_state.py` + `src/utils/panel_state.py` |
 | 科研自动化（定义 / 回执 / 执行器） | `src/automation/` + `src/tool/automation/` + `src/server/api/automation_api.py` |
+| 科研连接器（目录 / 拉取 / 来源凭据） | `src/connectors/` + `src/tool/connectors/` + `src/server/api/connectors_api.py` |
 | 会话/聊天接口 | `src/server/api/chat.py` |
 | 科研接口的错误状态回执 | `src/server/api/research_status.py` |
 | DAG 节点 | `src/harness/node/extensions/<type>/` |
@@ -119,6 +120,7 @@ uv run pytest -m l3             # 静态红线
 | 记忆检索打分 / 过滤 | `src/memory/purrmemo/core/scoring.py`、`filters.py` |
 | 面板异步状态 | `docs/async-state.md` |
 | 科研自动化 | `docs/automation.md` |
+| 科研连接器 | `docs/connectors.md` |
 | Sensor 进程控制 | `src/sensor/processes.py`、`src/sensor/file_refs.py` |
 | 模型重试 / 用量账本 | `src/model/core/retry.py`、`src/model/manager/usage_stats.py` |
 

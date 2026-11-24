@@ -53,6 +53,13 @@ PurrCat 专属的四类扩展插件的开发指南，含各自专有词汇表与
 
 - [科研自动化](automation.md)
 
+## 科研连接器（`docs/connectors.md`）
+
+检索 arXiv、OpenAlex、Crossref、PubMed、Zenodo、UniProt，
+把结果拉进本机库并留下来源凭据。
+
+- [科研连接器](connectors.md)
+
 ## 面板异步状态（`docs/async-state.md`）
 
 论文 / 数据 / 笔记三个面板共用的状态语义：有哪些数据、请求在做什么、

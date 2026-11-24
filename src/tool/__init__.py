@@ -9,6 +9,7 @@ from .automation import AUTOMATION_TOOL_SCHEMA
 from .bash import BASH_TOOL_SCHEMA
 from .brainstorm import BRAINSTORM_TOOL_SCHEMA
 from .callmcp import MCP_TOOL_SCHEMA
+from .connectors import CONNECTORS_TOOL_SCHEMA
 from .cron import CRON_TOOL_SCHEMA
 from .data import DATA_TOOL_SCHEMA
 from .fetch import FETCH_TOOL_SCHEMA
@@ -35,6 +36,7 @@ AGENT_TOOL_SCHEMA = [
     AUTOMATION_TOOL_SCHEMA,
     BASH_TOOL_SCHEMA,
     BRAINSTORM_TOOL_SCHEMA,
+    CONNECTORS_TOOL_SCHEMA,
     CRON_TOOL_SCHEMA,
     DATA_TOOL_SCHEMA,
     FETCH_TOOL_SCHEMA,

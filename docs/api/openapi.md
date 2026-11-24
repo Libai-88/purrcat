@@ -1136,6 +1136,127 @@ ACP 接入状态：relay 部署情况 / 端口 / uv 可用性
 | --- | --- | --- |
 | 200 | Successful Response | - |
 
+## Connectors
+
+### `GET /api/connectors`
+
+**标题**：List All
+
+列出连接器目录与最近的来源凭据。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `POST /api/connectors/paper`
+
+**标题**：Pull Paper
+
+把论文原文 PDF 拉进论文库。
+
+#### 请求体
+
+**Schema**：`PaperReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| connector_id | string | 否 |  |
+| pdf_url | string | 是 |  |
+| title | string | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/connectors/provenance/{provenance_id}`
+
+**标题**：Read Provenance
+
+读一条来源凭据。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| provenance_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `POST /api/connectors/pull`
+
+**标题**：Pull
+
+拉取并入库，留下来源凭据。
+
+#### 请求体
+
+**Schema**：`PullReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| connector_id | string | 是 |  |
+| query | string | 是 |  |
+| count | integer | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `POST /api/connectors/search`
+
+**标题**：Search
+
+只检索，不落库。
+
+#### 请求体
+
+**Schema**：`SearchReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| connector_id | string | 是 |  |
+| query | string | 是 |  |
+| count | integer | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/connectors/{connector_id}`
+
+**标题**：Read Connector
+
+读一个连接器的目录信息。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| connector_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
 ## DAG Graphs
 
 ### `GET /api/graphs`

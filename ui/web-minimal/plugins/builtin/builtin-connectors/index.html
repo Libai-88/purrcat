@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>连接器</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; overflow: hidden;
+    font-family: var(--wm-font, system-ui, -apple-system, "Segoe UI", sans-serif);
+    font-size: 13px; color: var(--wm-ink, #1f2430);
+    background: var(--wm-bg-base, #fff);
+  }
+  #side {
+    width: 240px; flex: none; display: flex; flex-direction: column;
+    border-right: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-sidebar, #f7f8fa);
+  }
+  #sidehead {
+    display: flex; align-items: center; gap: 6px; padding: 8px 10px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec);
+  }
+  #sidehead h2 { margin: 0; flex: 1; font-size: 12px; font-weight: 600; color: var(--wm-label-2nd, #5b6474); }
+  #list { flex: 1; overflow-y: auto; }
+  .item {
+    padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--wm-border-soft, #eef0f4);
+    color: var(--wm-label, #3a4152);
+  }
+  .item:hover { background: var(--wm-bg-hover, #eef1f6); }
+  .item.active { background: var(--wm-bg-active, #e4ebf7); color: var(--wm-ink, #1f2430); }
+  .item .t { display: block; font-weight: 600; line-height: 1.35; }
+  .item .m { display: block; margin-top: 3px; font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #bar {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-panel, #fbfbfd);
+  }
+  #bar .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  button {
+    font: inherit; padding: 4px 10px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-panel, #fff);
+    color: var(--wm-ink, #1f2430); cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--wm-bg-hover, #eef1f6); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: #fff; }
+  button.primary:hover:not(:disabled) { background: var(--wm-accent-hi, #2f5c8d); }
+  #query {
+    display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--wm-border, #e3e6ec);
+  }
+  #query input {
+    flex: 1; min-width: 0; font: inherit; padding: 5px 8px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-input, #fff); color: var(--wm-ink, #1f2430);
+  }
+  #body { flex: 1; overflow-y: auto; padding: 14px 18px 40px; line-height: 1.7; }
+  #body .meta { font-size: 11px; color: var(--wm-label-dim, #8b93a3); margin-bottom: 10px; }
+  #body .kinds { font-size: 11px; color: var(--wm-label-2nd, #5b6474); }
+  .rec { padding: 9px 0; border-bottom: 1px solid var(--wm-border-soft, #eef0f4); }
+  .rec .rt { font-weight: 600; line-height: 1.45; }
+  .rec .rm { font-size: 11px; color: var(--wm-label-dim, #8b93a3); margin-top: 3px; }
+  .rec .ra { font-size: 12px; color: var(--wm-label-2nd, #5b6474); margin-top: 2px; }
+  .rec .rab { font-size: 11px; color: var(--wm-accent, #3b6ea5); margin-top: 3px; }
+  .rec .rab a { color: inherit; }
+  .rec .rs { font-size: 12px; color: var(--wm-label-2nd, #5b6474); margin-top: 4px; }
+  #body h3 { font-size: 12px; color: var(--wm-label-2nd, #5b6474); margin: 18px 0 6px; }
+  #body .note { margin-top: 14px; font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  .prov {
+    padding: 8px 10px; margin-bottom: 8px; border: 1px solid var(--wm-border-soft, #eef0f4);
+    border-radius: var(--wm-radius-sm, 4px); background: var(--wm-bg-panel, #fbfbfd); font-size: 12px;
+  }
+  .prov .pid { font-family: var(--wm-mono, ui-monospace, Menlo, Consolas, monospace); font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  .prov code { font-family: var(--wm-mono, ui-monospace, Menlo, Consolas, monospace); font-size: 11px; }
+</style>
+<link rel="stylesheet" href="/minimal/assets/async-state.css" />
+</head>
+<body>
+  <div id="side">
+    <div id="sidehead"><h2>连接器</h2></div>
+    <div id="list"></div>
+  </div>
+  <div id="main">
+    <div id="bar">
+      <span class="title" id="title">未选择连接器</span>
+      <button id="pull" class="primary" disabled>拉取入库</button>
+    </div>
+    <div id="query">
+      <input id="q" type="text" placeholder="检索词，例如 crispr" spellcheck="false" />
+      <button id="search" disabled>检索</button>
+    </div>
+    <div id="body"></div>
+  </div>
+<script src="/minimal/assets/async-state.js"></script>
+<script>
+(function () {
+  var connectors = [];
+  var provenance = [];
+  var current = null;
+  var records = [];
+
+  var elList = document.getElementById('list');
+  var elTitle = document.getElementById('title');
+  var elBody = document.getElementById('body');
+  var elQuery = document.getElementById('q');
+  var btnSearch = document.getElementById('search');
+  var btnPull = document.getElementById('pull');
+
+  // 列表与正文各自一个状态机：局部加载，不清空整个页面。
+  var listRegion = new PurrCatAsync.Region(elList);
+  var bodyRegion = new PurrCatAsync.Region(elBody);
+
+  function esc(text) {
+    return PurrCatAsync.esc(text);
+  }
+
+  function api(path, options) {
+    return fetch(path, options).then(function (r) {
+      return r.json().then(function (body) {
+        if (!r.ok) {
+          var err = new Error((body.detail && body.detail.message) || body.detail || ('HTTP ' + r.status));
+          if (body.detail && body.detail.kind) err.kind = body.detail.kind;
+          throw err;
+        }
+        return body;
+      });
+    });
+  }
+
+  // ---------- 列表 ----------
+
+  function renderList() {
+    elList.innerHTML = '';
+    if (!connectors.length) {
+      var hint = document.createElement('div');
+      hint.className = 'item';
+      hint.style.cursor = 'default';
+      hint.textContent = '（没有连接器）';
+      elList.appendChild(hint);
+      return;
+    }
+    connectors.forEach(function (item) {
+      var row = document.createElement('div');
+      row.className = 'item' + (current && current.id === item.id ? ' active' : '');
+      row.innerHTML = '<span class="t"></span><span class="m"></span>';
+      row.querySelector('.t').textContent = item.name;
+      row.querySelector('.m').textContent = item.kinds.join(' / ');
+      row.onclick = function () { open(item.id); };
+      elList.appendChild(row);
+    });
+  }
+
+  function refresh() {
+    listRegion.begin('refresh');
+    return api('/api/connectors').then(function (data) {
+      connectors = data.connectors || [];
+      provenance = data.provenance || [];
+      listRegion.settle({ data: 'complete', request: 'idle', result: 'ok' }, function () {
+        renderList();
+      });
+      if (current) {
+        var found = null;
+        for (var i = 0; i < connectors.length; i++) {
+          if (connectors[i].id === current.id) found = connectors[i];
+        }
+        if (found) renderDetail();
+      }
+    }).catch(function (err) {
+      listRegion.fail(err, function () { refresh(); });
+    });
+  }
+
+  // ---------- 详情 ----------
+
+  function open(id) {
+    current = null;
+    for (var i = 0; i < connectors.length; i++) {
+      if (connectors[i].id === id) current = connectors[i];
+    }
+    if (!current) return;
+    renderList();
+    renderDetail();
+  }
+
+  function renderDetail() {
+    if (!current) return;
+    elTitle.textContent = current.name;
+    btnSearch.disabled = false;
+    btnPull.disabled = false;
+
+    var mine = provenance.filter(function (p) { return p.connector_id === current.id; });
+    var html = '';
+    html += '<div class="meta">' + esc(current.description) + '</div>';
+    html += '<div class="kinds">能拉：' + esc(current.kinds.join('、')) + '　·　入库到：'
+      + esc(current.lands === 'papers' ? '论文库' : '数据集库') + '　·　授权：'
+      + esc(current.auth === 'none' ? '匿名可用' : '需要 API key') + '</div>';
+    html += '<div class="meta">限额：' + esc(current.rate_limit) + '</div>';
+
+    if (mine.length) {
+      html += '<h3>来源凭据</h3>';
+      mine.forEach(function (p) {
+        html += '<div class="prov">';
+        html += '<div class="pid">' + esc(p.provenance_id) + ' · ' + esc(p.retrieved_at) + '</div>';
+        html += '<div>请求 <code>' + esc(JSON.stringify(p.request)) + '</code></div>';
+        html += '<div>入库 <code>' + esc(p.landed_id || '—') + '</code> · '
+          + esc(p.record_count) + ' 条 · 哈希 <code>' + esc((p.content_sha256 || '').slice(0, 16)) + '</code></div>';
+        html += '</div>';
+      });
+    }
+
+    html += '<h3>检索结果</h3>';
+    html += '<div id="results"><div class="meta">填个检索词，点「检索」。</div></div>';
+    html += '<div class="note">检索给的是**候选**，不是结论；'
+      + '「拉取入库」之后才会留下来源凭据，也才能被研究记录当证据引。'
+      + '凭据只说明出处，不说明它可不可信。</div>';
+    elBody.innerHTML = html;
+    elResults = document.getElementById('results');
+  }
+
+  var elResults = null;
+
+  function renderRecords() {
+    if (!elResults) return;
+    if (!records.length) {
+      elResults.innerHTML = '<div class="meta">没有匹配的结果。</div>';
+      return;
+    }
+    var html = '';
+    records.forEach(function (item) {
+      html += '<div class="rec">';
+      html += '<div class="rt">' + esc(item.title || item.source_id) + '</div>';
+      var meta = [];
+      if (item.year) meta.push(item.year);
+      if (item.venue) meta.push(item.venue);
+      if (item.doi) meta.push(item.doi);
+      if (meta.length) html += '<div class="rm">' + esc(meta.join(' · ')) + '</div>';
+      if (item.authors && item.authors.length) {
+        html += '<div class="ra">' + esc(item.authors.slice(0, 8).join(', ')) + '</div>';
+      }
+      if (item.abstract) {
+        html += '<div class="rs">' + esc(item.abstract.slice(0, 300)) + '</div>';
+      }
+      if (item.url) {
+        html += '<div class="rab"><a href="' + esc(item.url) + '" target="_blank" rel="noreferrer">'
+          + esc(item.url) + '</a></div>';
+      }
+      if (item.pdf_url) {
+        html += '<div class="rab"><a href="' + esc(item.pdf_url) + '" target="_blank" rel="noreferrer">原文 PDF</a></div>';
+      }
+      html += '</div>';
+    });
+    elResults.innerHTML = html;
+  }
+
+  // ---------- 动作 ----------
+
+  btnSearch.onclick = function () {
+    var query = elQuery.value.trim();
+    if (!query || !current) return;
+    btnSearch.disabled = true;
+    elResults.innerHTML = '<div class="meta">检索中…</div>';
+    api('/api/connectors/search', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ connector_id: current.id, query: query, count: 20 })
+    }).then(function (data) {
+      records = data.records || [];
+      renderRecords();
+    }).catch(function (err) {
+      elResults.innerHTML = '<div class="meta">检索失败：' + esc(err.message)
+        + (err.kind ? '（' + esc(err.kind) + '）' : '') + '</div>';
+    }).then(function () { btnSearch.disabled = false; });
+  };
+
+  elQuery.onkeydown = function (e) { if (e.key === 'Enter') btnSearch.click(); };
+
+  btnPull.onclick = function () {
+    var query = elQuery.value.trim();
+    if (!query || !current) return;
+    btnPull.disabled = true;
+    elResults.innerHTML = '<div class="meta">拉取并入库中…</div>';
+    api('/api/connectors/pull', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ connector_id: current.id, query: query, count: 20 })
+    }).then(function (data) {
+      records = data.records || [];
+      renderRecords();
+      var p = data.provenance || {};
+      elResults.innerHTML =
+        '<div class="prov"><div class="pid">' + esc(p.provenance_id || '') + '</div>'
+        + '<div>已入库为数据集 <code>' + esc((data.dataset || {}).id || '') + '</code>，'
+        + esc(p.record_count || 0) + ' 条。</div></div>'
+        + '<div class="meta">哈希 <code>' + esc((p.content_sha256 || '').slice(0, 16)) + '</code></div>';
+      refresh();
+    }).catch(function (err) {
+      elResults.innerHTML = '<div class="meta">拉取失败：' + esc(err.message)
+        + (err.kind ? '（' + esc(err.kind) + '）' : '') + '</div>';
+    }).then(function () { btnPull.disabled = false; });
+  };
+
+  // ---------- 启动 ----------
+
+  refresh();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "id": "builtin-connectors",
+  "root": "builtin",
+  "name": "连接器",
+  "description": "连接器：检索 arXiv、OpenAlex、Crossref、PubMed、Zenodo、UniProt，并把结果拉进本机库、留下来源凭据。",
+  "description-en": "Connectors: search arXiv, OpenAlex, Crossref, PubMed, Zenodo and UniProt, then pull results into the local library with source provenance.",
+  "icon": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3'/><path d='M6 7h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z'/><path d='M12 11v5M9.5 13.5 12 11l2.5 2.5'/></svg>",
+  "slot": { "area": "panel" },
+  "entry": "index.html",
+  "dependency": [],
+  "configSchema": []
+}

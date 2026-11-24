@@ -772,6 +772,29 @@
         "title": "PaperImportReq",
         "type": "object"
       },
+      "PaperReq": {
+        "properties": {
+          "connector_id": {
+            "default": "arxiv",
+            "title": "Connector Id",
+            "type": "string"
+          },
+          "pdf_url": {
+            "title": "Pdf Url",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pdf_url"
+        ],
+        "title": "PaperReq",
+        "type": "object"
+      },
       "ParadigmSaveReq": {
         "properties": {
           "data": {
@@ -856,6 +879,29 @@
           "message"
         ],
         "title": "PullImageResponse",
+        "type": "object"
+      },
+      "PullReq": {
+        "properties": {
+          "connector_id": {
+            "title": "Connector Id",
+            "type": "string"
+          },
+          "count": {
+            "default": 10,
+            "title": "Count",
+            "type": "integer"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connector_id",
+          "query"
+        ],
+        "title": "PullReq",
         "type": "object"
       },
       "QueryReq": {
@@ -975,6 +1021,29 @@
           "graph_name"
         ],
         "title": "RunTaskRequest",
+        "type": "object"
+      },
+      "SearchReq": {
+        "properties": {
+          "connector_id": {
+            "title": "Connector Id",
+            "type": "string"
+          },
+          "count": {
+            "default": 10,
+            "title": "Count",
+            "type": "integer"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connector_id",
+          "query"
+        ],
+        "title": "SearchReq",
         "type": "object"
       },
       "SubmitInstructionRequest": {
@@ -2855,6 +2924,228 @@
         "summary": "Api Setup Status",
         "tags": [
           "Configuration"
+        ]
+      }
+    },
+    "/api/connectors": {
+      "get": {
+        "description": "列出连接器目录与最近的来源凭据。",
+        "operationId": "list_all_api_connectors_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List All",
+        "tags": [
+          "Connectors"
+        ]
+      }
+    },
+    "/api/connectors/paper": {
+      "post": {
+        "description": "把论文原文 PDF 拉进论文库。",
+        "operationId": "pull_paper_api_connectors_paper_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaperReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pull Paper",
+        "tags": [
+          "Connectors"
+        ]
+      }
+    },
+    "/api/connectors/provenance/{provenance_id}": {
+      "get": {
+        "description": "读一条来源凭据。",
+        "operationId": "read_provenance_api_connectors_provenance__provenance_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provenance_id",
+            "required": true,
+            "schema": {
+              "title": "Provenance Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Provenance",
+        "tags": [
+          "Connectors"
+        ]
+      }
+    },
+    "/api/connectors/pull": {
+      "post": {
+        "description": "拉取并入库，留下来源凭据。",
+        "operationId": "pull_api_connectors_pull_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PullReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pull",
+        "tags": [
+          "Connectors"
+        ]
+      }
+    },
+    "/api/connectors/search": {
+      "post": {
+        "description": "只检索，不落库。\n\n检索结果本身也是**候选**，不是结论——所以这里不写来源凭据，\n凭据是「真的拉下来并入库了」才有的。",
+        "operationId": "search_api_connectors_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search",
+        "tags": [
+          "Connectors"
+        ]
+      }
+    },
+    "/api/connectors/{connector_id}": {
+      "get": {
+        "description": "读一个连接器的目录信息。",
+        "operationId": "read_connector_api_connectors__connector_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "title": "Connector Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Connector",
+        "tags": [
+          "Connectors"
         ]
       }
     },
