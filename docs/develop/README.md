@@ -16,7 +16,7 @@
 | `main.py` | 后端入口：初始化配置 → Agent → FastAPI |
 | `src/agent/` | 主循环、会话存储、范式 Hook、子代理、心跳 |
 | `src/model/` | 模型门面、Key 分配、并发、用量追踪 |
-| `src/tool/` | Bash / FileSystem / BrainStorm / Task / Search / Fetch / Memo / Paper / Request / Cron / CallMCP / KernelUpgrade |
+| `src/tool/` | Bash / FileSystem / BrainStorm / Task / Search / Fetch / Memo / Paper / Research / Request / Cron / CallMCP / KernelUpgrade |
 | `src/harness/` | DAG 引擎与节点扩展 |
 | `src/memory/` | PurrMemo（`purrmemo/core/storage/*_engine.py`） |
 | `src/papers/` | 论文库：PDF 导入分页、引文定位、证据核对 |

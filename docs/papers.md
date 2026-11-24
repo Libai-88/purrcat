@@ -59,6 +59,53 @@ Paper(action="verify", paper_id="<id>", claim="...", quote="...")
 
 面板的数据来自后端接口（`/api/papers*`），与 Agent 侧读的是同一份论文库。
 
+## 研究记录
+
+一次研究的问题、结论、证据、发现与未解决问题存成**可回看的工件**，落在数据目录的 `research/` 下，
+每条记录另存一份人类可读的 Markdown（`report.md`）。
+
+核心规则只有一条：**证据是位置声明，不是真理声明。**
+每条记录、每条结论都带一个封闭词表里的可信度状态：
+
+| 状态 | 含义 |
+| --- | --- |
+| `unverified` | 只核对了引文位置，没有人工复核结论（默认） |
+| `needs_review` | 需要人工看一遍 |
+| `accepted` | 人工已复核并接受 |
+| `rejected` | 人工已否决 |
+
+**引文准入**：写进记录的引文必须**逐字**出现在所引页面里，改写或转述一律拒收，并给出可执行的提示。
+引文在同一页出现多次时不静默挑一个，标为 `ambiguous` 并列出全部候选。
+
+结论与证据的关系用 `stance` 表达：`support`（原文支持）/ `counterevidence`（原文是反证）/
+`gap`（原文对此没有说法）。
+
+### 工具
+
+| action | 作用 | 必填参数 |
+| --- | --- | --- |
+| `save` | 保存研究记录 | `question`、`claims` |
+| `list` | 列出研究记录 | — |
+| `read` | 读一条记录 | `record_id` |
+
+`claims` 的每一项形如：
+
+```json
+{"text": "结论", "stance": "support",
+ "evidence": [{"paper_id": "...", "page": 3, "quote": "原文原句"}]}
+```
+
+### 面板
+
+论文阅读面板的侧栏有「论文 / 研究记录」两个页签。记录视图里：
+
+- 每条结论下面列出可点击的引用（论文 id + 页码）。
+- **点引用跳回原文**对应页并高亮该段。
+- **「从此处追问」**把这条记录的问题、结论与引文一起发给 Agent。
+- 底部可以**人工复核**可信度状态，每次改动都留下历史（从什么状态改到什么状态、说明、时间）。
+
+追问会带上记录里的证据，但**之前的回答不会被当作证据**。
+
 ## 数据存放
 
 论文库在本机数据目录下（`<data_root>/papers/`），每篇论文一个目录：
@@ -107,8 +154,9 @@ papers/
 | 论文库存储与导入 | `src/papers/library.py` |
 | 引文定位与断言匹配 | `src/papers/locate.py` |
 | 核对结论 | `src/papers/verify.py` |
-| Agent 工具 | `src/tool/paper/` |
-| 面板接口 | `src/server/api/papers_api.py` |
+| 研究记录与引文准入 | `src/papers/records.py` |
+| Agent 工具 | `src/tool/paper/`、`src/tool/research/` |
+| 面板接口 | `src/server/api/papers_api.py`、`src/server/api/research_api.py` |
 | 阅读面板插件 | `ui/web-minimal/plugins/builtin/builtin-paper/` |
 | 测试 PDF 生成 | `tests/support/pdf_factory.py` |
 
