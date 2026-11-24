@@ -60,6 +60,12 @@ PurrCat 专属的四类扩展插件的开发指南，含各自专有词汇表与
 
 - [科研连接器](connectors.md)
 
+## 贡献工作区（`docs/contributions.md`）
+
+把本机改动变成草稿 PR：工作区 → diff → 审阅 → 发布。Agent 不发布，发布权留给用户。
+
+- [贡献工作区](contributions.md)
+
 ## 科研环境（`docs/environments.md`）
 
 只读探测本机的 Python、Git、uv、Node、Docker 与执行能力。

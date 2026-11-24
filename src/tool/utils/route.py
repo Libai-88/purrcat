@@ -38,6 +38,7 @@ TOOL_FUNC_MAP = {
     "data": "Data",
     "environments": "Environments",
     "callmcp": "CallMCP",
+    "contributions": "Contributions",
     "connectors": "Connectors",
     "memo": "Memo",
     "notebook": "Notebook",

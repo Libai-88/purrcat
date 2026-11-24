@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>贡献</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; overflow: hidden;
+    font-family: var(--wm-font, system-ui, -apple-system, "Segoe UI", sans-serif);
+    font-size: 13px; color: var(--wm-ink, #1f2430);
+    background: var(--wm-bg-base, #fff);
+  }
+  #side {
+    width: 250px; flex: none; display: flex; flex-direction: column;
+    border-right: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-sidebar, #f7f8fa);
+  }
+  #sidehead {
+    display: flex; align-items: center; gap: 6px; padding: 8px 10px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec);
+  }
+  #sidehead h2 { margin: 0; flex: 1; font-size: 12px; font-weight: 600; color: var(--wm-label-2nd, #5b6474); }
+  #form { padding: 10px; border-bottom: 1px solid var(--wm-border, #e3e6ec); }
+  #form label { display: block; font-size: 11px; color: var(--wm-label-dim, #8b93a3); margin: 7px 0 3px; }
+  #form input {
+    width: 100%; font: inherit; padding: 5px 7px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-input, #fff); color: var(--wm-ink, #1f2430);
+  }
+  #form .row { display: flex; gap: 6px; margin-top: 10px; }
+  #form .row button { flex: 1; }
+  #err { margin-top: 6px; font-size: 11px; color: #b4463c; line-height: 1.5; }
+  #list { flex: 1; overflow-y: auto; }
+  .item {
+    padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--wm-border-soft, #eef0f4);
+    color: var(--wm-label, #3a4152);
+  }
+  .item:hover { background: var(--wm-bg-hover, #eef1f6); }
+  .item.active { background: var(--wm-bg-active, #e4ebf7); color: var(--wm-ink, #1f2430); }
+  .item .t { display: block; line-height: 1.35; }
+  .item .m { display: block; margin-top: 3px; font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #bar {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-panel, #fbfbfd);
+    flex-wrap: wrap;
+  }
+  #bar .title { flex: 1; min-width: 160px; font-weight: 600; }
+  button {
+    font: inherit; padding: 4px 10px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-panel, #fff);
+    color: var(--wm-ink, #1f2430); cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--wm-bg-hover, #eef1f6); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: #fff; }
+  #body { flex: 1; overflow-y: auto; padding: 14px 18px 40px; line-height: 1.7; }
+  .card {
+    padding: 10px 12px; margin-bottom: 10px; border: 1px solid var(--wm-border-soft, #eef0f4);
+    border-radius: var(--wm-radius-sm, 6px); background: var(--wm-bg-panel, #fbfbfd);
+  }
+  .card h3 { margin: 0 0 6px; font-size: 13px; }
+  .row { font-size: 12px; color: var(--wm-label-2nd, #5b6474); margin: 2px 0; }
+  .row code { font-family: var(--wm-mono, ui-monospace, Menlo, Consolas, monospace); font-size: 11px; }
+  .badge {
+    display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px;
+    border: 1px solid var(--wm-border, #d7dbe3); color: var(--wm-label-2nd, #5b6474);
+  }
+  .badge.ready { border-color: #4a8f5c; color: #2f6b3e; }
+  .badge.published { border-color: #3b6ea5; color: #2f5c8d; }
+  pre.diff {
+    max-height: 400px; overflow: auto; font: 11px/1.5 var(--wm-mono, ui-monospace, Menlo, Consolas, monospace);
+    background: var(--wm-bg-input, #f8f8f9); padding: 10px; border-radius: var(--wm-radius-sm, 4px);
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .token {
+    padding: 6px 9px; font-family: var(--wm-mono, ui-monospace, Menlo, Consolas, monospace);
+    font-size: 11px; background: var(--wm-bg-input, #f8f8f9); border-radius: var(--wm-radius-sm, 4px);
+  }
+  .boundary {
+    margin-bottom: 14px; padding: 8px 10px; font-size: 12px;
+    border-left: 3px solid #d8a13a; background: var(--wm-bg-panel, #fbfbfd);
+  }
+  .empty { color: var(--wm-label-dim, #8b93a3); font-size: 12px; }
+</style>
+<link rel="stylesheet" href="/minimal/assets/async-state.css" />
+</head>
+<body>
+  <div id="side">
+    <div id="sidehead"><h2>贡献</h2><button id="new">新建</button></div>
+    <div id="form" hidden>
+      <label for="f-task">任务 id</label><input id="f-task" placeholder="my-contribution" />
+      <label for="f-repo">仓库（owner/repo）</label><input id="f-repo" placeholder="PurrPod/purrcat" />
+      <label for="f-ws">本机工作区目录</label><input id="f-ws" placeholder="D:\work\purrcat-contrib" />
+      <label for="f-title">标题</label><input id="f-title" placeholder="修一处统计口径" />
+      <label for="f-source">来源链接（可选）</label><input id="f-source" placeholder="https://github.com/.../pull/1" />
+      <div class="row"><button id="save" class="primary">建立工作区</button><button id="cancel">取消</button></div>
+      <div id="err"></div>
+    </div>
+    <div id="list"></div>
+  </div>
+  <div id="main">
+    <div id="bar">
+      <span class="title" id="title">未选择工作区</span>
+      <button id="review" disabled>看 diff / 审阅</button>
+      <button id="ready" disabled>标记审阅完成</button>
+      <button id="publish" class="primary" disabled>发草稿 PR</button>
+      <button id="release" disabled>释放</button>
+    </div>
+    <div id="body"></div>
+  </div>
+<script src="/minimal/assets/async-state.js"></script>
+<script>
+(function () {
+  var items = [];
+  var current = null;
+  var elList = document.getElementById('list');
+  var elBody = document.getElementById('body');
+  var elForm = document.getElementById('form');
+  var elErr = document.getElementById('err');
+  var btnReview = document.getElementById('review');
+  var btnReady = document.getElementById('ready');
+  var btnPublish = document.getElementById('publish');
+  var btnRelease = document.getElementById('release');
+  var listRegion = new PurrCatAsync.Region(elList);
+  var bodyRegion = new PurrCatAsync.Region(elBody);
+
+  function esc(t) { return PurrCatAsync.esc(t); }
+  function api(path, options) {
+    return fetch(path, options).then(function (r) {
+      return r.json().then(function (b) {
+        if (!r.ok) {
+          var e = new Error((b.detail && b.detail.message) || b.detail || ('HTTP ' + r.status));
+          e.status = r.status;
+          throw e;
+        }
+        return b;
+      });
+    });
+  }
+  function statusBadge(s) {
+    var map = { prepared: '已建立', working: '工作中', review: '待审阅', ready: '已就绪', published: '草稿已发', released: '已释放' };
+    var cls = s === 'ready' ? 'ready' : (s === 'published' ? 'published' : '');
+    return '<span class="badge ' + cls + '">' + esc(map[s] || s || '') + '</span>';
+  }
+
+  function renderList() {
+    elList.innerHTML = '';
+    if (!items.length) {
+      var hint = document.createElement('div');
+      hint.className = 'item'; hint.style.cursor = 'default'; hint.textContent = '（还没有贡献工作区）';
+      elList.appendChild(hint); return;
+    }
+    items.forEach(function (item) {
+      var row = document.createElement('div');
+      row.className = 'item' + (current && current.task_id === item.task_id ? ' active' : '');
+      row.innerHTML = '<span class="t"></span><span class="m"></span>';
+      row.querySelector('.t').textContent = item.title || item.task_id;
+      row.querySelector('.m').textContent = item.status + ' · ' + item.repository;
+      row.onclick = function () { open(item.task_id); };
+      elList.appendChild(row);
+    });
+  }
+
+  function renderDetail() {
+    if (!current) return;
+    document.getElementById('title').textContent = current.title || current.task_id;
+    var canAct = ['review', 'ready', 'published'].indexOf(current.status) >= 0;
+    btnReview.disabled = false;
+    btnReady.disabled = !current.review_token;
+    btnPublish.disabled = !current.review_token || current.status === 'published';
+    btnRelease.disabled = current.status === 'released';
+
+    var html = '';
+    html += '<div class="boundary">Agent 不发布：发布权留给用户，且只发草稿 PR。'
+      + '贡献状态只说流程走到哪，不代表这个贡献会被接受。</div>';
+    html += '<div class="card"><h3>' + esc(current.title || current.task_id) + ' ' + statusBadge(current.status) + '</h3>';
+    html += '<div class="row">任务：<code>' + esc(current.task_id) + '</code>　仓库：<code>' + esc(current.repository) + '</code></div>';
+    html += '<div class="row">分支：<code>' + esc(current.branch) + '</code>　基准：<code>' + esc(current.base_head || '—') + '</code></div>';
+    html += '<div class="row">工作区：<code>' + esc(current.workspace) + '</code></div>';
+    html += '</div>';
+
+    if (current.review_token) {
+      html += '<div class="card"><h3>审阅凭据</h3>';
+      html += '<div class="token">' + esc(current.review_token) + '</div>';
+      html += '<div class="row" style="margin-top:8px">这是 diff 的指纹。审阅后文件若再变，点「看 diff / 审阅」重新生成。</div>';
+      html += '</div>';
+    }
+    if (current.diff) {
+      html += '<div class="card"><h3>Diff</h3><pre class="diff">' + esc(current.diff.slice(0, 6000)) + '</pre></div>';
+    }
+    if (current.pr_url) {
+      html += '<div class="card"><h3>草稿 PR</h3><div class="row">' + esc(current.pr_url) + '</div></div>';
+    }
+    if (current.publish_command) {
+      html += '<div class="card"><h3>待执行的发布命令</h3><pre class="diff">' + esc(current.publish_command) + '</pre>'
+        + '<div class="row">这条命令只生成、不自动执行——由你决定是否在自己的终端里跑。</div></div>';
+    }
+    elBody.innerHTML = html;
+  }
+
+  function load() {
+    listRegion.begin('refresh');
+    return api('/api/contributions').then(function (data) {
+      items = data.contributions || [];
+      listRegion.settle({ data: 'complete', request: 'idle', result: 'ok' }, function () { renderList(); });
+      if (current) {
+        var found = null;
+        items.forEach(function (x) { if (x.task_id === current.task_id) found = x; });
+        if (found) { current = found; renderDetail(); }
+      }
+    }).catch(function (err) { listRegion.fail(err, function () { load(); }); });
+  }
+
+  function open(taskId) {
+    var found = null;
+    items.forEach(function (x) { if (x.task_id === taskId) found = x; });
+    if (!found) return;
+    current = found;
+    renderList();
+    bodyRegion.begin('refresh');
+    api('/api/contributions/' + encodeURIComponent(taskId)).then(function (data) {
+      current = data;
+      bodyRegion.settle({ data: 'complete', request: 'idle', result: 'ok' }, function () { renderDetail(); });
+    }).catch(function (err) { bodyRegion.fail(err, function () { open(taskId); }); });
+  }
+
+  function act(path, body, done) {
+    api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) })
+      .then(function (data) { current = data; load().then(function () { renderDetail(); }); if (done) done(data); })
+      .catch(function (err) { elErr.textContent = err.message; alert(err.message); });
+  }
+
+  document.getElementById('new').onclick = function () { elErr.textContent = ''; elForm.hidden = false; };
+  document.getElementById('cancel').onclick = function () { elForm.hidden = true; };
+  document.getElementById('save').onclick = function () {
+    var payload = {
+      task_id: document.getElementById('f-task').value.trim(),
+      repository: document.getElementById('f-repo').value.trim(),
+      workspace: document.getElementById('f-ws').value.trim(),
+      title: document.getElementById('f-title').value.trim(),
+      source_url: document.getElementById('f-source').value.trim()
+    };
+    if (!payload.task_id || !payload.repository || !payload.workspace || !payload.title) {
+      elErr.textContent = '任务 id、仓库、工作区和标题都要填。'; return;
+    }
+    api('/api/contributions/prepare', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function () { elForm.hidden = true; return load().then(function () { open(payload.task_id); }); })
+      .catch(function (err) { elErr.textContent = err.message; });
+  };
+
+  btnReview.onclick = function () { if (current) act('/api/contributions/' + encodeURIComponent(current.task_id) + '/review'); };
+  btnReady.onclick = function () { if (current) act('/api/contributions/' + encodeURIComponent(current.task_id) + '/ready', { review_token: current.review_token }); };
+  btnPublish.onclick = function () {
+    if (!current) return;
+    if (!confirm('确定发草稿 PR 吗？这会联系 GitHub。')) return;
+    act('/api/contributions/' + encodeURIComponent(current.task_id) + '/publish', { review_token: current.review_token });
+  };
+  btnRelease.onclick = function () { if (current && confirm('释放这个工作区？本地改动不会动。')) act('/api/contributions/' + encodeURIComponent(current.task_id) + '/release'); };
+
+  load();
+})();
+</script>
+</body>
+</html>
