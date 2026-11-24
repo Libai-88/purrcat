@@ -1,0 +1,128 @@
+"""公开第三方科研 Skill 仓库清单。
+
+这些仓库各自公开、自带许可，内容只作为文本读取，不复制进 PurrCat 仓库。
+清单里的仓库若消失或改名，采集时会被跳过并记录，不影响其余条目。
+"""
+
+# 科研全流程相关：选题、文献、数据、统计、AI、科学计算、实验、绘图、写作、审稿、汇报
+RESEARCH_REPOSITORIES = [
+    "Yuan1z0825/nature-skills",
+    "K-Dense-AI/scientific-agent-skills",
+    "Orchestra-Research/AI-Research-SKILLs",
+    "pengjunchi0/codex-visio-paper-figure-skill",
+    "Leey21/awesome-ai-research-writing",
+    "LigphiDonk/academic-figure-generator",
+    "zLanqing/codex-claude-academic-skills",
+    "LeonChaoX/qinyan-academic-skills",
+    "Trae1ounG/paper-plot-skills",
+    "From-zero-tohero/ML-SHAP-Skill",
+    "stephenlzc/AI-Powered-Literature-Review-Skills",
+    "meleantonio/awesome-econ-ai-stuff",
+    "Imbad0202/academic-research-skills",
+    "Galaxy-Dawn/claude-scholar",
+    "brycewang-stanford/Auto-Empirical-Research-Skills",
+    "7toCR/paper2patent",
+    "HKUSTDial/Supervisor-Skills",
+    "l2461090/nature-figure-editable",
+    "blader/humanizer",
+    "ganzhi-black/humanities-thesis-skill",
+    "WUBING2023/PaperSpine",
+    "Master-cai/Research-Paper-Writing-Skills",
+    "c-narcissus/paper-framework-figure-studio-pro",
+    "Rss3208/Visiomaster",
+    "Imbad0202/academic-research-skills-codex",
+    "Gabberflast/academic-pptx-skill",
+    "natolambert/colloquium",
+]
+
+# 学术汇报与幻灯：组会、开题、答辩场景
+PRESENTATION_REPOSITORIES = [
+    "zarazhangrui/frontend-slides",
+    "op7418/guizang-ppt-skill",
+    "lewislulu/html-ppt-skill",
+    "seulee26/mckinsey-pptx",
+    "sunbigfly/ppt-agent-skills",
+    "tfriedel/claude-office-skills",
+    "promptadvisers/claude-code-polished-documents-skills",
+    "barun-saha/slide-deck-ai",
+    "hugohe3/ppt-master",
+    "NyxTides/ppt-image-first",
+    "daekeun-ml/ppt-translator",
+    "docsagent/docsagent",
+    "GongRzhe/Office-PowerPoint-MCP-Server",
+]
+
+REPOSITORIES = RESEARCH_REPOSITORIES + PRESENTATION_REPOSITORIES
+
+# 明确排除的通用开发技能：与科研流程无关，留在目录里只会干扰检索。
+# 逐条人工确认过描述确实偏通用开发向；新增条目时同样要先确认描述。
+EXCLUDED_SKILL_NAMES = {
+    # 通用编码协作与工程流程
+    "agent-authoring",
+    "agent-identifier",
+    "architecture-design",
+    "architecture-design-guide",
+    "code-exec-skills",
+    "code-review-excellence",
+    "code-simplifier",
+    "coding-guidelines",
+    "command-development",
+    "commit",
+    "commit-push-pr",
+    "context-status",
+    "daily-coding",
+    "distributed-systems-guide",
+    "execute",
+    "freeze-check",
+    "get-available-resources",
+    "handoff",
+    "help",
+    "init",
+    "identify",
+    "check-env",
+    "dse-loop",
+    # 通用 AI 工程与基础设施（不是科研方法本身）
+    "awq-quantization",
+    "blip-2-vision-language",
+    "chroma",
+    "dspy",
+    "faiss",
+    "gguf-quantization",
+    "graphiti-guide",
+    "huggingface-accelerate",
+    "knowledge-distillation",
+    "lambda-labs-gpu-cloud",
+    "langchain",
+    "llama-cpp",
+    "llava",
+    "llm-from-scratch-guide",
+    "llm-aiops-guide",
+    "evaluating-code-models",
+    "evaluating-llms-harness",
+    "distributing-llm-pretraining-torchtitan",
+    "distributed-llm-pretraining-torchtitan",
+    # 通用办公与商业
+    "algorithmic-art",
+    "brand-guidelines",
+    "business-skills",
+    "finance-skills",
+    "fiscal-briefing",
+    "internal-comms",
+    "feishu-notify",
+    "briefing-note",
+    "cost-benefit",
+    "funding-skills",
+    "grant-budget-guide",
+    # 通用工程杂项
+    "cs-skills",
+    "deep-audit",
+    "diverva",
+    "diverga-memory",
+    "diverge",
+    "google-colab-guide",
+    "large-document-reader",
+    "anti-hallucination",
+    "llamaguard",
+    "quickstart",
+    "uv-package-manager",
+}

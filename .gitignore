@@ -107,3 +107,6 @@ purrcat.toml
 # 本地工具与预览缓存
 .trae-html-share-packages/
 .screenshots/
+
+# 科研技能目录的采集缓存（仓库文件树，可随时重建）
+scripts/research_skills/.tree-cache/
