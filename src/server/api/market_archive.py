@@ -26,6 +26,20 @@ from src.utils.config import MCP_SOURCE_DIR, SKILL_DIR
 OFFICIAL_MCP_REPO_PATTERN = r"https?://github\.com/PurrPod/mcps"
 OFFICIAL_MCP_ZIP_URL = "https://github.com/PurrPod/mcps/archive/refs/heads/main.zip"
 
+_COMMIT_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+
+
+def is_commit_sha(ref: str) -> bool:
+    """判断一个 git ref 是否是完整的 commit SHA。"""
+    return bool(_COMMIT_SHA_PATTERN.match((ref or "").strip().lower()))
+
+
+def repo_zip_url(owner: str, repo: str, ref: str) -> str:
+    """仓库归档下载地址；commit 与分支的 URL 形态不同，不能混用。"""
+    if is_commit_sha(ref):
+        return f"https://github.com/{owner}/{repo}/archive/{ref}.zip"
+    return f"https://github.com/{owner}/{repo}/archive/refs/heads/{ref}.zip"
+
 
 def http_get_json(url: str, timeout: int = REMOTE_REQUEST_TIMEOUT):
     """同步 GET 一个远程 URL 并解析 JSON，带超时防卡死。"""
@@ -57,7 +71,10 @@ def http_download(url: str, timeout: int = REMOTE_REQUEST_TIMEOUT) -> bytes:
 
 
 def fetch_repo_zip(owner: str, repo: str, branch: str) -> bytes:
-    """下载仓库 zip 字节流；branch 为空（裸仓库链接）时自动探测默认分支。"""
+    """下载仓库 zip 字节流；branch 为空（裸仓库链接）时自动探测默认分支。
+
+    branch 也可以是完整的 commit SHA，此时按 commit 归档，保证内容可复现。
+    """
     default_branch = ""
     if not branch:
         try:
@@ -72,7 +89,7 @@ def fetch_repo_zip(owner: str, repo: str, branch: str) -> bytes:
 
     last_err = None
     for b in default_branch_candidates(branch, default_branch):
-        zip_url = f"https://github.com/{owner}/{repo}/archive/refs/heads/{b}.zip"
+        zip_url = repo_zip_url(owner, repo, b)
         try:
             return http_download(zip_url)
         except Exception as e:

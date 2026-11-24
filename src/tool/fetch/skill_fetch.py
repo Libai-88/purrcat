@@ -6,7 +6,37 @@ import stat
 import time
 from src.utils.config import AGENT_VM_DIR
 from src.utils.skill_helper import _find_skill_md_file, _parse_skill_md
+from src.utils import research_catalog
 from .exceptions import SkillNotFoundError
+
+
+def install_from_catalog(name: str) -> tuple[str, str]:
+    """从科研技能目录按需安装一个技能。
+
+    返回 (安装后的技能名, 失败原因)；目录里没有该技能时两者都为空串。
+    目录条目记录了来源仓库与固定 commit，因此安装内容可复现。
+    """
+    entry = research_catalog.find_entry(name)
+    if entry is None:
+        return "", ""
+
+    from src.server.api.research_install import install_catalog_skill
+
+    try:
+        installed = install_catalog_skill(entry)
+    except Exception as exc:
+        source = entry.get("source") or {}
+        return "", (
+            f"目录条目安装失败: {exc}（来源 {source.get('repository')} "
+            f"@{source.get('commit', '')[:8]}）"
+        )
+    if not installed:
+        return "", f"目录条目安装后未落地技能目录（来源 {entry.get('source')}）"
+
+    from src.tool.search.skill_search import reload_skill_index
+
+    reload_skill_index()
+    return installed, ""
 
 
 def _force_rmtree(path: str, max_retries: int = 3, retry_delay: float = 0.1):
@@ -48,8 +78,13 @@ def load_skill(name: str) -> tuple:
         # 先定位真实主库目录：技能目录名可能与 frontmatter name 不同
         # （如 soft-skill 目录内技能的 name 是 high-end-visual-design）
         md_file, sandbox_dir = _find_skill_md_file(name)
+        reason = ""
         if not md_file.exists():
-            raise SkillNotFoundError(name)
+            # 本地没有就查科研技能目录，命中则按需安装
+            _installed, reason = install_from_catalog(name)
+            md_file, sandbox_dir = _find_skill_md_file(name)
+        if not md_file.exists():
+            raise SkillNotFoundError(name, reason)
 
         # ==== 载入前从主库拉取最新的一份覆盖进沙盒中 ====
         # 以定位到的真实目录为复制源，按技能名落到沙盒（与 sandbox_dir 对齐），

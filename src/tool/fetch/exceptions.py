@@ -7,9 +7,13 @@ class FetchExecutionError(Exception):
 class SkillNotFoundError(FetchExecutionError):
     """技能未找到异常"""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, reason: str = ""):
         self.name = name
-        super().__init__(f"未找到技能: {name}")
+        self.reason = reason
+        message = f"未找到技能: {name}"
+        if reason:
+            message = f"{message}（{reason}）"
+        super().__init__(message)
 
 
 class MCPServerNotFoundError(FetchExecutionError):
