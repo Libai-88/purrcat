@@ -133,6 +133,55 @@ def _check_quote(paper_id: str, page: int, quote: str) -> dict:
     }
 
 
+def _data_evidence(item: dict, index: int) -> dict:
+    """校验一条数据收据引用，并把收据的关键事实抄进记录。
+
+    收据本身是不可变的，但记录要能脱离收据文件单独读懂，所以关键事实抄一份进来。
+    """
+    from src.data import query as query_module
+
+    receipt_id = str(item.get("receipt_id") or "").strip()
+    if not receipt_id:
+        raise RecordError(f"第 {index} 条结论的数据证据缺少 receipt_id")
+    receipt = query_module.get_receipt(receipt_id)
+    if receipt is None:
+        raise RecordError(f"没有这条查询收据：{receipt_id}")
+    if receipt.get("status") != "completed":
+        raise RecordError(
+            f"这条查询收据没有跑完（{receipt.get('status')}），不能当证据：{receipt_id}"
+        )
+    return {
+        "kind": "data",
+        "receipt_id": receipt_id,
+        "dataset_id": receipt.get("dataset_id", ""),
+        "asset_id": receipt.get("asset_id", ""),
+        "sha256": receipt.get("sha256", ""),
+        "question": receipt.get("question", ""),
+        "unit": receipt.get("unit", ""),
+        "grain": receipt.get("grain", ""),
+        "denominator": receipt.get("denominator", ""),
+        "row_count": receipt.get("row_count"),
+        "summary": receipt.get("summary") or {},
+        "acceptance": receipt.get("acceptance", ACCEPTANCE_NEEDS_REVIEW),
+    }
+
+
+def _numeric_check(evidence: list[dict]) -> dict | None:
+    """结论同时有原文引文与数据收据时，把两边的数字字面对一下。
+
+    只比数字对不对得上，不判断结论对不对。
+    """
+    from src.data import numeric
+
+    paper_items = [item for item in evidence if item.get("kind") == "paper"]
+    data_items = [item for item in evidence if item.get("kind") == "data"]
+    if not paper_items or not data_items:
+        return None
+    return numeric.compare_with_summary(
+        paper_items[0].get("quote", ""), data_items[0].get("summary")
+    )
+
+
 def build_record(
     question: str,
     claims: list[dict],
@@ -192,6 +241,14 @@ def build_record(
         for item in evidence_list:
             if not isinstance(item, dict):
                 raise RecordError(f"第 {index} 条结论的证据格式不对")
+            kind = str(item.get("kind") or "paper").strip()
+            if kind == "data":
+                built_evidence.append(_data_evidence(item, index))
+                continue
+            if kind != "paper":
+                raise RecordError(
+                    f"第 {index} 条结论的证据类型只能是 paper 或 data：{kind!r}"
+                )
             paper_id = str(item.get("paper_id") or "").strip()
             if not paper_id:
                 raise RecordError(f"第 {index} 条结论的证据缺少 paper_id")
@@ -205,6 +262,7 @@ def build_record(
             located = _check_quote(paper_id, page, quote)
             built_evidence.append(
                 {
+                    "kind": "paper",
                     "paper_id": paper_id,
                     "page": page,
                     "quote": quote,
@@ -218,6 +276,7 @@ def build_record(
         built_claims.append(
             {
                 "id": f"claim-{index}",
+                "numeric_check": _numeric_check(built_evidence),
                 "text": text,
                 "stance": stance,
                 "acceptance": claim_acceptance,
