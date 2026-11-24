@@ -251,6 +251,9 @@ def Data(
                 unit=unit,
                 grain=grain,
                 denominator=denominator,
+                category=category or "",
+                measure=measure or "",
+                aggregation=aggregation or "",
             )
             return text_response(
                 _render_result(outcome["result"], outcome["receipt"]),

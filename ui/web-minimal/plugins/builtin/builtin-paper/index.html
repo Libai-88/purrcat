@@ -109,6 +109,15 @@
   }
   #record h3 { font-size: 12px; color: var(--wm-label-2nd, #5b6474); margin: 20px 0 6px; text-transform: none; }
   #record ul { margin: 0; padding-left: 20px; }
+  #record .ev.data { border-left: 2px dashed var(--wm-border, #d7dbe3); padding-left: 8px; margin-top: 6px; }
+  #record .ev.data .rq { font-weight: 600; }
+  #record .ev.data .rm { color: var(--wm-label-dim, #8b93a3); font-size: 11px; margin-top: 2px; }
+  #record .check { margin-top: 6px; font-size: 11px; padding: 4px 8px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); color: var(--wm-label-2nd, #5b6474); }
+  #record .check.matched { border-color: #4a8f5c; color: #2f6b3e; }
+  #record .check.mismatch { border-color: #b4463c; color: #8f362e; }
+  #record .check.unresolved { border-color: #d8a13a; color: #9a6c14; }
+  #receiptpick { margin-left: 8px; max-width: 260px; }
   #record .foot {
     margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--wm-border, #e3e6ec);
     color: var(--wm-label-dim, #8b93a3); font-size: 12px; line-height: 1.7;
@@ -142,6 +151,7 @@
       <button id="prev">上一页</button>
       <span id="pager"></span>
       <button id="next">下一页</button>
+      <select id="receiptpick" hidden></select>
       <button id="send" class="primary" disabled>发送给 Agent</button>
     </div>
     <div id="page"><div id="empty">论文库还是空的。<br />点左上的「导入 PDF」选一篇，或用 Agent 的 <code>Paper</code> 工具导入。</div></div>
@@ -327,6 +337,32 @@
     elQuote.textContent = quote ? '「' + quote.slice(0, 60) + (quote.length > 60 ? '…' : '') + '」' : '';
   });
 
+  var elReceiptPick = document.getElementById('receiptpick');
+  var receipts = [];
+
+  function loadReceipts() {
+    return fetch('/api/data/receipts')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        receipts = data.receipts || [];
+        elReceiptPick.innerHTML = '';
+        if (!receipts.length) { elReceiptPick.hidden = true; return; }
+        var none = document.createElement('option');
+        none.value = '';
+        none.textContent = '（不附数据收据）';
+        elReceiptPick.appendChild(none);
+        receipts.forEach(function (r) {
+          var option = document.createElement('option');
+          option.value = r.query_id;
+          option.textContent = '数据收据 ' + r.query_id + ' · ' + (r.question || '') +
+            (r.unit ? '（' + r.unit + '）' : '');
+          elReceiptPick.appendChild(option);
+        });
+        elReceiptPick.hidden = false;
+      })
+      .catch(function () { elReceiptPick.hidden = true; });
+  }
+
   btnSend.onclick = function () {
     var quote = selectedQuote();
     if (!quote || !current) return;
@@ -334,11 +370,31 @@
       paper_id: current.id, title: current.title || '', page: pageNo,
       page_count: current.page_count, quote: quote
     };
-    callAction('chat.sendBatch', { events: [
-      { type: 'paper-evidence', content: JSON.stringify(payload) },
-      { type: 'user', content: '请核对这段引文：论文《' + (current.title || current.id) + '》第 ' + pageNo + ' 页的「' + quote + '」——原文是否支持它？在哪一页？' }
-    ] }).then(function () {
-      setStatus('已发送给 Agent');
+    var events = [{ type: 'paper-evidence', content: JSON.stringify(payload) }];
+    var ask = '请核对这段引文：论文《' + (current.title || current.id) + '》第 ' + pageNo +
+      ' 页的「' + quote + '」——原文是否支持它？在哪一页？';
+    var receiptId = elReceiptPick.value;
+    if (receiptId) {
+      var receipt = receipts.filter(function (r) { return r.query_id === receiptId; })[0] || {};
+      events.push({ type: 'data-receipt', content: JSON.stringify({
+        receipt_id: receiptId,
+        dataset_id: receipt.dataset_id || '',
+        asset_id: receipt.asset_id || '',
+        sha256: receipt.sha256 || '',
+        question: receipt.question || '',
+        unit: receipt.unit || '',
+        grain: receipt.grain || '',
+        denominator: receipt.denominator || '',
+        row_count: receipt.row_count == null ? null : receipt.row_count,
+        summary: receipt.summary || {}
+      }) });
+      ask = '请把这段引文和这条数据查询收据合起来核对：引文在论文《' + (current.title || current.id) +
+        '》第 ' + pageNo + ' 页的「' + quote + '」；收据 ' + receiptId + ' 回答的是「' +
+        (receipt.question || '') + '」。请给出原文依据，并说明两边的数字是否对得上。';
+    }
+    events.push({ type: 'user', content: ask });
+    callAction('chat.sendBatch', { events: events }).then(function () {
+      setStatus(receiptId ? '已把引文与数据收据一起发送给 Agent' : '已发送给 Agent');
       clearSelection();
     }).catch(function (err) { setStatus('发送失败：' + err.message); });
   };
@@ -376,6 +432,18 @@
       html += '<div class="claim ' + esc(claim.stance || '') + '">';
       html += '<div class="ct">' + esc(claim.text) + '</div>';
       (claim.evidence || []).forEach(function (ev) {
+        if (ev.kind === 'data') {
+          html += '<div class="ev data">';
+          html += '<div class="rq">数据收据 ' + esc(ev.receipt_id || '') + '</div>';
+          html += '<div class="rm">' + esc(ev.question || '') + '</div>';
+          html += '<div class="rm">';
+          if (ev.unit) html += '单位 ' + esc(ev.unit) + ' · ';
+          if (ev.grain) html += '粒度 ' + esc(ev.grain) + ' · ';
+          html += esc(ev.row_count == null ? '' : ev.row_count) + ' 行 · ' + esc(ev.dataset_id || '');
+          html += '</div>';
+          html += '</div>';
+          return;
+        }
         html += '<div class="ev">';
         html += '<button class="link cite" data-paper="' + esc(ev.paper_id) + '" data-page="' + ev.page + '">';
         html += esc(ev.paper_id) + ' 第 ' + ev.page + ' 页 ↗</button>';
@@ -385,6 +453,18 @@
         html += '<blockquote>' + esc(ev.quote) + '</blockquote>';
         html += '</div>';
       });
+      var check = claim.numeric_check;
+      if (check) {
+        html += '<div class="check ' + esc(check.status || '') + '">';
+        html += '数字比对：' + esc(check.status || '') + ' · ';
+        (check.matched || []).forEach(function (m) {
+          html += '原文 ' + esc(m.paper) + ' ↔ 数据 ' + esc(m.data);
+          if (m.note) html += '（' + esc(m.note) + '）';
+          html += '；';
+        });
+        (check.notes || []).forEach(function (n) { html += ' ' + esc(n); });
+        html += '</div>';
+      }
       html += '<div class="actions"><button class="link follow" data-claim="' + esc(claim.id) + '">从此处追问 →</button></div>';
       html += '</div>';
     });
@@ -574,6 +654,7 @@
 
   refreshPapers().then(function (list) { if (list.length) openPaper(list[0]); });
   refreshRecords().catch(function () { /* 目录读不到不影响读论文 */ });
+  loadReceipts().catch(function () { /* 没有数据收据不影响读论文 */ });
 })();
 </script>
 </body>

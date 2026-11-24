@@ -47,7 +47,12 @@ RESEARCH_TOOL_SCHEMA = {
                             },
                             "evidence": {
                                 "type": "array",
-                                "description": "支撑这条结论的原文引文，至少一条。",
+                                "description": (
+                                    "支撑这条结论的证据，至少一条。两种："
+                                    "kind=paper 是论文原文引文（必须逐字出现在那一页）；"
+                                    "kind=data 是一条数据查询收据的引用（用 receipt_id）。"
+                                    "两种可以同时给，系统会自动把原文里的数字与收据里的数字字面比对。"
+                                ),
                                 "items": {
                                     "type": "object",
                                     "properties": {
