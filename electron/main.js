@@ -26,15 +26,34 @@ app.commandLine.appendSwitch('disable-features', 'HttpsUpgrades');
 app.commandLine.appendSwitch('remote-debugging-address', '127.0.0.1');
 app.commandLine.appendSwitch('remote-debugging-port', '9222');
 
+const IS_DEV = !!process.env.ELECTRON_DEV;
+
+// 便携版（SPEC-036）：数据根目录 = 程序目录旁的 data/
+// 安装版 process.resourcesPath 是 <AppDir>/resources，便携版也一样（app.asar 在 resources/ 下）。
+// 所以「程序目录」= process.resourcesPath 的父目录，标记与 data/ 都放在那里。
+const PORTABLE_APP_DIR = path.dirname(process.resourcesPath || __dirname);
+const PORTABLE_FLAG = path.join(PORTABLE_APP_DIR, 'portable.flag');
+const PORTABLE = !IS_DEV && fs.existsSync(PORTABLE_FLAG);
+let PORTABLE_DATA_DIR = '';
+if (PORTABLE) {
+  PORTABLE_DATA_DIR = path.join(PORTABLE_APP_DIR, 'data');
+  try {
+    fs.mkdirSync(PORTABLE_DATA_DIR, { recursive: true });
+    app.setPath('userData', path.join(PORTABLE_DATA_DIR, 'electron'));
+  } catch (error) {
+    console.warn('[PurrCat] 便携数据目录创建失败，回退默认:', error.message);
+    PORTABLE_DATA_DIR = '';
+  }
+}
+
 // 🌟 GPU 兼容防御：部分老旧/异常显卡驱动上 Chromium GPU 进程反复崩溃，
 // 表现为主窗口大片空白/卡死（实测用户机器复现：顶部标题栏渲染、主体全白）。
 // 检测到 GPU 进程崩溃时写入标记并自动重启，下次启动禁用硬件加速（软渲染）。
+// 必须在 setPath('userData') 之后取路径。
 const GPU_FLAG = path.join(app.getPath('userData'), 'gpu-disabled.flag');
 if (fs.existsSync(GPU_FLAG)) {
   app.disableHardwareAcceleration();
 }
-
-const IS_DEV = !!process.env.ELECTRON_DEV;
 
 let apiPort = DEFAULT_API_PORT;
 let backendConfigError = null;
@@ -235,12 +254,18 @@ async function createBackend() {
     console.error('[PurrCat] API port selection failed:', error.message);
     return false;
   }
+  // 便携模式把数据根注入后端；Python 侧所有路径从 PURRCAT_DIR 派生。
+  const backendEnv = { ...process.env, PURRCAT_API_PORT: String(apiPort) };
+  if (PORTABLE && PORTABLE_DATA_DIR) {
+    backendEnv.PURRCAT_DIR = PORTABLE_DATA_DIR;
+    console.log('[PurrCat] 便携模式，数据目录:', PORTABLE_DATA_DIR);
+  }
   backendProcess = spawn(
     exe,
     ['--api', '--headless', '--api-port', String(apiPort)],
     {
       cwd: path.dirname(exe),
-      env: { ...process.env, PURRCAT_API_PORT: String(apiPort) },
+      env: backendEnv,
       windowsHide: true,
     },
   );
@@ -1648,7 +1673,8 @@ ipcMain.handle('browser:detached-comment', (_e, { pixelData, comment, url }) => 
 
 // 自动更新：生产模式从 GitHub Releases 检查（Windows/Linux 可用；macOS 未签名不支持静默更新，需重新下载 dmg）
 function initAutoUpdate() {
-  if (IS_DEV) return;
+  // 便携版不是安装包管理的，自动更新没有意义——要更新就换一个便携目录。
+  if (IS_DEV || PORTABLE) return;
   try {
     const { autoUpdater } = require('electron-updater');
     autoUpdater.autoDownload = true;

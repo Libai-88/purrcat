@@ -108,6 +108,7 @@ uv run pytest -m l3             # 静态红线
 | 科研连接器（目录 / 拉取 / 来源凭据） | `src/connectors/` + `src/tool/connectors/` + `src/server/api/connectors_api.py` |
 | 科研环境（只读探测 / 能力声明） | `src/environments/` + `src/tool/environments/` + `src/server/api/environments_api.py` |
 | 贡献工作区（diff / 审阅 / 草稿 PR） | `src/contributions/` + `src/tool/contributions/` + `src/server/api/contributions_api.py` |
+| 便携版打包 | `scripts/build_portable.py` + `src/utils/config.py`（`PURRCAT_DIR`）+ `electron/main.js` |
 | 会话/聊天接口 | `src/server/api/chat.py` |
 | 科研接口的错误状态回执 | `src/server/api/research_status.py` |
 | DAG 节点 | `src/harness/node/extensions/<type>/` |
@@ -125,6 +126,7 @@ uv run pytest -m l3             # 静态红线
 | 科研连接器 | `docs/connectors.md` |
 | 科研环境 | `docs/environments.md` |
 | 贡献工作区 | `docs/contributions.md` |
+| 便携版 | `docs/portable.md` |
 | Sensor 进程控制 | `src/sensor/processes.py`、`src/sensor/file_refs.py` |
 | 模型重试 / 用量账本 | `src/model/core/retry.py`、`src/model/manager/usage_stats.py` |
 

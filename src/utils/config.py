@@ -13,7 +13,26 @@ else:
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC_DIR = os.path.join(BASE_DIR, "src")
 
-PURRCAT_DIR = str(Path.home() / ".purrcat")
+
+def _resolve_purrcat_dir() -> str:
+    """数据根目录：默认 ~/.purrcat，便携版用 PURRCAT_DIR 环境变量改到程序目录旁。
+
+    便携版从 Electron  spawn 后端时注入这个变量，Python 侧所有路径常量都从
+    ``PURRCAT_DIR`` 派生，所以一处覆盖就能让全部数据跟着目录走。
+
+    - 相对路径转成绝对路径（按 cwd 解析），避免后端 cwd 变化导致数据目录漂移；
+    - 空串 / 非法值一律回退默认，不让一个手滑的环境变量搞坏路径。
+    """
+    raw = os.environ.get("PURRCAT_DIR", "").strip()
+    if raw:
+        try:
+            return os.path.abspath(os.path.expanduser(raw))
+        except (OSError, ValueError):
+            pass
+    return str(Path.home() / ".purrcat")
+
+
+PURRCAT_DIR = _resolve_purrcat_dir()
 MODEL_CONFIG_PATH = os.path.join(PURRCAT_DIR, "model.json")
 SENSOR_CONFIG_PATH = os.path.join(PURRCAT_DIR, "activate_sensor.json")
 FILE_CONFIG_PATH = os.path.join(PURRCAT_DIR, "file.json")
