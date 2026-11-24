@@ -77,6 +77,49 @@
 
 `interpretations` 参数形如 `{"年龄": "number"}`，只有被点名的列会转换。
 
+## 图表
+
+图表是**带出处的规格**，不是图片。后端生成一份 JSON，前端照着渲染（PurrCat 不引入图表库，
+手写 SVG 渲染器）。规格内容寻址、可被引用，就像查询收据一样。
+
+四种图型：`bar` / `line` / `area` 按类目聚合，`scatter` 逐行画点。
+金融专用的蜡烛图、桑基图与科研场景无关，不做。
+
+每份规格都带着这次画图的全部依据：
+
+| 字段 | 说明 |
+| --- | --- |
+| `chart` | 图型、横轴列、纵轴列、聚合方式 |
+| `rows[].value` / `rows[].x` / `rows[].y` | 数据点 |
+| `rows[].rowProvenance` | 这个点来自原文件第几行 |
+| `source.datasetId` / `assetId` / `sha256` / `versionLabel` | 读的是哪个数据集的哪一版 |
+| `source.dataView` | 口径：用了哪些列、聚合方式、哪些列被显式解释为数字 |
+| `source.report` | 完整的质量报告 |
+| `source.omittedGroups` / `excludedValues` | 跳过了几组、丢了几个值 |
+| `source.caveats` | 单位/粒度/分母的声明与省略说明 |
+| `acceptance` | 可信度状态，默认 `needs_review` |
+
+几条拒收规则，都是为了不给读者看一根假的柱子：
+
+- **数值必须是有限数**：缺值与非数值不画，计入 `excludedValues`。
+- **标签列与数值列必须不同**：相同则拒收，否则图上分不清横轴是什么。
+- **数值运算要求已解释**：未解释的文本列不能求和或参与数值比较。
+- **重复坐标点拒收**：散点图里重复的点会互相盖住，让用户先决定是聚合还是换轴。
+- **最多 50 组**：超出的记入 `omittedGroups`，不静默截断。
+
+规格按自身字节的哈希命名与校验，被改动过就拒绝读取；同样的口径得到同样的 id。
+
+> 方法是**声明**，不是科学检查。画的是描述统计，不是结论。这句话写在每份规格里，也显示在界面上。
+
+### 工具与接口
+
+| 入口 | 作用 |
+| --- | --- |
+| `Data` 的 `chart` 动作 | 画一张图并保存规格 |
+| `Data` 的 `charts` 动作 | 列出已保存的规格 |
+| `POST /api/data/datasets/{id}/chart` | 面板画图 |
+| `GET /api/data/charts` | 列出规格 |
+
 ## 面板
 
 内置插件 `builtin-data` 入驻中栏面板区：
@@ -84,6 +127,7 @@
 - 左侧列数据集（带版本数、格式、大小、可用性），右侧是当前版本的检查结果。
 - 字段画像表里每列都有「解释为数字」，点一下就重新检查。
 - 下方是质量汇总与样本表格（行号 + 源行号）。
+- 再下面是画图区：选图型、横纵轴与聚合方式，画出的图带出处。
 - 「问 Agent」把数据集视图发给 Agent：能检查的给完整视图，
   **检查不了的就只给身份、来源与校验和，并明确要求不要编造记录**。
 
@@ -94,8 +138,10 @@
 | 数据集与版本、可用性 | `src/data/library.py` |
 | 检查、字段画像、显式解释 | `src/data/inspect.py` |
 | 查询与收据 | `src/data/query.py` |
+| 图表规格与内容寻址 | `src/data/chart.py` |
 | Agent 工具 | `src/tool/data/` |
 | 面板接口 | `src/server/api/data_api.py` |
 | 面板插件 | `ui/web-minimal/plugins/builtin/builtin-data/` |
 
-设计与验收标准见 [../tests/specs/SPEC-027-data-workbench.md](../tests/specs/SPEC-027-data-workbench.md)。
+设计与验收标准见 [../tests/specs/SPEC-027-data-workbench.md](../tests/specs/SPEC-027-data-workbench.md)
+与 [../tests/specs/SPEC-028-charts.md](../tests/specs/SPEC-028-charts.md)。
