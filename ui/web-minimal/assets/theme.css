@@ -54,6 +54,26 @@
   --wm-sidebar-inset: 14px;   /* 会话列表上下缩进，与右侧面板高度保持一致 */
   --wm-chat-w: 420px;         /* 右侧聊天列固定宽度：中栏面板最大化时留给聊天的横向宽度 */
   --wm-chat-min-w: 360px;     /* 聊天列（历史框+输入框）最小宽度：面板容器再宽也不会把它压得比这更窄 */
+
+  /* ===== 可访问性与交互反馈（ui-ux-pro-max P1/P2 基准）===== */
+  /* 键盘焦点环：全局可见，任何控件 tab 到时都有 2px 描边。
+     以前只有两处输入框有 focus 样式，键盘用户找不到焦点在哪。 */
+  --wm-ring: 0 0 0 2px color-mix(in srgb, var(--wm-accent) 55%, transparent);
+}
+/* 焦点可见：只对键盘操作生效（鼠标点击不出环） */
+:focus-visible {
+  outline: 2px solid var(--wm-accent);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+/* 动效尊重系统设置：开了「减少动态效果」时全部瞬时完成 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

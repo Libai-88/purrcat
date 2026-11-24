@@ -67,12 +67,15 @@
   .wm-pp_tabname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .wm-pp_tabx {
     flex: none;
-    width: 16px; height: 16px;
+    /* WCAG 2.2 Target Size Minimum：可点击目标至少 24px；
+       视觉字号不变，只把热区撑够，误触率立刻下来 */
+    width: 24px; height: 24px;
     display: flex; align-items: center; justify-content: center;
     border: none; border-radius: 4px; background: transparent; color: inherit;
     font-size: 10px; line-height: 1; cursor: pointer; opacity: 0.6;
   }
   .wm-pp_tabx:hover { background: var(--wm-bg-hover); opacity: 1; }
+  .wm-pp_tabx:focus-visible { outline: 2px solid var(--wm-accent); outline-offset: 0; opacity: 1; }
   /* + 新建标签页按钮 */
   .wm-pp_add {
     flex: none;
