@@ -29,6 +29,7 @@ ROUTERS = {
     "papers": "src.server.api.papers_api",
     "research": "src.server.api.research_api",
     "data": "src.server.api.data_api",
+    "notebook": "src.server.api.notebook_api",
 }
 
 # (path, methods, endpoint name)，顺序即 FastAPI 匹配顺序，必须逐字保持。
@@ -241,6 +242,15 @@ EXPECTED_ROUTES = {
         ("/acp/stream", "GET", "acp_stream"),
         ("/acp/file", "POST", "acp_upload_file"),
         ("/acp/file", "GET", "acp_download_file"),
+    ],
+    "notebook": [
+        ("/api/notebooks", "GET", "list_documents"),
+        # /evaluate 必须排在 /{doc_id} 之前，否则会被当成 doc_id
+        ("/api/notebooks/evaluate", "POST", "evaluate"),
+        ("/api/notebooks/{doc_id}", "GET", "read_document"),
+        ("/api/notebooks/{doc_id}", "POST", "commit_document"),
+        ("/api/notebooks/{doc_id}/history", "GET", "document_history"),
+        ("/api/notebooks/{doc_id}/export", "GET", "export_document"),
     ],
     "data": [
         ("/api/data/datasets", "GET", "list_datasets"),

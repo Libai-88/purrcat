@@ -13,6 +13,7 @@ from .data import DATA_TOOL_SCHEMA
 from .fetch import FETCH_TOOL_SCHEMA
 from .filesystem import FILESYSTEM_TOOL_SCHEMA
 from .memo import MEMO_TOOL_SCHEMA
+from .notebook import NOTEBOOK_TOOL_SCHEMA
 from .paper import PAPER_TOOL_SCHEMA
 from .request import REQUEST_TOOL_SCHEMA
 from .research import RESEARCH_TOOL_SCHEMA
@@ -37,6 +38,7 @@ AGENT_TOOL_SCHEMA = [
     FETCH_TOOL_SCHEMA,
     FILESYSTEM_TOOL_SCHEMA,
     MEMO_TOOL_SCHEMA,
+    NOTEBOOK_TOOL_SCHEMA,
     PAPER_TOOL_SCHEMA,
     REQUEST_TOOL_SCHEMA,
     RESEARCH_TOOL_SCHEMA,

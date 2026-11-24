@@ -1761,6 +1761,128 @@ ACP 接入状态：relay 部署情况 / 端口 / uv 可用性
 | 200 | Successful Response | - |
 | 422 | Validation Error | HTTPValidationError |
 
+## Notebook
+
+### `GET /api/notebooks`
+
+**标题**：List Documents
+
+列出所有笔记。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `POST /api/notebooks/evaluate`
+
+**标题**：Evaluate
+
+算出一个文档里所有表格的值。
+
+#### 请求体
+
+**Schema**：`EvaluateReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| document | object | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/notebooks/{doc_id}`
+
+**标题**：Read Document
+
+读某一版修订；不给修订号就读最新版。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| doc_id | path | string | 是 |  |
+| revision | query | integer \| null | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `POST /api/notebooks/{doc_id}`
+
+**标题**：Commit Document
+
+提交一次修订；修订号对不上会报冲突。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| doc_id | path | string | 是 |  |
+
+#### 请求体
+
+**Schema**：`CommitReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| document | object | 是 |  |
+| expected_revision | integer \| null | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/notebooks/{doc_id}/export`
+
+**标题**：Export Document
+
+导出成 Markdown，附一份损失清单。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| doc_id | path | string | 是 |  |
+| revision | query | integer \| null | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/notebooks/{doc_id}/history`
+
+**标题**：Document History
+
+修订历史。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| doc_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
 ## Paper Library
 
 ### `GET /api/papers`

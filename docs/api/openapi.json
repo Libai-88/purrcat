@@ -186,6 +186,31 @@
         "title": "ChatReq",
         "type": "object"
       },
+      "CommitReq": {
+        "properties": {
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "expected_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Revision"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "title": "CommitReq",
+        "type": "object"
+      },
       "DetectResponse": {
         "properties": {
           "installed": {
@@ -261,6 +286,20 @@
           "is_ready"
         ],
         "title": "EnvStatusResponse",
+        "type": "object"
+      },
+      "EvaluateReq": {
+        "properties": {
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "title": "EvaluateReq",
         "type": "object"
       },
       "FileUpdateReq": {
@@ -4536,6 +4575,270 @@
         "summary": "Search",
         "tags": [
           "Memory System"
+        ]
+      }
+    },
+    "/api/notebooks": {
+      "get": {
+        "description": "列出所有笔记。",
+        "operationId": "list_documents_api_notebooks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Documents",
+        "tags": [
+          "Notebook"
+        ]
+      }
+    },
+    "/api/notebooks/evaluate": {
+      "post": {
+        "description": "算出一个文档里所有表格的值。\n\n公式引擎只有一份实现（Python），面板与 Agent 都调它，避免两份实现漂移。",
+        "operationId": "evaluate_api_notebooks_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluate",
+        "tags": [
+          "Notebook"
+        ]
+      }
+    },
+    "/api/notebooks/{doc_id}": {
+      "get": {
+        "description": "读某一版修订；不给修订号就读最新版。",
+        "operationId": "read_document_api_notebooks__doc_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "doc_id",
+            "required": true,
+            "schema": {
+              "title": "Doc Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Document",
+        "tags": [
+          "Notebook"
+        ]
+      },
+      "post": {
+        "description": "提交一次修订；修订号对不上会报冲突。",
+        "operationId": "commit_document_api_notebooks__doc_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "doc_id",
+            "required": true,
+            "schema": {
+              "title": "Doc Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommitReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Commit Document",
+        "tags": [
+          "Notebook"
+        ]
+      }
+    },
+    "/api/notebooks/{doc_id}/export": {
+      "get": {
+        "description": "导出成 Markdown，附一份损失清单。",
+        "operationId": "export_document_api_notebooks__doc_id__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "doc_id",
+            "required": true,
+            "schema": {
+              "title": "Doc Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Document",
+        "tags": [
+          "Notebook"
+        ]
+      }
+    },
+    "/api/notebooks/{doc_id}/history": {
+      "get": {
+        "description": "修订历史。",
+        "operationId": "document_history_api_notebooks__doc_id__history_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "doc_id",
+            "required": true,
+            "schema": {
+              "title": "Doc Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Document History",
+        "tags": [
+          "Notebook"
         ]
       }
     },

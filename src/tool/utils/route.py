@@ -37,6 +37,7 @@ TOOL_FUNC_MAP = {
     "data": "Data",
     "callmcp": "CallMCP",
     "memo": "Memo",
+    "notebook": "Notebook",
     "paper": "Paper",
     "request": "Request",
     "research": "Research",
