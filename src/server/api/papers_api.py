@@ -2,12 +2,15 @@
 
 Agent 侧走 `Paper` 工具（src/tool/paper/），这里只服务界面：
 列论文、读某页原文、导入。
+
+失败时错误体里多一个 ``status``，面板据此分清「不可用」和「失败」。
 """
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from src.papers import library
+from src.server.api import research_status
 from src.tool.filesystem.utils import can_read
 
 router = APIRouter(prefix="/api/papers", tags=["Paper Library"])
@@ -37,7 +40,7 @@ def import_paper(req: PaperImportReq):
     try:
         return library.import_paper(path)
     except library.PaperError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc) from exc
 
 
 @router.get("/{paper_id}")
@@ -55,7 +58,7 @@ def get_page(paper_id: str, page: int):
     try:
         text = library.page_text(paper_id, page)
     except library.PaperError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc) from exc
     return {"paper_id": paper_id, "page": page, "text": text}
 
 
@@ -65,5 +68,5 @@ def get_fulltext(paper_id: str):
     try:
         pages = library.all_pages(paper_id)
     except library.PaperError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc) from exc
     return {"paper_id": paper_id, "pages": pages}

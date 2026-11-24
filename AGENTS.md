@@ -103,7 +103,9 @@ uv run pytest -m l3             # 静态红线
 | 研究记录与人工复核 | `src/papers/records.py` + `src/tool/research/` + `src/server/api/research_api.py` |
 | 数据集库与查询收据 | `src/data/`（库）+ `src/tool/data/`（工具）+ `src/server/api/data_api.py` |
 | 研究笔记与公式引擎 | `src/notebook/`（库）+ `src/tool/notebook/`（工具）+ `src/server/api/notebook_api.py` |
+| 面板异步状态（词表 / 推导 / 渲染） | `ui/web-minimal/assets/async-state.{js,css}` + `src/utils/async_state.py` + `src/utils/panel_state.py` |
 | 会话/聊天接口 | `src/server/api/chat.py` |
+| 科研接口的错误状态回执 | `src/server/api/research_status.py` |
 | DAG 节点 | `src/harness/node/extensions/<type>/` |
 | DAG 调度 / 检查点 | `src/harness/task_scheduler.py`、`src/harness/task_persistence.py` |
 | 聊天渲染 / 输入框 | `plugins/builtin/builtin-history/index.html` |
@@ -114,6 +116,7 @@ uv run pytest -m l3             # 静态红线
 | 新增 UI 插件 | `~/.purrcat/webmin-plugins/<id>/` 或 `plugins/builtin/<id>/` |
 | 记忆 / 传感器 / 自进化 | `src/memory/` / `src/sensor/` + `src/server/acp/` / `src/evolve/<type>/` |
 | 记忆检索打分 / 过滤 | `src/memory/purrmemo/core/scoring.py`、`filters.py` |
+| 面板异步状态 | `docs/async-state.md` |
 | Sensor 进程控制 | `src/sensor/processes.py`、`src/sensor/file_refs.py` |
 | 模型重试 / 用量账本 | `src/model/core/retry.py`、`src/model/manager/usage_stats.py` |
 

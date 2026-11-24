@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from src.notebook import document as doc
 from src.notebook import export as export_module
 from src.notebook import store, table
+from src.server.api import research_status
+from src.utils import panel_state
 
 router = APIRouter(prefix="/api/notebooks", tags=["Notebook"])
 
@@ -36,7 +38,7 @@ def evaluate(req: EvaluateReq):
     try:
         validated = doc.validate_document(req.document)
     except doc.DocumentError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc, reason=panel_state.REASON_PARSE) from exc
 
     sheets = {}
     for index, block in enumerate(validated["blocks"]):
@@ -55,7 +57,7 @@ def read_document(doc_id: str, revision: int | None = None):
     try:
         record = store.read(doc_id, revision)
     except store.NotebookError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise research_status.fail(exc, code=404) from exc
     return record
 
 
@@ -65,11 +67,13 @@ def commit_document(doc_id: str, req: CommitReq):
     try:
         return store.commit(doc_id, req.document, req.expected_revision)
     except store.RevisionConflict as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise research_status.fail(
+            exc, code=409, reason=panel_state.REASON_CONFLICT
+        ) from exc
     except doc.DocumentError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc, reason=panel_state.REASON_PARSE) from exc
     except store.NotebookError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc) from exc
 
 
 @router.get("/{doc_id}/history")
@@ -84,7 +88,7 @@ def export_document(doc_id: str, revision: int | None = None):
     try:
         record = store.read(doc_id, revision)
     except store.NotebookError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise research_status.fail(exc, code=404) from exc
 
     document = record["document"]
     sheets = {}

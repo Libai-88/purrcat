@@ -124,6 +124,7 @@
   }
   #record .actions { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
 </style>
+<link rel="stylesheet" href="/minimal/assets/async-state.css" />
 </head>
 <body>
   <div id="side">
@@ -154,10 +155,11 @@
       <select id="receiptpick" hidden></select>
       <button id="send" class="primary" disabled>发送给 Agent</button>
     </div>
-    <div id="page"><div id="empty">论文库还是空的。<br />点左上的「导入 PDF」选一篇，或用 Agent 的 <code>Paper</code> 工具导入。</div></div>
+    <div id="page"></div>
     <div id="record" hidden></div>
     <div id="hint"><span id="status">选中正文里的一段，再点「发送给 Agent」</span><span id="quote"></span></div>
   </div>
+<script src="/minimal/assets/async-state.js"></script>
 <script>
 (function () {
   var seq = 0;
@@ -187,6 +189,8 @@
   var elTitle = document.getElementById('title');
   var elPage = document.getElementById('page');
   var elRecord = document.getElementById('record');
+  // 论文正文区域的状态机：骨架屏、刷新保旧、失败重试都走这一份。
+  var pageRegion = new PurrCatAsync.Region(elPage);
   var elPager = document.getElementById('pager');
   var elStatus = document.getElementById('status');
   var elQuote = document.getElementById('quote');
@@ -262,6 +266,8 @@
 
   function openPaper(paper, jump) {
     view = 'papers';
+    // 换论文 = 换对象：旧正文必须清掉，不能当成新论文的内容。
+    pageRegion.reset();
     current = paper;
     pageNo = jump && jump.page ? jump.page : 1;
     pending = jump || null;
@@ -284,15 +290,25 @@
 
   function loadPage() {
     if (!current) return;
-    elPage.textContent = '载入中…';
+    // 首次加载显示骨架屏；翻页/刷新时保留上一页内容，只挂一条「更新中」。
+    var request = pageRegion.hasContent ? 'refresh' : 'first_load';
+    pageRegion.begin(request);
     fetch('/api/papers/' + encodeURIComponent(current.id) + '/pages/' + pageNo)
       .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
+        return r.json().then(function (body) {
+          if (!r.ok) {
+            var err = new Error(body.detail || ('HTTP ' + r.status));
+            err.status = body.status;
+            throw err;
+          }
+          return body;
+        });
       })
       .then(function (data) {
-        elPage.textContent = data.text || '（这一页没有文本）';
-        elPage.scrollTop = 0;
+        pageRegion.settle({ data: 'complete', request: 'idle', result: 'ok' }, function (node) {
+          node.textContent = data.text || '（这一页没有文本）';
+          node.scrollTop = 0;
+        });
         syncPager();
         clearSelection();
         if (pending) {
@@ -301,7 +317,9 @@
           pending = null;
         }
       })
-      .catch(function (err) { elPage.textContent = '读取失败：' + err.message; });
+      .catch(function (err) {
+        pageRegion.fail(err, function () { loadPage(); });
+      });
   }
 
   function highlightRange(start, end) {
@@ -569,6 +587,7 @@
       .then(function (data) { papers = data.papers || []; renderList(); return papers; });
   }
 
+
   function refreshRecords() {
     return fetch('/api/research/records').then(function (r) { return r.json(); })
       .then(function (data) { records = data.records || []; renderList(); return records; });
@@ -594,6 +613,17 @@
     } else {
       elPage.innerHTML = '<div id="empty">从左边选一篇论文开始读。</div>';
     }
+  }
+
+  /** 论文库还没有论文时：给「导入」入口，而不是一句干巴巴的「暂无」。 */
+  function renderEmptyLibrary() {
+    if (papers.length) return;
+    pageRegion.settle({
+      data: 'none', request: 'idle', result: 'empty',
+      reason: 'no_data', detail: '论文库还是空的。导入一篇 PDF，或让 Agent 用 Paper 工具导入。',
+      action: 'import',
+      onAction: function (action) { if (action === 'import') btnPick.click(); }
+    }, null);
   }
 
   tabPapers.onclick = function () { switchView('papers'); };
@@ -652,7 +682,10 @@
 
   // ---------- 启动 ----------
 
-  refreshPapers().then(function (list) { if (list.length) openPaper(list[0]); });
+  refreshPapers().then(function (list) {
+    if (list.length) openPaper(list[0]);
+    else renderEmptyLibrary();
+  });
   refreshRecords().catch(function () { /* 目录读不到不影响读论文 */ });
   loadReceipts().catch(function () { /* 没有数据收据不影响读论文 */ });
 })();

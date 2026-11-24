@@ -99,6 +99,7 @@
   #chartbox text { fill: var(--wm-label-2nd, #5b6474); font-size: 10px; }
   #chartmsg { margin-top: 8px; font-size: 12px; color: var(--wm-label-dim, #8b93a3); line-height: 1.7; }
 </style>
+<link rel="stylesheet" href="/minimal/assets/async-state.css" />
 </head>
 <body>
   <div id="side">
@@ -146,6 +147,7 @@
     </div>
     <div id="status">选中一个数据集查看它的结构与质量</div>
   </div>
+<script src="/minimal/assets/async-state.js"></script>
 <script>
 (function () {
   var seq = 0;
@@ -173,6 +175,8 @@
   var elList = document.getElementById('list');
   var elTitle = document.getElementById('title');
   var elBody = document.getElementById('body');
+  // 检查结果区域的状态机：原件丢失/变化在这里变成「不可用 + 重新导入」。
+  var bodyRegion = new PurrCatAsync.Region(elBody);
   var elStatus = document.getElementById('status');
   var elVersion = document.getElementById('version');
   var elVLabel = document.getElementById('vlabel');
@@ -223,6 +227,8 @@
   // ---------- 详情 ----------
 
   function openDataset(item) {
+    // 换数据集 = 换对象：旧检查结果必须清掉。
+    bodyRegion.reset();
     current = item;
     interpretations = {};
     assetId = (item.latest || {}).id || '';
@@ -247,7 +253,9 @@
 
   function loadInspection() {
     if (!current || !assetId) return;
-    elBody.innerHTML = '<div id="empty">载入中…</div>';
+    // 换版本或改解释时保留上一份内容，只挂「更新中」；首次才显示骨架屏。
+    var request = bodyRegion.hasContent ? 'refresh' : 'first_load';
+    bodyRegion.begin(request);
     btnAsk.disabled = true;
     var url = '/api/data/datasets/' + encodeURIComponent(current.id) + '/inspection'
       + '?asset_id=' + encodeURIComponent(assetId);
@@ -256,12 +264,30 @@
     }
     fetch(url)
       .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
+        return r.json().then(function (body) {
+          if (!r.ok) {
+            var err = new Error(body.detail || ('HTTP ' + r.status));
+            err.status = body.status;
+            throw err;
+          }
+          return body;
+        });
       })
-      .then(function (data) { inspection = data; renderInspection(); })
+      .then(function (data) {
+        inspection = data;
+        // 原件变了就是过期：内容还在，但不是最新的了。
+        var availability = (data.asset || {}).availability;
+        var settle = { data: 'complete', request: 'idle', result: 'ok' };
+        if (availability === 'changed') {
+          settle.data = 'stale';
+          settle.reason = 'source_changed';
+          settle.detail = '原文件已变，下面是导入时的内容。';
+          settle.action = 'import';
+        }
+        bodyRegion.settle(settle, function () { renderInspection(); });
+      })
       .catch(function (err) {
-        elBody.innerHTML = '<div id="empty">检查失败：' + esc(err.message) + '</div>';
+        bodyRegion.fail(err, function () { loadInspection(); });
       });
   }
 

@@ -104,6 +104,7 @@
   }
   .empty { color: var(--wm-label-dim, #8b93a3); line-height: 1.8; }
 </style>
+<link rel="stylesheet" href="/minimal/assets/async-state.css" />
 </head>
 <body>
   <div id="side">
@@ -124,6 +125,7 @@
     <div id="doc"><div class="empty">从左边选一篇笔记，或点「新建」。</div></div>
     <div id="status">证据只说明引文出现在原文的哪一页，不说明结论在科学上成立。</div>
   </div>
+<script src="/minimal/assets/async-state.js"></script>
 <script>
 (function () {
   var documents = [];
@@ -132,6 +134,8 @@
 
   var elList = document.getElementById('list');
   var elDoc = document.getElementById('doc');
+  // 笔记正文区域的状态机：骨架屏、刷新保旧、失败重试、冲突都走这一份。
+  var docRegion = new PurrCatAsync.Region(elDoc);
   var elTitle = document.getElementById('title');
   var elStatus = document.getElementById('status');
   var btnSave = document.getElementById('save');
@@ -182,10 +186,19 @@
   // ---------- 打开 ----------
 
   function open(docId) {
+    // 换笔记 = 换对象：旧正文必须清掉。
+    docRegion.reset();
+    docRegion.begin('first_load');
     return fetch('/api/notebooks/' + encodeURIComponent(docId))
       .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
+        return r.json().then(function (body) {
+          if (!r.ok) {
+            var err = new Error(body.detail || ('HTTP ' + r.status));
+            err.status = body.status;
+            throw err;
+          }
+          return body;
+        });
       })
       .then(function (record) {
         current = record;
@@ -194,10 +207,14 @@
         elTitle.value = record.document.title || '';
         elTitle.readOnly = false;
         renderList();
-        render();
+        docRegion.settle({ data: 'complete', request: 'idle', result: 'ok' }, function () {
+          render();
+        });
         setStatus('第 ' + record.revision + ' 版（摘要 ' + String(record.digest).slice(0, 12) + '）');
       })
-      .catch(function (err) { setStatus('打开失败：' + err.message, 'bad'); });
+      .catch(function (err) {
+        docRegion.fail(err, function () { open(docId); });
+      });
   }
 
   // ---------- 渲染 ----------

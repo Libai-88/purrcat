@@ -1,0 +1,131 @@
+/* 面板异步状态：骨架、空态、提示条与错误块的统一外观。
+   词表与规则在 async-state.js 里；这里只管长什么样。 */
+
+.pcx-skeleton-wrap {
+  padding: 12px 0;
+}
+
+.pcx-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pcx-skeleton__line {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--wm-bg-hover, #eef1f6);
+}
+
+.pcx-skeleton__line--short {
+  width: 62%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pcx-skeleton__line {
+    animation: pcx-breathe 1.8s ease-in-out infinite;
+  }
+
+  .pcx-skeleton__line--short {
+    animation-delay: 0.2s;
+  }
+}
+
+@keyframes pcx-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.pcx-state {
+  padding: 14px 16px;
+  border: 1px solid var(--wm-border, #e3e6ec);
+  border-radius: var(--wm-radius-sm, 6px);
+  background: var(--wm-bg-panel, #fbfbfd);
+  line-height: 1.6;
+}
+
+.pcx-state__title {
+  font-weight: 600;
+  color: var(--wm-ink, #1f2430);
+}
+
+.pcx-state__detail {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--wm-label-2nd, #5b6474);
+}
+
+.pcx-state__action {
+  margin-top: 10px;
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  border: 1px solid var(--wm-border, #d7dbe3);
+  border-radius: var(--wm-radius-sm, 6px);
+  background: var(--wm-bg-base, #fff);
+  color: var(--wm-ink, #1f2430);
+  cursor: pointer;
+}
+
+.pcx-state__action:hover {
+  background: var(--wm-bg-hover, #eef1f6);
+}
+
+.pcx-state--failed,
+.pcx-state--first_load_failed {
+  border-color: color-mix(in srgb, #b4463c 32%, var(--wm-border, #e3e6ec));
+}
+
+.pcx-state--failed .pcx-state__title,
+.pcx-state--first_load_failed .pcx-state__title {
+  color: #b4463c;
+}
+
+.pcx-state--unavailable {
+  border-style: dashed;
+}
+
+.pcx-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 5px 10px;
+  border-radius: var(--wm-radius-sm, 6px);
+  border: 1px solid var(--wm-border, #e3e6ec);
+  background: var(--wm-bg-panel, #fbfbfd);
+  font-size: 12px;
+  color: var(--wm-label-2nd, #5b6474);
+}
+
+.pcx-banner--stale,
+.pcx-banner--partial {
+  border-color: color-mix(in srgb, #b07a1f 34%, var(--wm-border, #e3e6ec));
+  color: #8a6318;
+}
+
+.pcx-banner--refresh_failed {
+  border-color: color-mix(in srgb, #b4463c 32%, var(--wm-border, #e3e6ec));
+  color: #b4463c;
+}
+
+.pcx-banner__action {
+  font: inherit;
+  font-size: 11px;
+  padding: 1px 8px;
+  border: 1px solid currentColor;
+  border-radius: var(--wm-radius-sm, 6px);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pcx-banner__action:hover {
+  background: var(--wm-bg-hover, #eef1f6);
+}

@@ -47,6 +47,13 @@ PurrCat 专属的四类扩展插件的开发指南，含各自专有词汇表与
 
 - [数据工作台](data.md)
 
+## 面板异步状态（`docs/async-state.md`）
+
+论文 / 数据 / 笔记三个面板共用的状态语义：有哪些数据、请求在做什么、
+业务结果是什么，以及失败后该重试还是该重新导入。
+
+- [面板异步状态](async-state.md)
+
 ---
 
 > API 文档与 `src/server` 真实路由的一致性由 `scripts/check_api_docs.py` 校验（CI 工作流 `.github/workflows/api-docs.yml`）。

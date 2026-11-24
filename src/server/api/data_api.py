@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from src.data import chart as chart_module
 from src.data import inspect as inspect_module
 from src.data import library, query as query_module
+from src.server.api import research_status
 
 router = APIRouter(prefix="/api/data", tags=["Data Library"])
 
@@ -55,7 +56,7 @@ def import_dataset(req: ImportReq):
             dataset_id=req.dataset_id,
         )
     except library.DataError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc) from exc
     return imported
 
 
@@ -74,7 +75,7 @@ def inspect_version(dataset_id: str, asset_id: str = "", interpretations: str = 
     try:
         resolved = library.resolve_version(dataset_id, asset_id)
     except library.DataError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise research_status.fail(exc, code=404) from exc
 
     parsed = {}
     if interpretations:
@@ -88,7 +89,7 @@ def inspect_version(dataset_id: str, asset_id: str = "", interpretations: str = 
     try:
         inspection = inspect_module.inspect_asset(resolved["asset"], parsed)
     except inspect_module.InspectionError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc) from exc
 
     return {
         "dataset_id": dataset_id,
@@ -124,7 +125,7 @@ def run_query(dataset_id: str, req: QueryReq):
             denominator=req.denominator,
         )
     except (library.DataError, inspect_module.InspectionError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc) from exc
     return outcome
 
 
@@ -159,9 +160,9 @@ def make_chart(dataset_id: str, req: ChartReq):
             denominator=req.denominator,
         )
     except (library.DataError, inspect_module.InspectionError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc) from exc
     except chart_module.ChartError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise research_status.fail(exc) from exc
     return document
 
 

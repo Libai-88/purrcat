@@ -79,6 +79,19 @@ def create_app(port: int | None = None) -> FastAPI:
     # 🌟 关闭时回收所有插件后端子进程，避免残留孤儿进程
     from src.server.api import plugin_runtime as _plugin_runtime
 
+    # 科研类错误多带一个 status：面板据此分清「不可用」和「失败」，
+    # 也知道该给「重试」还是「导入」。只针对这一类错误，其余错误形状不变。
+    from fastapi.responses import JSONResponse
+
+    from src.server.api.research_status import ResearchError
+
+    @app.exception_handler(ResearchError)
+    def _research_error_handler(request, exc: ResearchError):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail, "status": exc.status},
+        )
+
     @app.on_event("shutdown")
     def _shutdown_plugin_runtimes():
         _plugin_runtime.stop_all()
