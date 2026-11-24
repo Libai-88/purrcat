@@ -262,8 +262,13 @@ def build_receipt(
     grain: str = "",
     denominator: str = "",
     elapsed_seconds: float = 0.0,
+    summary: dict | None = None,
 ) -> dict:
-    """组装一条查询收据。"""
+    """组装一条查询收据。
+
+    summary 是这次查询算出来的数值摘要：聚合时是各组的值，否则是命中行数。
+    有了它，论文里的数字才能和这张表算出来的数字做字面比对。
+    """
     return {
         "query_id": "q-" + uuid.uuid4().hex[:12],
         "dataset_id": dataset["id"],
@@ -277,6 +282,7 @@ def build_receipt(
         "status": "completed",
         "row_count": result.get("total"),
         "row_count_returned": len(result.get("rows") or []),
+        "summary": summary or {"kind": "rows", "row_count": result.get("total")},
         "elapsed_seconds": round(elapsed_seconds, 4),
         "acceptance": ACCEPTANCE_NEEDS_REVIEW,
         "created_at": _now(),
@@ -332,8 +338,15 @@ def run_query(
     unit: str = "",
     grain: str = "",
     denominator: str = "",
+    category: str = "",
+    measure: str = "",
+    aggregation: str = "",
 ) -> dict:
-    """跑一次查询并留下收据。"""
+    """跑一次查询并留下收据。
+
+    给了 category 就按类目聚合，收据里的摘要会是各组的值；
+    否则摘要就是命中行数。
+    """
     from src.data import inspect as inspect_module
 
     resolved = library.resolve_version(dataset_id, asset_id)
@@ -348,6 +361,18 @@ def run_query(
     result = query_rows(inspection, spec)
     elapsed = time.time() - started
 
+    summary = {"kind": "rows", "row_count": result.get("total")}
+    if category:
+        grouped = aggregate(inspection, category, measure, aggregation or "sum")
+        summary = {
+            "kind": "aggregate",
+            "category": category,
+            "measure": measure,
+            "aggregation": grouped["aggregation"],
+            "values": {group["label"]: group["value"] for group in grouped["groups"]},
+            "omitted_groups": grouped["omitted_groups"],
+        }
+
     receipt = build_receipt(
         resolved["dataset"],
         asset,
@@ -358,6 +383,7 @@ def run_query(
         grain=grain,
         denominator=denominator,
         elapsed_seconds=elapsed,
+        summary=summary,
     )
     save_receipt(receipt)
     return {"receipt": receipt, "result": result}
