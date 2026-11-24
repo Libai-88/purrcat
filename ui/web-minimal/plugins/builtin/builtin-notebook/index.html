@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>笔记</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; overflow: hidden;
+    font-family: var(--wm-font, system-ui, -apple-system, "Segoe UI", sans-serif);
+    font-size: 13px; color: var(--wm-ink, #1f2430);
+    background: var(--wm-bg-base, #fff);
+  }
+  #side {
+    width: 220px; flex: none; display: flex; flex-direction: column;
+    border-right: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-sidebar, #f7f8fa);
+  }
+  #sidehead {
+    display: flex; align-items: center; gap: 6px; padding: 8px 10px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec);
+  }
+  #sidehead h2 { margin: 0; flex: 1; font-size: 12px; font-weight: 600; color: var(--wm-label-2nd, #5b6474); }
+  #list { flex: 1; overflow-y: auto; }
+  .item {
+    padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--wm-border-soft, #eef0f4);
+    color: var(--wm-label, #3a4152);
+  }
+  .item:hover { background: var(--wm-bg-hover, #eef1f6); }
+  .item.active { background: var(--wm-bg-active, #e4ebf7); color: var(--wm-ink, #1f2430); }
+  .item .t { display: block; line-height: 1.35; }
+  .item .m { display: block; margin-top: 3px; font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #bar {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-panel, #fbfbfd);
+  }
+  #title {
+    flex: 1; min-width: 0; font: inherit; font-weight: 600; color: var(--wm-ink, #1f2430);
+    background: transparent; border: 1px solid transparent; border-radius: var(--wm-radius-sm, 4px);
+    padding: 4px 6px;
+  }
+  #title:hover { border-color: var(--wm-border, #d7dbe3); }
+  #doc { flex: 1; overflow-y: auto; padding: 20px 30px 60px; line-height: 1.75; max-width: 900px; }
+  #doc h2 { font-size: 15px; margin: 22px 0 8px; }
+  #doc .blk { margin: 0 0 12px; }
+  .prose {
+    border: 1px solid transparent; border-radius: var(--wm-radius-sm, 4px); padding: 4px 6px;
+    outline: none; white-space: pre-wrap; min-height: 22px;
+  }
+  .prose:hover { border-color: var(--wm-border-soft, #eef0f4); }
+  .prose:focus { border-color: var(--wm-accent, #3b6ea5); background: var(--wm-bg-panel, #fbfbfd); }
+  .quote {
+    border-left: 3px solid var(--wm-accent, #3b6ea5); background: var(--wm-bg-panel, #fbfbfd);
+    padding: 8px 12px; border-radius: 0 var(--wm-radius-sm, 4px) var(--wm-radius-sm, 4px) 0;
+  }
+  .quote .k { font-size: 11px; color: var(--wm-label-dim, #8b93a3); margin-bottom: 4px; }
+  .quote .q { font-family: var(--wm-mono, ui-monospace, Menlo, Consolas, monospace); font-size: 12px; white-space: pre-wrap; }
+  .data {
+    border-left: 3px dashed var(--wm-border, #d7dbe3); background: var(--wm-bg-panel, #fbfbfd);
+    padding: 8px 12px; border-radius: 0 var(--wm-radius-sm, 4px) var(--wm-radius-sm, 4px) 0;
+  }
+  .data .k { font-size: 11px; color: var(--wm-label-dim, #8b93a3); margin-bottom: 4px; }
+  .finding {
+    border-left: 3px solid #4a8f5c; padding: 8px 0 8px 12px; margin: 0 0 14px;
+  }
+  .finding.counterevidence { border-left-color: #b4463c; }
+  .finding.gap { border-left-color: #d8a13a; }
+  .finding .claim { font-weight: 600; }
+  .finding .lim { margin-top: 4px; font-size: 12px; color: var(--wm-label-dim, #8b93a3); }
+  table.grid { border-collapse: collapse; margin: 4px 0 10px; font-size: 12px; }
+  table.grid th, table.grid td {
+    border: 1px solid var(--wm-border, #d7dbe3); padding: 3px 7px; min-width: 56px;
+  }
+  table.grid th { background: var(--wm-bg-sidebar, #f7f8fa); font-weight: 600; text-align: left; }
+  table.grid td.err { color: #b4463c; background: #fdf1f0; }
+  table.grid td.calc { color: var(--wm-label-2nd, #5b6474); }
+  table.grid td.editable { cursor: text; }
+  table.grid td.editable:focus { outline: 2px solid var(--wm-accent, #3b6ea5); outline-offset: -2px; }
+  .badge {
+    display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 11px;
+    border: 1px solid var(--wm-border, #d7dbe3); color: var(--wm-label-2nd, #5b6474);
+  }
+  .badge.warn { border-color: #d8a13a; color: #9a6c14; }
+  .badge.ok { border-color: #4a8f5c; color: #2f6b3e; }
+  #status {
+    padding: 7px 12px; border-top: 1px solid var(--wm-border, #e3e6ec);
+    color: var(--wm-label-dim, #8b93a3); font-size: 12px; background: var(--wm-bg-panel, #fbfbfd);
+  }
+  #status.warn { color: #9a6c14; }
+  #status.bad { color: #8f362e; }
+  button {
+    font: inherit; padding: 4px 10px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-panel, #fff);
+    color: var(--wm-ink, #1f2430); cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--wm-bg-hover, #eef1f6); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: #fff; }
+  button.primary:hover:not(:disabled) { background: var(--wm-accent-hi, #2f5c8d); }
+  button.link {
+    border: none; background: none; color: var(--wm-accent, #3b6ea5);
+    padding: 0 3px; text-decoration: underline; cursor: pointer; font-size: 12px;
+  }
+  .empty { color: var(--wm-label-dim, #8b93a3); line-height: 1.8; }
+</style>
+</head>
+<body>
+  <div id="side">
+    <div id="sidehead">
+      <h2>研究笔记</h2>
+      <button id="new">新建</button>
+    </div>
+    <div id="list"></div>
+  </div>
+  <div id="main">
+    <div id="bar">
+      <input id="title" type="text" placeholder="未命名笔记" readonly />
+      <button id="addtext">加正文</button>
+      <button id="addtable">加表格</button>
+      <button id="export">导出</button>
+      <button id="save" class="primary" disabled>保存</button>
+    </div>
+    <div id="doc"><div class="empty">从左边选一篇笔记，或点「新建」。</div></div>
+    <div id="status">证据只说明引文出现在原文的哪一页，不说明结论在科学上成立。</div>
+  </div>
+<script>
+(function () {
+  var documents = [];
+  var current = null;     // {doc_id, revision, digest, document}
+  var dirty = false;
+
+  var elList = document.getElementById('list');
+  var elDoc = document.getElementById('doc');
+  var elTitle = document.getElementById('title');
+  var elStatus = document.getElementById('status');
+  var btnSave = document.getElementById('save');
+
+  function esc(text) {
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function setStatus(text, tone) {
+    elStatus.textContent = text;
+    elStatus.className = tone || '';
+  }
+  function markDirty() {
+    dirty = true;
+    btnSave.disabled = false;
+    setStatus('有未保存的改动', 'warn');
+  }
+
+  // ---------- 列表 ----------
+
+  function renderList() {
+    elList.innerHTML = '';
+    if (!documents.length) {
+      var hint = document.createElement('div');
+      hint.className = 'item';
+      hint.style.cursor = 'default';
+      hint.textContent = '（还没有笔记）';
+      elList.appendChild(hint);
+      return;
+    }
+    documents.forEach(function (item) {
+      var row = document.createElement('div');
+      row.className = 'item' + (current && item.doc_id === current.doc_id ? ' active' : '');
+      row.innerHTML = '<span class="t"></span><span class="m"></span>';
+      row.querySelector('.t').textContent = item.title || item.doc_id;
+      row.querySelector('.m').textContent = '第 ' + item.revision + ' 版 · ' + (item.block_count || 0) + ' 个块';
+      row.onclick = function () { open(item.doc_id); };
+      elList.appendChild(row);
+    });
+  }
+
+  function refreshList() {
+    return fetch('/api/notebooks')
+      .then(function (r) { return r.json(); })
+      .then(function (data) { documents = data.documents || []; renderList(); });
+  }
+
+  // ---------- 打开 ----------
+
+  function open(docId) {
+    return fetch('/api/notebooks/' + encodeURIComponent(docId))
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (record) {
+        current = record;
+        dirty = false;
+        btnSave.disabled = true;
+        elTitle.value = record.document.title || '';
+        elTitle.readOnly = false;
+        renderList();
+        render();
+        setStatus('第 ' + record.revision + ' 版（摘要 ' + String(record.digest).slice(0, 12) + '）');
+      })
+      .catch(function (err) { setStatus('打开失败：' + err.message, 'bad'); });
+  }
+
+  // ---------- 渲染 ----------
+
+  function render() {
+    elDoc.innerHTML = '';
+    if (!current) return;
+    var document_ = current.document;
+    (document_.blocks || []).forEach(function (block) {
+      elDoc.appendChild(renderBlock(block));
+    });
+    evaluate();
+  }
+
+  function renderBlock(block) {
+    var wrap = document.createElement('div');
+    wrap.className = 'blk';
+    var attrs = block.attrs || {};
+    if (block.kind === 'text' || block.kind === 'heading') {
+      var prose = document.createElement('div');
+      prose.className = 'prose';
+      prose.contentEditable = 'true';
+      prose.textContent = attrs.text || '';
+      if (block.kind === 'heading') {
+        prose.style.fontWeight = '600';
+        prose.style.fontSize = '15px';
+        prose.style.marginTop = '14px';
+      }
+      prose.oninput = function () {
+        attrs.text = prose.textContent;
+        markDirty();
+      };
+      wrap.appendChild(prose);
+    } else if (block.kind === 'evidence') {
+      wrap.innerHTML =
+        '<div class="quote"><div class="k">原文证据 · ' + esc(attrs.paper_id) + ' 第 ' + esc(attrs.page) + ' 页' +
+        (attrs.verification && attrs.verification !== 'exact-match'
+          ? ' <span class="badge warn">' + esc(attrs.verification) + '</span>' : '') +
+        '</div><div class="q"></div></div>';
+      wrap.querySelector('.q').textContent = attrs.quote || '';
+    } else if (block.kind === 'data') {
+      wrap.innerHTML =
+        '<div class="data"><div class="k">数据收据 · ' + esc(attrs.receipt_id) + '</div>' +
+        '<div class="k"></div><div class="k"></div></div>';
+      var details = wrap.querySelectorAll('.k');
+      details[1].textContent = attrs.question || '';
+      var meta = [];
+      if (attrs.unit) meta.push('单位 ' + attrs.unit);
+      if (attrs.grain) meta.push('粒度 ' + attrs.grain);
+      if (attrs.row_count != null) meta.push(attrs.row_count + ' 行');
+      details[2].textContent = meta.join(' · ');
+    } else if (block.kind === 'finding') {
+      wrap.className = 'blk finding ' + esc(attrs.stance || 'support');
+      wrap.innerHTML = '<div class="claim"></div><div class="lim"></div>';
+      wrap.querySelector('.claim').textContent = attrs.claim || '';
+      wrap.querySelector('.lim').textContent = attrs.limitations ? '局限：' + attrs.limitations : '';
+    } else if (block.kind === 'table') {
+      wrap.appendChild(renderTable(block));
+    }
+    return wrap;
+  }
+
+  function renderTable(block) {
+    var attrs = block.attrs || {};
+    var sheet = attrs.sheet || {};
+    var rows = Math.min(intOf(sheet.rows, 0), 12);
+    var columns = Math.min(intOf(sheet.columns, 0), 10);
+    var table = document.createElement('table');
+    table.className = 'grid';
+    table.dataset.blockId = block.block_id || '';
+    var head = document.createElement('tr');
+    for (var c = 0; c < columns; c++) {
+      var th = document.createElement('th');
+      th.textContent = (attrs.column_names || {})[colLetter(c)] || colLetter(c);
+      head.appendChild(th);
+    }
+    table.appendChild(head);
+    for (var r = 0; r < rows; r++) {
+      var tr = document.createElement('tr');
+      for (var cc = 0; cc < columns; cc++) {
+        var td = document.createElement('td');
+        td.className = 'editable';
+        td.dataset.address = colLetter(cc) + (r + 1);
+        td.contentEditable = 'true';
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+    table.oninput = function (event) {
+      var td = event.target;
+      if (!td || !td.dataset || !td.dataset.address) return;
+      var sheet2 = findSheet(block);
+      sheet2.cells[td.dataset.address] = td.textContent;
+      markDirty();
+      evaluate();
+    };
+    var holder = document.createElement('div');
+    holder.appendChild(table);
+    return holder;
+  }
+
+  function findSheet(block) {
+    var attrs = block.attrs || {};
+    if (!attrs.sheet) attrs.sheet = { rows: 5, columns: 5, cells: {} };
+    if (!attrs.sheet.cells) attrs.sheet.cells = {};
+    return attrs.sheet;
+  }
+
+  function intOf(value, fallback) {
+    var n = parseInt(value, 10);
+    return isFinite(n) ? n : fallback;
+  }
+  function colLetter(index) {
+    var letters = '', n = index + 1;
+    while (n) { var rem = (n - 1) % 26; letters = String.fromCharCode(65 + rem) + letters; n = Math.floor((n - 1) / 26); }
+    return letters;
+  }
+
+  // ---------- 公式求值（调后端，引擎只有一份实现） ----------
+
+  function evaluate() {
+    if (!current) return;
+    fetch('/api/notebooks/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ document: current.document })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.values) return;
+        var values = {};
+        Object.keys(data.values).forEach(function (sheet) {
+          Object.keys(data.values[sheet]).forEach(function (address) {
+            values[address] = data.values[sheet][address];
+          });
+        });
+        document.querySelectorAll('table.grid').forEach(function (table) {
+          var blockId = table.dataset.blockId;
+          var sheetValues = data.values[blockId] || {};
+          table.querySelectorAll('td').forEach(function (td) {
+            var address = td.dataset.address;
+            var source = sheetOf(table, blockId);
+            var raw = source && source.cells ? source.cells[address] : undefined;
+            var value = sheetValues[address];
+            td.classList.remove('err', 'calc');
+            if (value !== undefined && value !== null && value !== '') {
+              td.textContent = formatValue(value);
+              if (raw && String(raw).charAt(0) === '=') td.classList.add('calc');
+              if (typeof value === 'string' && value.charAt(0) === '#') td.classList.add('err');
+            } else if (raw !== undefined) {
+              td.textContent = raw;
+            }
+          });
+        });
+      })
+      .catch(function () { /* 求值失败不阻塞编辑 */ });
+  }
+
+  function sheetOf(table, blockId) {
+    if (!current) return null;
+    var found = null;
+    (current.document.blocks || []).forEach(function (block) {
+      if (block.block_id === blockId) found = (block.attrs || {}).sheet;
+    });
+    return found;
+  }
+
+  function formatValue(value) {
+    if (value === null || value === undefined) return '';
+    if (value === true) return 'TRUE';
+    if (value === false) return 'FALSE';
+    if (typeof value === 'number' && isFinite(value)) {
+      return Number.isInteger(value) ? String(value) : String(Math.round(value * 1e6) / 1e6);
+    }
+    return String(value);
+  }
+
+  // ---------- 增块 ----------
+
+  function addBlock(kind) {
+    if (!current) { setStatus('先打开或新建一篇笔记', 'warn'); return; }
+    var block;
+    if (kind === 'table') {
+      block = {
+        kind: 'table',
+        block_id: 'tbl' + Math.random().toString(36).slice(2, 8),
+        attrs: { label: '', sheet: { rows: 5, columns: 5, cells: {} } }
+      };
+    } else {
+      block = { kind: kind, attrs: { text: '' } };
+    }
+    current.document.blocks = current.document.blocks || [];
+    current.document.blocks.push(block);
+    markDirty();
+    render();
+  }
+
+  document.getElementById('addtext').onclick = function () { addBlock('text'); };
+  document.getElementById('addtable').onclick = function () { addBlock('table'); };
+
+  elTitle.oninput = function () {
+    if (!current) return;
+    current.document.title = elTitle.value;
+    markDirty();
+  };
+
+  // ---------- 保存 ----------
+
+  btnSave.onclick = function () {
+    if (!current) return;
+    btnSave.disabled = true;
+    fetch('/api/notebooks/' + encodeURIComponent(current.doc_id), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        document: current.document,
+        expected_revision: current.revision
+      })
+    })
+      .then(function (r) {
+        return r.json().then(function (d) {
+          if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+          return d;
+        });
+      })
+      .then(function (record) {
+        current = record;
+        dirty = false;
+        setStatus('已保存第 ' + record.revision + ' 版（摘要 ' + String(record.digest).slice(0, 12) + '）');
+        return refreshList();
+      })
+      .catch(function (err) {
+        btnSave.disabled = false;
+        setStatus('保存失败：' + err.message, 'bad');
+      });
+  };
+
+  // ---------- 导出 ----------
+
+  document.getElementById('export').onclick = function () {
+    if (!current) return;
+    fetch('/api/notebooks/' + encodeURIComponent(current.doc_id) + '/export')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.losses && data.losses.length) {
+          setStatus('导出完成，但有 ' + data.losses.length + ' 处损失：' +
+            data.losses.map(function (l) { return l.code; }).join('、'), 'warn');
+        } else {
+          setStatus('导出完成，无损失');
+        }
+        var area = document.createElement('pre');
+        area.style.whiteSpace = 'pre-wrap';
+        area.style.marginTop = '12px';
+        area.textContent = data.markdown || '';
+        elDoc.appendChild(area);
+      })
+      .catch(function (err) { setStatus('导出失败：' + err.message, 'bad'); });
+  };
+
+  // ---------- 新建 ----------
+
+  document.getElementById('new').onclick = function () {
+    var docId = 'nb' + Math.random().toString(36).slice(2, 10);
+    var payload = {
+      schema_version: 1,
+      title: '未命名笔记',
+      blocks: [],
+      acceptance: 'unverified'
+    };
+    fetch('/api/notebooks/' + docId, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ document: payload })
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return refreshList().then(function () { return open(docId); });
+      })
+      .catch(function (err) { setStatus('新建失败：' + err.message, 'bad'); });
+  };
+
+  // ---------- 启动 ----------
+
+  refreshList().then(function () {
+    if (documents.length) open(documents[0].doc_id);
+  });
+})();
+</script>
+</body>
+</html>

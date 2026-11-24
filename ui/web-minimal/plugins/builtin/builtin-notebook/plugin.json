@@ -1,0 +1,12 @@
+{
+  "id": "builtin-notebook",
+  "root": "builtin",
+  "name": "笔记",
+  "description": "研究笔记：把一次研究写成由块组成的文档——正文、论文原文引文、数据查询收据、可计算的表格，以及引用前两者的结论。",
+  "description-en": "Research notebook: write a study as a document of blocks — prose, verbatim paper citations, data query receipts, computed tables, and findings that cite them.",
+  "icon": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4.5A2.5 2.5 0 0 1 6.5 2H18a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6.5A2.5 2.5 0 0 1 4 19.5z'/><path d='M8 7h8M8 11h8M8 15h4'/></svg>",
+  "slot": { "area": "panel" },
+  "entry": "index.html",
+  "dependency": [],
+  "configSchema": []
+}
