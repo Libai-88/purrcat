@@ -780,6 +780,11 @@ body.rail-nosidebar.has-panels .wm-main {
 }
 .wm-pp_menu-item:hover { background: var(--wm-bg-hover); color: var(--wm-label); }
 .wm-pp_menu-item.active { background: var(--wm-bg-active); color: var(--wm-label); }
+.wm-pp_menu-hint {
+  margin-left: auto; flex: none; max-width: 180px; padding-left: 10px;
+  font-size: 11px; color: var(--wm-label-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .wm-pp_menu-tag { margin-left: auto; flex: none; padding-left: 10px; font-size: 11px; color: var(--wm-label-dim); }
 .wm-pp_menu-ico { flex: none; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; }
 .wm-pp_menu-ico svg { display: block; width: 15px; height: 15px; }

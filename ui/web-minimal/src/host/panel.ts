@@ -247,6 +247,37 @@ import type { PluginDescriptor, PluginFrame, SlotDef } from './types.js';
     return tab;
   }
   // 依据 tabs/activeId 同步：标签条、每个标签的视图（保留已挂载帧）、空态、广播帧集合
+  // 空态引导：在 .wm-pp_empty 的 #phGrid 里给每个面板插件生成一张卡片。
+  // 卡片点击 = openPanelTab（与 + 菜单同一个入口），所以行为不会分叉。
+  export function renderEmptyGuide(emptyEl: HTMLElement, plugins: Array<Record<string, any>>): void {
+    const grid = emptyEl.querySelector('#phGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    plugins.forEach(({ p }) => {
+      const card = HOST.document.createElement('button');
+      card.type = 'button';
+      card.className = 'ph-card';
+      const name = HOST.document.createElement('span');
+      name.className = 'ph-name';
+      const ico = HOST.document.createElement('span');
+      ico.className = 'ph-ico';
+      paintPluginIcon(ico, p);
+      name.appendChild(ico);
+      const nm = HOST.document.createElement('span');
+      nm.textContent = p.name || p.id;
+      name.appendChild(nm);
+      card.appendChild(name);
+      const desc = HOST.document.createElement('div');
+      desc.className = 'ph-desc';
+      // description 是插件自述的第一句，足够新手判断「这是干什么的」
+      const d = String((p as any).description || '').trim();
+      desc.textContent = d.length > 60 ? d.slice(0, 60) + '…' : (d || '打开这个面板');
+      card.appendChild(desc);
+      card.addEventListener('click', () => openPanelTab(p.id));
+      grid.appendChild(card);
+    });
+  }
+
   export function renderPanel(st: PanelState): void {
     // 首次（或容器被重建后）按「内置容器」插件提供的外壳搭壳：标签条 + 内容区；
     // 已挂载视图随之失效需清空
@@ -269,6 +300,9 @@ import type { PluginDescriptor, PluginFrame, SlotDef } from './types.js';
       st.closeBtn!.addEventListener('click', () => { setContainerHidden(true); closePanelMenus(); });
       st.body = el.querySelector('.wm-pp_body') as HTMLElement;
       st.emptyEl = el.querySelector('.wm-pp_empty') as HTMLElement;
+      // 空态引导：把可开的面板亮成卡片（名字 + 一句说明，点击即开），
+      // 新手不用点 + 猜里面有什么。卡片内容由 renderEmptyGuide 填充。
+      renderEmptyGuide(st.emptyEl, st.plugins);
       st.views = {};
       st.frames = {};
     }
@@ -367,6 +401,14 @@ import type { PluginDescriptor, PluginFrame, SlotDef } from './types.js';
       const nm = HOST.document.createElement('span');
       nm.textContent = p.name || p.id;
       item.appendChild(nm);
+      // 一句说明：菜单里光有名字，新手猜不出「连接器 / 进化工厂」是干嘛的
+      const d = String((p as any).description || '').trim();
+      if (d) {
+        const hint = HOST.document.createElement('span');
+        hint.className = 'wm-pp_menu-hint';
+        hint.textContent = d.length > 40 ? d.slice(0, 40) + '…' : d;
+        item.appendChild(hint);
+      }
       if (isOpen) {
         const tag = HOST.document.createElement('span');
         tag.className = 'wm-pp_menu-tag';

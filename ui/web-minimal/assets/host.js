@@ -679,6 +679,33 @@
     tab.addEventListener("click", () => setActivePanelTab(st, id));
     return tab;
   }
+  function renderEmptyGuide(emptyEl, plugins) {
+    const grid = emptyEl.querySelector("#phGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    plugins.forEach(({ p }) => {
+      const card = HOST.document.createElement("button");
+      card.type = "button";
+      card.className = "ph-card";
+      const name = HOST.document.createElement("span");
+      name.className = "ph-name";
+      const ico = HOST.document.createElement("span");
+      ico.className = "ph-ico";
+      paintPluginIcon(ico, p);
+      name.appendChild(ico);
+      const nm = HOST.document.createElement("span");
+      nm.textContent = p.name || p.id;
+      name.appendChild(nm);
+      card.appendChild(name);
+      const desc = HOST.document.createElement("div");
+      desc.className = "ph-desc";
+      const d = String(p.description || "").trim();
+      desc.textContent = d.length > 60 ? d.slice(0, 60) + "\u2026" : d || "\u6253\u5F00\u8FD9\u4E2A\u9762\u677F";
+      card.appendChild(desc);
+      card.addEventListener("click", () => openPanelTab(p.id));
+      grid.appendChild(card);
+    });
+  }
   function renderPanel(st) {
     if (!st.head || !st.head.isConnected) {
       if (!panelShellTpl) return;
@@ -702,6 +729,7 @@
       });
       st.body = el.querySelector(".wm-pp_body");
       st.emptyEl = el.querySelector(".wm-pp_empty");
+      renderEmptyGuide(st.emptyEl, st.plugins);
       st.views = {};
       st.frames = {};
     }
@@ -798,6 +826,13 @@
       const nm = HOST.document.createElement("span");
       nm.textContent = p.name || p.id;
       item.appendChild(nm);
+      const d = String(p.description || "").trim();
+      if (d) {
+        const hint = HOST.document.createElement("span");
+        hint.className = "wm-pp_menu-hint";
+        hint.textContent = d.length > 40 ? d.slice(0, 40) + "\u2026" : d;
+        item.appendChild(hint);
+      }
       if (isOpen) {
         const tag = HOST.document.createElement("span");
         tag.className = "wm-pp_menu-tag";
@@ -4254,6 +4289,12 @@
     const target = areaActive(area) || areaCandidates(area)[0] || null;
     if (target) paintPluginIcon(g, target);
     else paintIcon(g, PANEL_AREA_ICON, "\u25A4");
+    const nm = btn.querySelector(".rail-name");
+    const label = target ? target.name || areaLabel(area) : areaLabel(area);
+    btn.title = areaOn(area) ? label + "\uFF08\u70B9\u51FB\u5207\u6362 / \u5173\u95ED\uFF09" : label + "\uFF08\u5DF2\u5173\u95ED\uFF0C\u70B9\u51FB\u6253\u5F00\uFF09";
+    btn.setAttribute("aria-label", btn.title);
+    btn.setAttribute("aria-pressed", areaOn(area) ? "true" : "false");
+    if (nm) nm.textContent = label;
   }
   function makeAreaRailButton(area) {
     const btn = HOST.document.createElement("button");

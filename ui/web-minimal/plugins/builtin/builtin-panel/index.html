@@ -100,11 +100,44 @@
   /* 内容区：各标签视图的定位基准 */
   .wm-pp_body { flex: 1; min-height: 0; position: relative; }
   .wm-pp_body iframe { border: 0; width: 100%; height: 100%; display: block; }
+  /* 空态：直接把可开的面板亮出来（名字 + 一句说明，点击即开），
+     不再让新手对着「点击上方 +」猜里面有什么 */
   .wm-pp_empty {
     height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--wm-label-dim);
-    font-size: 13px;
+    overflow-y: auto;
+    padding: 18px 20px 24px;
+  }
+  .wm-pp_empty .ph-title {
+    font-size: 13px; font-weight: 600; color: var(--wm-label);
+    margin-bottom: 4px;
+  }
+  .wm-pp_empty .ph-sub {
+    font-size: 12px; color: var(--wm-label-dim); margin-bottom: 14px;
+  }
+  .wm-pp_empty .ph-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .wm-pp_empty .ph-card {
+    text-align: left; padding: 10px 12px;
+    border: 1px solid var(--wm-border); border-radius: 10px;
+    background: var(--wm-bg-panel, var(--wm-bl-0));
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+  }
+  .wm-pp_empty .ph-card:hover {
+    background: var(--wm-bg-hover); border-color: var(--wm-border);
+  }
+  .wm-pp_empty .ph-card .ph-name {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: var(--wm-label);
+  }
+  .wm-pp_empty .ph-card .ph-name .ph-ico {
+    display: inline-flex; width: 16px; height: 16px;
+  }
+  .wm-pp_empty .ph-card .ph-name .ph-ico svg { width: 100%; height: 100%; }
+  .wm-pp_empty .ph-card .ph-desc {
+    margin-top: 4px; font-size: 12px; color: var(--wm-label-dim); line-height: 1.5;
   }
 </style>
 </head>
@@ -117,7 +150,11 @@
       <button class="wm-pp_drawer" title="关闭面板">✕</button>
     </div>
     <div class="wm-pp_body">
-      <div class="wm-pp_empty">点击上方 + 新建标签页</div>
+      <div class="wm-pp_empty">
+        <div class="ph-title">这里可以打开各个功能面板</div>
+        <div class="ph-sub">点下面任意一张卡片即可打开；之后它们会以标签页的形式出现在顶部。</div>
+        <div class="ph-grid" id="phGrid"></div>
+      </div>
     </div>
   </div>
 </body>

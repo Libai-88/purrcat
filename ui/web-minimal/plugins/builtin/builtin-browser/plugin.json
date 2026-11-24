@@ -3,10 +3,19 @@
   "root": "builtin",
   "name": "浏览器",
   "icon": "globe",
-  "slot": { "area": "panel" },
+  "slot": {
+    "area": "panel"
+  },
   "entry": "index.html",
   "openUrl": true,
   "configSchema": [
-    { "key": "homepage", "label": "主页地址", "type": "text", "default": "https://www.bing.com" }
-  ]
+    {
+      "key": "homepage",
+      "label": "主页地址",
+      "type": "text",
+      "default": "https://www.bing.com"
+    }
+  ],
+  "description": "内置浏览器：在应用内打开网页，给 Agent 抓取与操作页面用；论文、连接器里的外链也会在这里打开。",
+  "description-en": "Built-in browser: open web pages inside the app for the Agent to fetch and act on; external links from papers and connectors open here too."
 }

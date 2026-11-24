@@ -75,6 +75,17 @@ import type { PluginDescriptor } from './types.js';
     const target = areaActive(area) || areaCandidates(area)[0] || null;
     if (target) paintPluginIcon(g, target);
     else paintIcon(g, PANEL_AREA_ICON, '▤');
+    // 悬停提示说人话：新手看到的是「论文 / 会话历史」等功能名，
+    // 不是「面板容器 / 会话位」这种实现术语。区域关闭时说明怎么打开。
+    // aria-label 与 title 同步（可访问名），供读屏与自动化定位。
+    const nm = btn.querySelector('.rail-name') as HTMLElement | null;
+    const label = target ? (target.name || areaLabel(area)) : areaLabel(area);
+    btn.title = areaOn(area)
+      ? label + '（点击切换 / 关闭）'
+      : label + '（已关闭，点击打开）';
+    btn.setAttribute('aria-label', btn.title);
+    btn.setAttribute('aria-pressed', areaOn(area) ? 'true' : 'false');
+    if (nm) nm.textContent = label;
   }
   // 区域图标：区域生效=on；点击弹出候选菜单（仅一个候选时直接开/关）
   export function makeAreaRailButton(area: string): HTMLButtonElement {

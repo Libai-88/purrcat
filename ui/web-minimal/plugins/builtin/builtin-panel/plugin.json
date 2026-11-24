@@ -1,10 +1,12 @@
 {
   "id": "builtin-panel",
-  "name": "内置容器",
-  "description": "宿主原生的中栏面板容器（入驻 panel-container 区域）：顶部为多标签栏（Chrome 风格），每个面板插件各驻留一个独立 iframe，切换仅显隐、不重载；容器外壳的结构与样式由本插件提供。",
-  "description-en": "Native middle-column panel container living in the panel-container area: a Chrome-style tab strip where every panel-area plugin keeps its own persistent iframe (show/hide only, never reloaded). The shell markup and styling are provided by this plugin.",
+  "name": "工具面板",
+  "description": "中栏工具面板区：论文、数据、笔记、自动化、连接器等面板以标签页形式开在这里。点击白条图标开关，容器内 + 可再开更多面板。",
+  "description-en": "Middle-column tool panels: papers, data, notebook, automations, connectors and more open as tabs here. Toggle from the left rail; use + inside to open more.",
   "icon": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect width='18' height='18' x='3' y='3' rx='2'/><path d='M3 9h18'/></svg>",
-  "slot": { "area": "panel-container" },
+  "slot": {
+    "area": "panel-container"
+  },
   "entry": "index.html",
   "root": "builtin",
   "dependency": [],
