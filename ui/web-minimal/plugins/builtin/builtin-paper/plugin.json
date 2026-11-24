@@ -1,0 +1,12 @@
+{
+  "id": "builtin-paper",
+  "root": "builtin",
+  "name": "论文",
+  "description": "论文阅读面板：浏览本机论文库的原文，选中段落可一键发送给 Agent 做证据核对。",
+  "description-en": "Paper reading panel: browse the local paper library, select a passage and send it to the Agent for evidence checking.",
+  "icon": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 19.5V5a2 2 0 0 1 2-2h13v18H6.5A2.5 2.5 0 0 0 4 21.5'/><path d='M8 7h7M8 11h7'/></svg>",
+  "slot": { "area": "panel" },
+  "entry": "index.html",
+  "dependency": [],
+  "configSchema": []
+}

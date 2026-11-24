@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>论文</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; overflow: hidden;
+    font-family: var(--wm-font, system-ui, -apple-system, "Segoe UI", sans-serif);
+    font-size: 13px; color: var(--wm-ink, #1f2430);
+    background: var(--wm-bg-base, #fff);
+  }
+  #side {
+    width: 240px; flex: none; display: flex; flex-direction: column;
+    border-right: 1px solid var(--wm-border, #e3e6ec);
+    background: var(--wm-bg-sidebar, #f7f8fa);
+  }
+  #sidehead {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px; border-bottom: 1px solid var(--wm-border, #e3e6ec);
+  }
+  #sidehead h2 {
+    margin: 0; flex: 1; font-size: 12px; font-weight: 600;
+    color: var(--wm-label-2nd, #5b6474);
+  }
+  #imp { padding: 8px 10px; border-bottom: 1px solid var(--wm-border, #e3e6ec); }
+  #imp input {
+    width: 100%; font: inherit; padding: 5px 7px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-input, #fff);
+    color: var(--wm-ink, #1f2430);
+  }
+  #imp .row { display: flex; gap: 6px; margin-top: 6px; }
+  #imp .row button { flex: 1; }
+  #err { margin-top: 6px; font-size: 11px; color: #b4463c; line-height: 1.5; word-break: break-all; }
+  #papers { flex: 1; overflow-y: auto; }
+  .paper {
+    padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--wm-border-soft, #eef0f4);
+    color: var(--wm-label, #3a4152);
+  }
+  .paper:hover { background: var(--wm-bg-hover, #eef1f6); }
+  .paper.active { background: var(--wm-bg-active, #e4ebf7); color: var(--wm-ink, #1f2430); }
+  .paper .t { display: block; line-height: 1.35; }
+  .paper .m { display: block; margin-top: 3px; font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #bar {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-panel, #fbfbfd);
+  }
+  #bar .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  button {
+    font: inherit; padding: 4px 10px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-panel, #fff);
+    color: var(--wm-ink, #1f2430); cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--wm-bg-hover, #eef1f6); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: #fff; }
+  button.primary:hover:not(:disabled) { background: var(--wm-accent-hi, #2f5c8d); }
+  #page {
+    flex: 1; overflow-y: auto; padding: 18px 26px; line-height: 1.75;
+    font-family: var(--wm-mono, ui-monospace, Menlo, Consolas, monospace);
+    white-space: pre-wrap; word-break: break-word; user-select: text;
+  }
+  #page::selection { background: var(--wm-accent-weak, #d6e4f5); }
+  #empty { padding: 40px 26px; color: var(--wm-label-dim, #8b93a3); line-height: 1.8; }
+  #hint {
+    padding: 8px 12px; border-top: 1px solid var(--wm-border, #e3e6ec);
+    color: var(--wm-label-dim, #8b93a3); font-size: 12px;
+    display: flex; align-items: center; gap: 10px; background: var(--wm-bg-panel, #fbfbfd);
+  }
+  #status { flex: 1; }
+  #quote { color: var(--wm-ink, #1f2430); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+</head>
+<body>
+  <div id="side">
+    <div id="sidehead">
+      <h2>论文库</h2>
+      <button id="pick">导入 PDF</button>
+    </div>
+    <div id="imp" hidden>
+      <input id="path" type="text" placeholder="PDF 的绝对路径" spellcheck="false" />
+      <div class="row">
+        <button id="browse">选择文件</button>
+        <button id="doimport" class="primary">导入</button>
+      </div>
+      <div id="err"></div>
+    </div>
+    <div id="papers"></div>
+  </div>
+  <div id="main">
+    <div id="bar">
+      <span class="title" id="title">未选择论文</span>
+      <button id="prev">上一页</button>
+      <span id="pager"></span>
+      <button id="next">下一页</button>
+      <button id="send" class="primary" disabled>发送给 Agent</button>
+    </div>
+    <div id="page"><div id="empty">论文库还是空的。<br />点左上的「导入 PDF」选一篇，或用 Agent 的 <code>Paper</code> 工具导入。</div></div>
+    <div id="hint"><span id="status">选中正文里的一段，再点「发送给 Agent」</span><span id="quote"></span></div>
+  </div>
+<script>
+(function () {
+  var seq = 0;
+  function callAction(actionId, payload) {
+    return new Promise(function (resolve, reject) {
+      var id = ++seq;
+      function onMsg(e) {
+        var m = e.data;
+        if (m && m.type === 'callActionResult' && m.id === id) {
+          window.removeEventListener('message', onMsg);
+          if (m.ok) resolve(m.data); else reject(new Error(m.error || '调用失败'));
+        }
+      }
+      window.addEventListener('message', onMsg);
+      window.parent.postMessage({ type: 'callAction', id: id, actionId: actionId, payload: payload || {} }, '*');
+    });
+  }
+
+  var papers = [];
+  var current = null;   // 当前论文元数据
+  var pageNo = 1;
+
+  var elPapers = document.getElementById('papers');
+  var elTitle = document.getElementById('title');
+  var elPage = document.getElementById('page');
+  var elPager = document.getElementById('pager');
+  var elStatus = document.getElementById('status');
+  var elQuote = document.getElementById('quote');
+  var elImp = document.getElementById('imp');
+  var elPath = document.getElementById('path');
+  var elErr = document.getElementById('err');
+  var btnPrev = document.getElementById('prev');
+  var btnNext = document.getElementById('next');
+  var btnSend = document.getElementById('send');
+  var btnPick = document.getElementById('pick');
+  var btnBrowse = document.getElementById('browse');
+  var btnImport = document.getElementById('doimport');
+
+  function setStatus(text) { elStatus.textContent = text; }
+
+  function renderList() {
+    elPapers.innerHTML = '';
+    if (!papers.length) {
+      var hint = document.createElement('div');
+      hint.className = 'paper';
+      hint.style.cursor = 'default';
+      hint.textContent = '（暂无）';
+      elPapers.appendChild(hint);
+      return;
+    }
+    papers.forEach(function (p) {
+      var row = document.createElement('div');
+      row.className = 'paper' + (current && p.id === current.id ? ' active' : '');
+      var t = document.createElement('span');
+      t.className = 't';
+      t.textContent = p.title || p.id;
+      var m = document.createElement('span');
+      m.className = 'm';
+      m.textContent = p.page_count + ' 页 · ' + (p.file_name || '');
+      row.appendChild(t);
+      row.appendChild(m);
+      row.onclick = function () { open(p); };
+      elPapers.appendChild(row);
+    });
+  }
+
+  function syncPager() {
+    var total = current ? current.page_count : 0;
+    elPager.textContent = total ? (pageNo + ' / ' + total) : '';
+    btnPrev.disabled = !total || pageNo <= 1;
+    btnNext.disabled = !total || pageNo >= total;
+  }
+
+  function open(paper) {
+    current = paper;
+    pageNo = 1;
+    renderList();
+    elTitle.textContent = paper.title || paper.id;
+    loadPage();
+  }
+
+  function loadPage() {
+    if (!current) return;
+    elPage.textContent = '载入中…';
+    fetch('/api/papers/' + encodeURIComponent(current.id) + '/pages/' + pageNo)
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        elPage.textContent = data.text || '（这一页没有文本）';
+        elPage.scrollTop = 0;
+        syncPager();
+        clearSelection();
+      })
+      .catch(function (err) {
+        elPage.textContent = '读取失败：' + err.message;
+      });
+  }
+
+  function clearSelection() {
+    btnSend.disabled = true;
+    elQuote.textContent = '';
+    setStatus('选中正文里的一段，再点「发送给 Agent」');
+  }
+
+  function selectedQuote() {
+    var sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return '';
+    return String(sel).replace(/\s+/g, ' ').trim();
+  }
+
+  document.addEventListener('selectionchange', function () {
+    var quote = selectedQuote();
+    btnSend.disabled = !quote;
+    elQuote.textContent = quote ? '「' + quote.slice(0, 60) + (quote.length > 60 ? '…' : '') + '」' : '';
+  });
+
+  btnSend.onclick = function () {
+    var quote = selectedQuote();
+    if (!quote || !current) return;
+    var payload = {
+      paper_id: current.id,
+      title: current.title || '',
+      page: pageNo,
+      page_count: current.page_count,
+      quote: quote
+    };
+    var events = [
+      { type: 'paper-evidence', content: JSON.stringify(payload) },
+      { type: 'user', content: '请核对这段引文：论文《' + (current.title || current.id) + '》第 ' + pageNo + ' 页的「' + quote + '」——原文是否支持它？在哪一页？' }
+    ];
+    callAction('chat.sendBatch', { events: events })
+      .then(function () {
+        setStatus('已发送给 Agent');
+        clearSelection();
+      })
+      .catch(function (err) { setStatus('发送失败：' + err.message); });
+  };
+
+  btnPrev.onclick = function () { if (pageNo > 1) { pageNo -= 1; loadPage(); } };
+  btnNext.onclick = function () {
+    if (current && pageNo < current.page_count) { pageNo += 1; loadPage(); }
+  };
+
+  // ---- 导入 ----
+
+  function refresh() {
+    return fetch('/api/papers')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        papers = data.papers || [];
+        renderList();
+        return papers;
+      });
+  }
+
+  function doImport(path) {
+    if (!path) { elErr.textContent = '请填写 PDF 的路径'; return; }
+    elErr.textContent = '导入中…（解析大 PDF 需要几秒）';
+    btnImport.disabled = true;
+    fetch('/api/papers/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: path })
+    })
+      .then(function (r) {
+        return r.json().then(function (d) {
+          if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+          return d;
+        });
+      })
+      .then(function (meta) {
+        elErr.textContent = '';
+        elImp.hidden = true;
+        elPath.value = '';
+        return refresh().then(function () { open(meta); });
+      })
+      .catch(function (err) { elErr.textContent = '导入失败：' + err.message; })
+      .then(function () { btnImport.disabled = false; });
+  }
+
+  btnPick.onclick = function () {
+    elImp.hidden = !elImp.hidden;
+    elErr.textContent = '';
+    if (!elImp.hidden) elPath.focus();
+  };
+
+  btnBrowse.onclick = function () {
+    // 原生文件选择只在桌面端可用：插件与宿主同源，可以直接读宿主暴露的 preload 能力。
+    // 不先探测的话，独立浏览器里这个调用会一直悬着，用户看不到任何反馈。
+    var host = window.parent;
+    if (!host || !host.purrcat || !host.purrcat.openDialog) {
+      elErr.textContent = '当前环境没有原生文件选择，请直接填写 PDF 的路径';
+      return;
+    }
+    callAction('dialog.files', {})
+      .then(function (paths) {
+        if (paths && paths.length) elPath.value = paths[0];
+        else elErr.textContent = '没有选择文件';
+      })
+      .catch(function (err) {
+        elErr.textContent = '原生文件选择不可用（' + err.message + '），请直接填写路径';
+      });
+  };
+
+  btnImport.onclick = function () { doImport(elPath.value.trim()); };
+  elPath.onkeydown = function (e) {
+    if (e.key === 'Enter') { doImport(elPath.value.trim()); }
+  };
+
+  refresh()
+    .then(function (list) { if (list.length) open(list[0]); })
+    .catch(function (err) {
+      elPage.innerHTML = '<div id="empty">读取论文库失败：' + err.message + '</div>';
+    });
+})();
+</script>
+</body>
+</html>

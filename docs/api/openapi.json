@@ -508,6 +508,19 @@
         "title": "NewSessionReq",
         "type": "object"
       },
+      "PaperImportReq": {
+        "properties": {
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "PaperImportReq",
+        "type": "object"
+      },
       "ParadigmSaveReq": {
         "properties": {
           "data": {
@@ -3954,6 +3967,198 @@
         "summary": "Search",
         "tags": [
           "Memory System"
+        ]
+      }
+    },
+    "/api/papers": {
+      "get": {
+        "description": "列出论文库中的论文。",
+        "operationId": "list_papers_api_papers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Papers",
+        "tags": [
+          "Paper Library"
+        ]
+      }
+    },
+    "/api/papers/import": {
+      "post": {
+        "description": "导入本机 PDF 到论文库，返回论文元数据。\n\n解析在请求线程里跑（FastAPI 的同步路由走线程池），大 PDF 会让这次请求等上几秒。",
+        "operationId": "import_paper_api_papers_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaperImportReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Paper",
+        "tags": [
+          "Paper Library"
+        ]
+      }
+    },
+    "/api/papers/{paper_id}": {
+      "get": {
+        "description": "取一篇论文的元数据。",
+        "operationId": "get_paper_api_papers__paper_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "paper_id",
+            "required": true,
+            "schema": {
+              "title": "Paper Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Paper",
+        "tags": [
+          "Paper Library"
+        ]
+      }
+    },
+    "/api/papers/{paper_id}/fulltext": {
+      "get": {
+        "description": "读整篇原文（分页拼接）。",
+        "operationId": "get_fulltext_api_papers__paper_id__fulltext_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "paper_id",
+            "required": true,
+            "schema": {
+              "title": "Paper Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Fulltext",
+        "tags": [
+          "Paper Library"
+        ]
+      }
+    },
+    "/api/papers/{paper_id}/pages/{page}": {
+      "get": {
+        "description": "读某篇论文某一页的原文。",
+        "operationId": "get_page_api_papers__paper_id__pages__page__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "paper_id",
+            "required": true,
+            "schema": {
+              "title": "Paper Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "page",
+            "required": true,
+            "schema": {
+              "title": "Page",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Page",
+        "tags": [
+          "Paper Library"
         ]
       }
     },

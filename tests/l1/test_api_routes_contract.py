@@ -26,6 +26,7 @@ ROUTERS = {
     "paradigms": "src.server.api.paradigms",
     "acp": "src.server.api.acp",
     "webmin": "src.server.api.webmin",
+    "papers": "src.server.api.papers_api",
 }
 
 # (path, methods, endpoint name)，顺序即 FastAPI 匹配顺序，必须逐字保持。
@@ -238,6 +239,14 @@ EXPECTED_ROUTES = {
         ("/acp/stream", "GET", "acp_stream"),
         ("/acp/file", "POST", "acp_upload_file"),
         ("/acp/file", "GET", "acp_download_file"),
+    ],
+    "papers": [
+        ("/api/papers", "GET", "list_papers"),
+        # 必须在 /api/papers/{paper_id} 之前：否则 "import" 会被当成 paper_id
+        ("/api/papers/import", "POST", "import_paper"),
+        ("/api/papers/{paper_id}", "GET", "get_paper"),
+        ("/api/papers/{paper_id}/pages/{page}", "GET", "get_page"),
+        ("/api/papers/{paper_id}/fulltext", "GET", "get_fulltext"),
     ],
     "webmin": [
         ("/api/webmin/manifest", "GET", "api_webmin_manifest"),

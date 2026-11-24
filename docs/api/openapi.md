@@ -1542,6 +1542,99 @@ ACP 接入状态：relay 部署情况 / 端口 / uv 可用性
 | 200 | Successful Response | - |
 | 422 | Validation Error | HTTPValidationError |
 
+## Paper Library
+
+### `GET /api/papers`
+
+**标题**：List Papers
+
+列出论文库中的论文。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `POST /api/papers/import`
+
+**标题**：Import Paper
+
+导入本机 PDF 到论文库，返回论文元数据。
+
+#### 请求体
+
+**Schema**：`PaperImportReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/papers/{paper_id}`
+
+**标题**：Get Paper
+
+取一篇论文的元数据。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| paper_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/papers/{paper_id}/fulltext`
+
+**标题**：Get Fulltext
+
+读整篇原文（分页拼接）。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| paper_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/papers/{paper_id}/pages/{page}`
+
+**标题**：Get Page
+
+读某篇论文某一页的原文。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| paper_id | path | string | 是 |  |
+| page | path | integer | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
 ## Paradigms
 
 ### `GET /api/paradigms`
