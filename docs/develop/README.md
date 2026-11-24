@@ -16,11 +16,12 @@
 | `main.py` | 后端入口：初始化配置 → Agent → FastAPI |
 | `src/agent/` | 主循环、会话存储、范式 Hook、子代理、心跳 |
 | `src/model/` | 模型门面、Key 分配、并发、用量追踪 |
-| `src/tool/` | Bash / FileSystem / BrainStorm / Task / Search / Fetch / Memo / Paper / Research / Data / Request / Cron / CallMCP / KernelUpgrade |
+| `src/tool/` | Bash / FileSystem / BrainStorm / Task / Search / Fetch / Memo / Paper / Research / Data / Notebook / Request / Cron / CallMCP / KernelUpgrade |
 | `src/harness/` | DAG 引擎与节点扩展 |
 | `src/memory/` | PurrMemo（`purrmemo/core/storage/*_engine.py`） |
 | `src/papers/` | 论文库：PDF 导入分页、引文定位、证据核对 |
 | `src/data/` | 数据集库：不可变版本、结构检查、查询收据 |
+| `src/notebook/` | 研究笔记：块文档、公式引擎、不可变修订 |
 | `src/sensor/` + `src/server/acp/` | Sensor 生命周期、ACP 协议 |
 | `src/server/api/` | 全部 HTTP/WS 路由与插件运行时 |
 | `src/evolve/` | 进化工厂（skill/mcp/sensor/agentloop/graph/ui_plugin） |

@@ -102,6 +102,7 @@ uv run pytest -m l3             # 静态红线
 | 论文库与证据核对 | `src/papers/`（库）+ `src/tool/paper/`（工具） |
 | 研究记录与人工复核 | `src/papers/records.py` + `src/tool/research/` + `src/server/api/research_api.py` |
 | 数据集库与查询收据 | `src/data/`（库）+ `src/tool/data/`（工具）+ `src/server/api/data_api.py` |
+| 研究笔记与公式引擎 | `src/notebook/`（库）+ `src/tool/notebook/`（工具）+ `src/server/api/notebook_api.py` |
 | 会话/聊天接口 | `src/server/api/chat.py` |
 | DAG 节点 | `src/harness/node/extensions/<type>/` |
 | DAG 调度 / 检查点 | `src/harness/task_scheduler.py`、`src/harness/task_persistence.py` |
