@@ -209,11 +209,13 @@ async def _bg_heavy_init():
 
     # 5. 后台慢速加载：计算向量和加载大模型
     def _build_heavy_vectors():
+        from src.tool.search.catalog_search import rebuild_catalog_index_async
         from src.tool.search.mcp_search import MCPSearcher
         from src.tool.search.skill_search import SkillSearcher
 
         MCPSearcher().build_vectors_in_background()
         SkillSearcher().build_vectors_in_background()
+        rebuild_catalog_index_async()
 
     # 用独立的 Task 去算矩阵，完全不影响主体
     asyncio.create_task(asyncio.to_thread(_build_heavy_vectors))
