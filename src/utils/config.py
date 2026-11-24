@@ -67,6 +67,12 @@ GRAPHS_DIR = os.path.join(PURRCAT_DIR, "graph")
 MCP_SOURCE_DIR = os.path.join(PURRCAT_DIR, "mcps")
 SENSOR_EXTENSION_DIR = os.path.join(PURRCAT_DIR, "sensor")
 
+# 科研技能目录：用户覆盖优先，发行版副本兜底
+RESEARCH_CATALOG_PATH = os.path.join(PURRCAT_DIR, "research-catalog.json")
+RESEARCH_CATALOG_SHIPPED_PATH = os.path.join(SRC_DIR, "utils", "research_catalog.json")
+# 目录检索的稠密矩阵缓存（体积较大，跟随用户可选的数据目录）
+RESEARCH_CATALOG_INDEX_DIR = os.path.join(DATA_ROOT, "research-catalog")
+
 SCHEDULE_FILE = os.path.join(SCHEDULE_DIR, "schedule.json")
 
 AGENT_DIR = os.path.join(SRC_DIR, "agent")
