@@ -9,6 +9,7 @@ from .bash import BASH_TOOL_SCHEMA
 from .brainstorm import BRAINSTORM_TOOL_SCHEMA
 from .callmcp import MCP_TOOL_SCHEMA
 from .cron import CRON_TOOL_SCHEMA
+from .data import DATA_TOOL_SCHEMA
 from .fetch import FETCH_TOOL_SCHEMA
 from .filesystem import FILESYSTEM_TOOL_SCHEMA
 from .memo import MEMO_TOOL_SCHEMA
@@ -32,6 +33,7 @@ AGENT_TOOL_SCHEMA = [
     BASH_TOOL_SCHEMA,
     BRAINSTORM_TOOL_SCHEMA,
     CRON_TOOL_SCHEMA,
+    DATA_TOOL_SCHEMA,
     FETCH_TOOL_SCHEMA,
     FILESYSTEM_TOOL_SCHEMA,
     MEMO_TOOL_SCHEMA,

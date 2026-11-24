@@ -34,6 +34,7 @@ TOOL_FUNC_MAP = {
     "bash": "Bash",
     "brainstorm": "BrainStorm",
     "cron": "Cron",
+    "data": "Data",
     "callmcp": "CallMCP",
     "memo": "Memo",
     "paper": "Paper",
