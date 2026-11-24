@@ -8,6 +8,7 @@ import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from src.data import chart as chart_module
 from src.data import inspect as inspect_module
 from src.data import library, query as query_module
 
@@ -125,6 +126,58 @@ def run_query(dataset_id: str, req: QueryReq):
     except (library.DataError, inspect_module.InspectionError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return outcome
+
+
+class ChartReq(BaseModel):
+    asset_id: str = ""
+    chart_type: str = "bar"
+    x: str = ""
+    y: str = ""
+    aggregation: str = "sum"
+    interpretations: dict = {}
+    title: str = ""
+    unit: str = ""
+    grain: str = ""
+    denominator: str = ""
+
+
+@router.post("/datasets/{dataset_id}/chart")
+def make_chart(dataset_id: str, req: ChartReq):
+    """画一张图，保存图表规格（带完整出处）。"""
+    try:
+        document = chart_module.make_chart(
+            dataset_id,
+            req.asset_id,
+            chart_type=req.chart_type,
+            x_field=req.x,
+            y_field=req.y,
+            aggregation=req.aggregation,
+            interpretations=req.interpretations or {},
+            title=req.title,
+            unit=req.unit,
+            grain=req.grain,
+            denominator=req.denominator,
+        )
+    except (library.DataError, inspect_module.InspectionError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except chart_module.ChartError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return document
+
+
+@router.get("/charts")
+def list_charts():
+    """列出已保存的图表规格。"""
+    return {"charts": chart_module.list_charts()}
+
+
+@router.get("/charts/{digest}")
+def get_chart(digest: str):
+    """读一份图表规格。"""
+    try:
+        return chart_module.read_chart(digest)
+    except chart_module.ChartError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.get("/receipts")

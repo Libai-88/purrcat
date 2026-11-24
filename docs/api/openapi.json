@@ -92,6 +92,63 @@
         "title": "BranchSessionReq",
         "type": "object"
       },
+      "ChartReq": {
+        "properties": {
+          "aggregation": {
+            "default": "sum",
+            "title": "Aggregation",
+            "type": "string"
+          },
+          "asset_id": {
+            "default": "",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "chart_type": {
+            "default": "bar",
+            "title": "Chart Type",
+            "type": "string"
+          },
+          "denominator": {
+            "default": "",
+            "title": "Denominator",
+            "type": "string"
+          },
+          "grain": {
+            "default": "",
+            "title": "Grain",
+            "type": "string"
+          },
+          "interpretations": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Interpretations",
+            "type": "object"
+          },
+          "title": {
+            "default": "",
+            "title": "Title",
+            "type": "string"
+          },
+          "unit": {
+            "default": "",
+            "title": "Unit",
+            "type": "string"
+          },
+          "x": {
+            "default": "",
+            "title": "X",
+            "type": "string"
+          },
+          "y": {
+            "default": "",
+            "title": "Y",
+            "type": "string"
+          }
+        },
+        "title": "ChartReq",
+        "type": "object"
+      },
       "ChatBatchReq": {
         "properties": {
           "events": {
@@ -2440,6 +2497,67 @@
         ]
       }
     },
+    "/api/data/charts": {
+      "get": {
+        "description": "列出已保存的图表规格。",
+        "operationId": "list_charts_api_data_charts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Charts",
+        "tags": [
+          "Data Library"
+        ]
+      }
+    },
+    "/api/data/charts/{digest}": {
+      "get": {
+        "description": "读一份图表规格。",
+        "operationId": "get_chart_api_data_charts__digest__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "digest",
+            "required": true,
+            "schema": {
+              "title": "Digest",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Chart",
+        "tags": [
+          "Data Library"
+        ]
+      }
+    },
     "/api/data/datasets": {
       "get": {
         "description": "列出数据集。",
@@ -2558,6 +2676,57 @@
           }
         },
         "summary": "Get Dataset",
+        "tags": [
+          "Data Library"
+        ]
+      }
+    },
+    "/api/data/datasets/{dataset_id}/chart": {
+      "post": {
+        "description": "画一张图，保存图表规格（带完整出处）。",
+        "operationId": "make_chart_api_data_datasets__dataset_id__chart_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChartReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Make Chart",
         "tags": [
           "Data Library"
         ]

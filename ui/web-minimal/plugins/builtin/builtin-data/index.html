@@ -87,6 +87,17 @@
     color: var(--wm-label-dim, #8b93a3); font-size: 12px; line-height: 1.7;
   }
   #status { padding: 7px 12px; border-top: 1px solid var(--wm-border, #e3e6ec); color: var(--wm-label-dim, #8b93a3); font-size: 12px; background: var(--wm-bg-panel, #fbfbfd); }
+  #chartbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  #chartbox { border: 1px solid var(--wm-border-soft, #eef0f4); border-radius: var(--wm-radius-sm, 4px); padding: 10px; background: var(--wm-bg-panel, #fbfbfd); }
+  #chartbox svg { display: block; width: 100%; height: auto; }
+  #chartbox .axis { stroke: var(--wm-border, #d7dbe3); stroke-width: 1; }
+  #chartbox .grid { stroke: var(--wm-border-soft, #eef0f4); stroke-width: 1; }
+  #chartbox .bar { fill: var(--wm-accent, #3b6ea5); }
+  #chartbox .line { fill: none; stroke: var(--wm-accent, #3b6ea5); stroke-width: 2; }
+  #chartbox .area { fill: var(--wm-accent-weak, #d6e4f5); stroke: var(--wm-accent, #3b6ea5); stroke-width: 2; }
+  #chartbox .dot { fill: var(--wm-accent, #3b6ea5); }
+  #chartbox text { fill: var(--wm-label-2nd, #5b6474); font-size: 10px; }
+  #chartmsg { margin-top: 8px; font-size: 12px; color: var(--wm-label-dim, #8b93a3); line-height: 1.7; }
 </style>
 </head>
 <body>
@@ -113,6 +124,26 @@
       <button id="ask" class="primary" disabled>问 Agent</button>
     </div>
     <div id="body"><div id="empty">从左边选一个数据集，或导入一个数据文件。</div></div>
+    <div id="chartpane" hidden>
+      <h3>画图</h3>
+      <div id="chartbar">
+        <select id="ctype">
+          <option value="bar">柱状图</option>
+          <option value="line">折线图</option>
+          <option value="area">面积图</option>
+          <option value="scatter">散点图</option>
+        </select>
+        <select id="cx"></select>
+        <select id="cy"></select>
+        <select id="cagg">
+          <option value="sum">求和</option>
+          <option value="count">计数</option>
+        </select>
+        <button id="draw" class="primary">画图</button>
+      </div>
+      <div id="chartbox"></div>
+      <div id="chartmsg"></div>
+    </div>
     <div id="status">选中一个数据集查看它的结构与质量</div>
   </div>
 <script>
@@ -301,6 +332,7 @@
       btn.onclick = function () { interpretField(btn.getAttribute('data-field')); };
     });
     btnAsk.disabled = false;
+    populateChartFields();
     elStatus.textContent = '检查的是这一个固定版本；换版本会重新检查';
   }
 
@@ -336,6 +368,189 @@
     }).catch(function (err) {
       elStatus.textContent = '发送失败：' + err.message;
     });
+  };
+
+
+  // ---------- 画图 ----------
+
+  var elChartPane = document.getElementById('chartpane');
+  var elChartBox = document.getElementById('chartbox');
+  var elChartMsg = document.getElementById('chartmsg');
+  var elCType = document.getElementById('ctype');
+  var elCx = document.getElementById('cx');
+  var elCy = document.getElementById('cy');
+  var elCagg = document.getElementById('cagg');
+  var btnDraw = document.getElementById('draw');
+
+  function svgEl(tag, attrs) {
+    var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (var key in attrs) { if (attrs[key] !== null && attrs[key] !== undefined) el.setAttribute(key, attrs[key]); }
+    return el;
+  }
+
+  function formatNumber(value) {
+    var n = Number(value);
+    if (!isFinite(n)) return String(value);
+    if (n !== 0 && (Math.abs(n) >= 10000 || Math.abs(n) < 0.01)) return n.toExponential(2);
+    return String(Math.round(n * 1000) / 1000);
+  }
+
+  function renderChart(doc) {
+    elChartBox.innerHTML = '';
+    var chart = doc.chart || {};
+    var rows = doc.rows || [];
+    if (!rows.length) { elChartBox.textContent = '没有可画的数据点'; return; }
+
+    var W = 760, H = 300, padL = 62, padR = 18, padT = 18, padB = 54;
+    var innerW = W - padL - padR, innerH = H - padT - padB;
+    var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': doc.title || '图表' });
+
+    var isScatter = chart.type === 'scatter';
+    var values = rows.map(function (row) { return isScatter ? row.y : row.value; });
+    var maxV = Math.max.apply(null, values.concat([0]));
+    var minV = Math.min.apply(null, values.concat([0]));
+    if (maxV === minV) maxV = minV + 1;
+    if (minV > 0) minV = 0;
+    var yScale = function (v) { return padT + innerH - ((v - minV) / (maxV - minV)) * innerH; };
+
+    for (var i = 0; i <= 4; i++) {
+      var value = minV + (maxV - minV) * i / 4;
+      var y = yScale(value);
+      svg.appendChild(svgEl('line', { x1: padL, y1: y, x2: W - padR, y2: y, class: 'grid' }));
+      var tick = svgEl('text', { x: padL - 6, y: y + 3, 'text-anchor': 'end' });
+      tick.textContent = formatNumber(value);
+      svg.appendChild(tick);
+    }
+
+    var points = [];
+    if (isScatter) {
+      var xs = rows.map(function (row) { return row.x; });
+      var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+      if (maxX === minX) maxX = minX + 1;
+      var xScale = function (v) { return padL + ((v - minX) / (maxX - minX)) * innerW; };
+      rows.forEach(function (row) { points.push({ x: xScale(row.x), y: yScale(row.y), label: row.label }); });
+      [minX, maxX].forEach(function (v) {
+        var t = svgEl('text', { x: xScale(v), y: H - padB + 18, 'text-anchor': 'middle' });
+        t.textContent = formatNumber(v);
+        svg.appendChild(t);
+      });
+    } else {
+      var band = innerW / rows.length;
+      var barW = Math.max(2, Math.min(48, band * 0.62));
+      rows.forEach(function (row, index) {
+        points.push({
+          x: padL + band * (index + 0.5),
+          y: yScale(row.value), value: row.value, label: row.label, barW: barW
+        });
+      });
+      var step = Math.ceil(rows.length / 12);
+      points.forEach(function (point, index) {
+        if (index % step) return;
+        var t = svgEl('text', { x: point.x, y: H - padB + 18, 'text-anchor': 'middle' });
+        t.textContent = String(point.label).slice(0, 10);
+        svg.appendChild(t);
+      });
+    }
+
+    svg.appendChild(svgEl('line', { x1: padL, y1: yScale(minV), x2: W - padR, y2: yScale(minV), class: 'axis' }));
+
+    if (chart.type === 'bar') {
+      points.forEach(function (point) {
+        var y = yScale(point.value);
+        var height = Math.abs(y - yScale(0));
+        svg.appendChild(svgEl('rect', {
+          x: point.x - point.barW / 2, y: Math.min(y, yScale(0)),
+          width: point.barW, height: Math.max(height, 1), class: 'bar'
+        }));
+      });
+    } else if (chart.type === 'line' || chart.type === 'area') {
+      var path = points.map(function (point, index) {
+        return (index ? 'L' : 'M') + point.x + ' ' + point.y;
+      }).join(' ');
+      if (chart.type === 'area') {
+        var base = yScale(Math.max(minV, 0));
+        svg.appendChild(svgEl('path', {
+          d: path + ' L' + points[points.length - 1].x + ' ' + base + ' L' + points[0].x + ' ' + base + ' Z',
+          class: 'area'
+        }));
+      } else {
+        svg.appendChild(svgEl('path', { d: path, class: 'line' }));
+      }
+      points.forEach(function (point) {
+        svg.appendChild(svgEl('circle', { cx: point.x, cy: point.y, r: 2.5, class: 'dot' }));
+      });
+    } else {
+      points.forEach(function (point) {
+        svg.appendChild(svgEl('circle', { cx: point.x, cy: point.y, r: 3, class: 'dot' }));
+      });
+    }
+
+    elChartBox.appendChild(svg);
+  }
+
+  function renderChartProvenance(doc) {
+    var source = doc.source || {};
+    var lines = [];
+    lines.push('出处：' + (source.datasetId || '') + ' · ' + (source.versionLabel || '') + ' · SHA-256 ' + (source.sha256 || ''));
+    (source.caveats || []).forEach(function (caveat) { lines.push('· ' + caveat); });
+    lines.push(doc.method || '');
+    elChartMsg.innerHTML = lines.map(esc).join('<br />');
+  }
+
+  function populateChartFields() {
+    if (!inspection || !inspection.report) { elChartPane.hidden = true; return; }
+    elChartPane.hidden = false;
+    var fields = inspection.report.fields || [];
+    var previousX = elCx.value, previousY = elCy.value;
+    elCx.innerHTML = ''; elCy.innerHTML = '';
+    fields.forEach(function (field) {
+      var xOption = document.createElement('option');
+      xOption.value = field.name;
+      xOption.textContent = field.name + (field.interpretation ? '（数字）' : '');
+      elCx.appendChild(xOption);
+      var yOption = document.createElement('option');
+      yOption.value = field.name;
+      yOption.textContent = field.name + (field.interpretation ? '（数字）' : '');
+      elCy.appendChild(yOption);
+    });
+    if (previousX) elCx.value = previousX;
+    if (previousY) elCy.value = previousY;
+    if (elCx.options.length > 1 && elCx.value === elCx.options[0].value) elCx.value = elCx.options[1].value;
+    if (elCy.options.length > 1 && elCy.value === elCy.options[0].value) elCy.value = elCy.options[1].value;
+    elCagg.hidden = elCType.value === 'scatter';
+  }
+
+  elCType.onchange = function () { elCagg.hidden = elCType.value === 'scatter'; };
+
+  btnDraw.onclick = function () {
+    if (!current || !assetId) return;
+    elChartMsg.textContent = '画图中…';
+    fetch('/api/data/datasets/' + encodeURIComponent(current.id) + '/chart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        asset_id: assetId,
+        chart_type: elCType.value,
+        x: elCx.value,
+        y: elCy.value,
+        aggregation: elCagg.value,
+        interpretations: interpretations
+      })
+    })
+      .then(function (r) {
+        return r.json().then(function (d) {
+          if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+          return d;
+        });
+      })
+      .then(function (doc) {
+        renderChart(doc);
+        renderChartProvenance(doc);
+      })
+      .catch(function (err) {
+        elChartBox.innerHTML = '';
+        elChartMsg.textContent = '画图失败：' + err.message;
+      });
   };
 
   // ---------- 导入 ----------

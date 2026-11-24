@@ -1090,6 +1090,37 @@ ACP 接入状态：relay 部署情况 / 端口 / uv 可用性
 
 ## Data Library
 
+### `GET /api/data/charts`
+
+**标题**：List Charts
+
+列出已保存的图表规格。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `GET /api/data/charts/{digest}`
+
+**标题**：Get Chart
+
+读一份图表规格。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| digest | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
 ### `GET /api/data/datasets`
 
 **标题**：List Datasets
@@ -1147,6 +1178,42 @@ ACP 接入状态：relay 部署情况 / 端口 / uv 可用性
 | 名称 | 位置 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
 | dataset_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `POST /api/data/datasets/{dataset_id}/chart`
+
+**标题**：Make Chart
+
+画一张图，保存图表规格（带完整出处）。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| dataset_id | path | string | 是 |  |
+
+#### 请求体
+
+**Schema**：`ChartReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| asset_id | string | 否 |  |
+| chart_type | string | 否 |  |
+| x | string | 否 |  |
+| y | string | 否 |  |
+| aggregation | string | 否 |  |
+| interpretations | object | 否 |  |
+| title | string | 否 |  |
+| unit | string | 否 |  |
+| grain | string | 否 |  |
+| denominator | string | 否 |  |
 
 #### 响应
 
