@@ -14,10 +14,30 @@ from src.papers.library import (
     page_text,
     papers_root,
 )
+from src.papers.records import (
+    ACCEPTANCE_ACCEPTED,
+    ACCEPTANCE_NEEDS_REVIEW,
+    ACCEPTANCE_REJECTED,
+    ACCEPTANCE_UNVERIFIED,
+    RecordError,
+    build_record,
+    get_record,
+    list_records,
+    save_record,
+)
 from src.papers.verify import NOT_FOUND, PARTIAL, SUPPORTED, verify_claim
 
 __all__ = [
+    "ACCEPTANCE_ACCEPTED",
+    "ACCEPTANCE_NEEDS_REVIEW",
+    "ACCEPTANCE_REJECTED",
+    "ACCEPTANCE_UNVERIFIED",
     "PaperError",
+    "RecordError",
+    "build_record",
+    "get_record",
+    "list_records",
+    "save_record",
     "NOT_FOUND",
     "PARTIAL",
     "SUPPORTED",
