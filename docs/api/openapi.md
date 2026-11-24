@@ -1792,6 +1792,67 @@ ACP 接入状态：relay 部署情况 / 端口 / uv 可用性
 | 200 | Successful Response | - |
 | 422 | Validation Error | HTTPValidationError |
 
+## Research Records
+
+### `GET /api/research/records`
+
+**标题**：List Records
+
+列出研究记录。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `GET /api/research/records/{record_id}`
+
+**标题**：Get Record
+
+读一条研究记录。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| record_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `POST /api/research/records/{record_id}/acceptance`
+
+**标题**：Set Acceptance
+
+人工复核：改记录的可信度状态。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| record_id | path | string | 是 |  |
+
+#### 请求体
+
+**Schema**：`AcceptanceReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| acceptance | string | 是 |  |
+| note | string | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
 ## System Environment
 
 ### `GET /api/system/agent/stats`

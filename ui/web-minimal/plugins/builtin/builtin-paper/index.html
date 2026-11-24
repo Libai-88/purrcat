@@ -13,7 +13,7 @@
     background: var(--wm-bg-base, #fff);
   }
   #side {
-    width: 240px; flex: none; display: flex; flex-direction: column;
+    width: 250px; flex: none; display: flex; flex-direction: column;
     border-right: 1px solid var(--wm-border, #e3e6ec);
     background: var(--wm-bg-sidebar, #f7f8fa);
   }
@@ -21,20 +21,24 @@
     display: flex; align-items: center; gap: 6px;
     padding: 8px 10px; border-bottom: 1px solid var(--wm-border, #e3e6ec);
   }
-  #sidehead h2 {
-    margin: 0; flex: 1; font-size: 12px; font-weight: 600;
-    color: var(--wm-label-2nd, #5b6474);
+  #sidehead h2 { margin: 0; flex: 1; font-size: 12px; font-weight: 600; color: var(--wm-label-2nd, #5b6474); }
+  #tabs { display: flex; gap: 4px; padding: 8px 10px 0; }
+  #tabs button {
+    flex: 1; font-size: 12px; padding: 5px 8px;
+    border: 1px solid var(--wm-border, #d7dbe3);
+    border-bottom: none; border-radius: var(--wm-radius-sm, 4px) var(--wm-radius-sm, 4px) 0 0;
+    background: transparent; color: var(--wm-label-2nd, #5b6474);
   }
+  #tabs button.on { background: var(--wm-bg-panel, #fff); color: var(--wm-ink, #1f2430); font-weight: 600; }
   #imp { padding: 8px 10px; border-bottom: 1px solid var(--wm-border, #e3e6ec); }
   #imp input {
     width: 100%; font: inherit; padding: 5px 7px; border-radius: var(--wm-radius-sm, 4px);
-    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-input, #fff);
-    color: var(--wm-ink, #1f2430);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-input, #fff); color: var(--wm-ink, #1f2430);
   }
   #imp .row { display: flex; gap: 6px; margin-top: 6px; }
   #imp .row button { flex: 1; }
   #err { margin-top: 6px; font-size: 11px; color: #b4463c; line-height: 1.5; word-break: break-all; }
-  #papers { flex: 1; overflow-y: auto; }
+  #list { flex: 1; overflow-y: auto; }
   .paper {
     padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--wm-border-soft, #eef0f4);
     color: var(--wm-label, #3a4152);
@@ -58,12 +62,20 @@
   button:disabled { opacity: .45; cursor: default; }
   button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: #fff; }
   button.primary:hover:not(:disabled) { background: var(--wm-accent-hi, #2f5c8d); }
+  button.link {
+    border: none; background: none; color: var(--wm-accent, #3b6ea5);
+    padding: 1px 4px; text-decoration: underline; cursor: pointer;
+  }
+  button.link:hover:not(:disabled) { background: none; opacity: .75; }
   #page {
     flex: 1; overflow-y: auto; padding: 18px 26px; line-height: 1.75;
     font-family: var(--wm-mono, ui-monospace, Menlo, Consolas, monospace);
     white-space: pre-wrap; word-break: break-word; user-select: text;
   }
   #page::selection { background: var(--wm-accent-weak, #d6e4f5); }
+  #page mark {
+    background: var(--wm-accent-weak, #ffe9a8); color: inherit; border-radius: 2px; padding: 1px 0;
+  }
   #empty { padding: 40px 26px; color: var(--wm-label-dim, #8b93a3); line-height: 1.8; }
   #hint {
     padding: 8px 12px; border-top: 1px solid var(--wm-border, #e3e6ec);
@@ -72,13 +84,47 @@
   }
   #status { flex: 1; }
   #quote { color: var(--wm-ink, #1f2430); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* —— 研究记录视图 —— */
+  #record { flex: 1; overflow-y: auto; padding: 20px 28px; line-height: 1.7; }
+  #record h2 { margin: 0 0 4px; font-size: 15px; }
+  #record .meta { color: var(--wm-label-dim, #8b93a3); font-size: 12px; margin-bottom: 16px; }
+  #record .badge {
+    display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 11px;
+    border: 1px solid var(--wm-border, #d7dbe3); color: var(--wm-label-2nd, #5b6474);
+  }
+  #record .badge.warn { border-color: #d8a13a; color: #9a6c14; }
+  #record .badge.ok { border-color: #4a8f5c; color: #2f6b3e; }
+  #record .claim {
+    border-left: 3px solid var(--wm-border, #d7dbe3); padding: 2px 0 2px 12px; margin: 0 0 16px;
+  }
+  #record .claim.support { border-left-color: #4a8f5c; }
+  #record .claim.counterevidence { border-left-color: #b4463c; }
+  #record .claim.gap { border-left-color: #d8a13a; }
+  #record .ct { font-weight: 600; margin-bottom: 4px; }
+  #record .ev { margin: 6px 0 0 2px; color: var(--wm-label, #3a4152); }
+  #record .ev blockquote {
+    margin: 4px 0 0; padding: 6px 10px; border-left: 2px solid var(--wm-border, #d7dbe3);
+    color: var(--wm-label-2nd, #5b6474); font-size: 12px;
+  }
+  #record h3 { font-size: 12px; color: var(--wm-label-2nd, #5b6474); margin: 20px 0 6px; text-transform: none; }
+  #record ul { margin: 0; padding-left: 20px; }
+  #record .foot {
+    margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--wm-border, #e3e6ec);
+    color: var(--wm-label-dim, #8b93a3); font-size: 12px; line-height: 1.7;
+  }
+  #record .actions { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
 </style>
 </head>
 <body>
   <div id="side">
     <div id="sidehead">
-      <h2>论文库</h2>
+      <h2 id="sideTitle">论文库</h2>
       <button id="pick">导入 PDF</button>
+    </div>
+    <div id="tabs">
+      <button id="tabPapers" class="on">论文</button>
+      <button id="tabRecords">研究记录</button>
     </div>
     <div id="imp" hidden>
       <input id="path" type="text" placeholder="PDF 的绝对路径" spellcheck="false" />
@@ -88,7 +134,7 @@
       </div>
       <div id="err"></div>
     </div>
-    <div id="papers"></div>
+    <div id="list"></div>
   </div>
   <div id="main">
     <div id="bar">
@@ -99,6 +145,7 @@
       <button id="send" class="primary" disabled>发送给 Agent</button>
     </div>
     <div id="page"><div id="empty">论文库还是空的。<br />点左上的「导入 PDF」选一篇，或用 Agent 的 <code>Paper</code> 工具导入。</div></div>
+    <div id="record" hidden></div>
     <div id="hint"><span id="status">选中正文里的一段，再点「发送给 Agent」</span><span id="quote"></span></div>
   </div>
 <script>
@@ -120,66 +167,109 @@
   }
 
   var papers = [];
-  var current = null;   // 当前论文元数据
+  var records = [];
+  var current = null;
   var pageNo = 1;
+  var view = 'papers';       // papers | records
+  var pending = null;        // 待高亮的 {paper_id, page, start, end}
 
-  var elPapers = document.getElementById('papers');
+  var elList = document.getElementById('list');
   var elTitle = document.getElementById('title');
   var elPage = document.getElementById('page');
+  var elRecord = document.getElementById('record');
   var elPager = document.getElementById('pager');
   var elStatus = document.getElementById('status');
   var elQuote = document.getElementById('quote');
   var elImp = document.getElementById('imp');
   var elPath = document.getElementById('path');
   var elErr = document.getElementById('err');
+  var elSideTitle = document.getElementById('sideTitle');
   var btnPrev = document.getElementById('prev');
   var btnNext = document.getElementById('next');
   var btnSend = document.getElementById('send');
   var btnPick = document.getElementById('pick');
   var btnBrowse = document.getElementById('browse');
   var btnImport = document.getElementById('doimport');
+  var tabPapers = document.getElementById('tabPapers');
+  var tabRecords = document.getElementById('tabRecords');
 
   function setStatus(text) { elStatus.textContent = text; }
+  function esc(text) {
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
 
-  function renderList() {
-    elPapers.innerHTML = '';
+  // ---------- 侧栏列表 ----------
+
+  function renderPapers() {
+    elList.innerHTML = '';
     if (!papers.length) {
-      var hint = document.createElement('div');
-      hint.className = 'paper';
-      hint.style.cursor = 'default';
-      hint.textContent = '（暂无）';
-      elPapers.appendChild(hint);
+      elList.appendChild(hintRow('（暂无）'));
       return;
     }
     papers.forEach(function (p) {
       var row = document.createElement('div');
-      row.className = 'paper' + (current && p.id === current.id ? ' active' : '');
-      var t = document.createElement('span');
-      t.className = 't';
-      t.textContent = p.title || p.id;
-      var m = document.createElement('span');
-      m.className = 'm';
-      m.textContent = p.page_count + ' 页 · ' + (p.file_name || '');
-      row.appendChild(t);
-      row.appendChild(m);
-      row.onclick = function () { open(p); };
-      elPapers.appendChild(row);
+      row.className = 'paper' + (view === 'papers' && current && p.id === current.id ? ' active' : '');
+      row.innerHTML = '<span class="t"></span><span class="m"></span>';
+      row.querySelector('.t').textContent = p.title || p.id;
+      row.querySelector('.m').textContent = p.page_count + ' 页 · ' + (p.file_name || '');
+      row.onclick = function () { openPaper(p); };
+      elList.appendChild(row);
     });
   }
 
-  function syncPager() {
-    var total = current ? current.page_count : 0;
-    elPager.textContent = total ? (pageNo + ' / ' + total) : '';
-    btnPrev.disabled = !total || pageNo <= 1;
-    btnNext.disabled = !total || pageNo >= total;
+  function renderRecords() {
+    elList.innerHTML = '';
+    if (!records.length) {
+      elList.appendChild(hintRow('（还没有研究记录）'));
+      return;
+    }
+    records.forEach(function (r) {
+      var row = document.createElement('div');
+      row.className = 'paper' + (view === 'records' && current && r.id === current.id ? ' active' : '');
+      row.innerHTML = '<span class="t"></span><span class="m"></span>';
+      row.querySelector('.t').textContent = r.title || r.question || r.id;
+      row.querySelector('.m').textContent =
+        (r.claims || []).length + ' 条结论 · ' + (r.acceptance || '');
+      row.onclick = function () { openRecord(r); };
+      elList.appendChild(row);
+    });
   }
 
-  function open(paper) {
+  function hintRow(text) {
+    var row = document.createElement('div');
+    row.className = 'paper';
+    row.style.cursor = 'default';
+    row.textContent = text;
+    return row;
+  }
+
+  function renderList() {
+    if (view === 'papers') renderPapers(); else renderRecords();
+  }
+
+  // ---------- 论文视图 ----------
+
+  function openPaper(paper, jump) {
+    view = 'papers';
     current = paper;
-    pageNo = 1;
+    pageNo = jump && jump.page ? jump.page : 1;
+    pending = jump || null;
+    tabPapers.classList.add('on'); tabRecords.classList.remove('on');
+    elSideTitle.textContent = '论文库';
+    elPage.hidden = false; elRecord.hidden = true;
+    btnPrev.hidden = false; btnNext.hidden = false; btnSend.hidden = false;
+    elPager.hidden = false;
     renderList();
     elTitle.textContent = paper.title || paper.id;
     loadPage();
+  }
+
+  function syncPager() {
+    var total = current && current.page_count ? current.page_count : 0;
+    elPager.textContent = total ? (pageNo + ' / ' + total) : '';
+    btnPrev.disabled = !total || pageNo <= 1;
+    btnNext.disabled = !total || pageNo >= total;
   }
 
   function loadPage() {
@@ -195,16 +285,33 @@
         elPage.scrollTop = 0;
         syncPager();
         clearSelection();
+        if (pending) {
+          var hit = highlightRange(pending.start, pending.end);
+          if (hit) setStatus('已定位到引文所在位置');
+          pending = null;
+        }
       })
-      .catch(function (err) {
-        elPage.textContent = '读取失败：' + err.message;
-      });
+      .catch(function (err) { elPage.textContent = '读取失败：' + err.message; });
+  }
+
+  function highlightRange(start, end) {
+    var node = elPage.firstChild;
+    if (!node || node.nodeType !== 3) return false;
+    if (typeof start !== 'number' || typeof end !== 'number') return false;
+    if (start < 0 || end > node.textContent.length || end <= start) return false;
+    var range = document.createRange();
+    range.setStart(node, start);
+    range.setEnd(node, end);
+    var mark = document.createElement('mark');
+    try { range.surroundContents(mark); } catch (e) { return false; }
+    mark.scrollIntoView({ block: 'center' });
+    return true;
   }
 
   function clearSelection() {
     btnSend.disabled = true;
     elQuote.textContent = '';
-    setStatus('选中正文里的一段，再点「发送给 Agent」');
+    if (view === 'papers') setStatus('选中正文里的一段，再点「发送给 Agent」');
   }
 
   function selectedQuote() {
@@ -214,6 +321,7 @@
   }
 
   document.addEventListener('selectionchange', function () {
+    if (view !== 'papers') return;
     var quote = selectedQuote();
     btnSend.disabled = !quote;
     elQuote.textContent = quote ? '「' + quote.slice(0, 60) + (quote.length > 60 ? '…' : '') + '」' : '';
@@ -223,22 +331,16 @@
     var quote = selectedQuote();
     if (!quote || !current) return;
     var payload = {
-      paper_id: current.id,
-      title: current.title || '',
-      page: pageNo,
-      page_count: current.page_count,
-      quote: quote
+      paper_id: current.id, title: current.title || '', page: pageNo,
+      page_count: current.page_count, quote: quote
     };
-    var events = [
+    callAction('chat.sendBatch', { events: [
       { type: 'paper-evidence', content: JSON.stringify(payload) },
       { type: 'user', content: '请核对这段引文：论文《' + (current.title || current.id) + '》第 ' + pageNo + ' 页的「' + quote + '」——原文是否支持它？在哪一页？' }
-    ];
-    callAction('chat.sendBatch', { events: events })
-      .then(function () {
-        setStatus('已发送给 Agent');
-        clearSelection();
-      })
-      .catch(function (err) { setStatus('发送失败：' + err.message); });
+    ] }).then(function () {
+      setStatus('已发送给 Agent');
+      clearSelection();
+    }).catch(function (err) { setStatus('发送失败：' + err.message); });
   };
 
   btnPrev.onclick = function () { if (pageNo > 1) { pageNo -= 1; loadPage(); } };
@@ -246,25 +348,185 @@
     if (current && pageNo < current.page_count) { pageNo += 1; loadPage(); }
   };
 
-  // ---- 导入 ----
+  // ---------- 研究记录视图 ----------
 
-  function refresh() {
-    return fetch('/api/papers')
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        papers = data.papers || [];
-        renderList();
-        return papers;
-      });
+  function openRecord(record) {
+    view = 'records';
+    current = record;
+    tabRecords.classList.add('on'); tabPapers.classList.remove('on');
+    elSideTitle.textContent = '研究记录';
+    elPage.hidden = true; elRecord.hidden = false;
+    btnPrev.hidden = true; btnNext.hidden = true; btnSend.hidden = true; elPager.hidden = true;
+    renderList();
+    elTitle.textContent = record.title || record.question || record.id;
+    setStatus('研究记录：证据只说明引文在原文的位置，不说明结论成立');
+    renderRecord(record);
   }
+
+  function renderRecord(record) {
+    var acceptance = record.acceptance || 'unverified';
+    var badgeClass = acceptance === 'accepted' ? 'ok' : (acceptance === 'unverified' ? 'warn' : '');
+    var html = '<h2></h2>';
+    html += '<div class="meta">可信度状态 <span class="badge ' + badgeClass + '">' + esc(acceptance) + '</span>';
+    html += ' · ' + esc(record.created_at || '') + ' · <code>' + esc(record.id) + '</code></div>';
+    html += '<div><strong>问题：</strong>' + esc(record.question) + '</div>';
+    html += '<h3>结论</h3>';
+
+    (record.claims || []).forEach(function (claim) {
+      html += '<div class="claim ' + esc(claim.stance || '') + '">';
+      html += '<div class="ct">' + esc(claim.text) + '</div>';
+      (claim.evidence || []).forEach(function (ev) {
+        html += '<div class="ev">';
+        html += '<button class="link cite" data-paper="' + esc(ev.paper_id) + '" data-page="' + ev.page + '">';
+        html += esc(ev.paper_id) + ' 第 ' + ev.page + ' 页 ↗</button>';
+        if (ev.verification && ev.verification !== 'exact-match') {
+          html += ' <span class="badge warn">' + esc(ev.verification) + '</span>';
+        }
+        html += '<blockquote>' + esc(ev.quote) + '</blockquote>';
+        html += '</div>';
+      });
+      html += '<div class="actions"><button class="link follow" data-claim="' + esc(claim.id) + '">从此处追问 →</button></div>';
+      html += '</div>';
+    });
+
+    if ((record.findings || []).length) {
+      html += '<h3>发现</h3><ul>';
+      (record.findings || []).forEach(function (f) { html += '<li>' + esc(f) + '</li>'; });
+      html += '</ul>';
+    }
+    if ((record.gaps || []).length) {
+      html += '<h3>未解决的问题</h3><ul>';
+      (record.gaps || []).forEach(function (g) { html += '<li>' + esc(g) + '</li>'; });
+      html += '</ul>';
+    }
+
+    html += '<h3>人工复核</h3><div class="actions">';
+    html += '<button class="review" data-value="needs_review">标为待复核</button>';
+    html += '<button class="review" data-value="accepted">标为已接受</button>';
+    html += '<button class="review" data-value="rejected">标为已否决</button>';
+    html += '<button class="review" data-value="unverified">回到未核实</button>';
+    html += '</div>';
+
+    html += '<div class="foot">证据只说明引文出现在原文的哪一页，不说明结论在科学上成立。<br />';
+    html += '「从此处追问」会带上这条记录的问题、结论与引文，但之前的回答不会被当作证据。</div>';
+
+    elRecord.innerHTML = html;
+    elRecord.querySelectorAll('.cite').forEach(function (btn) {
+      btn.onclick = function () { jumpToEvidence(btn); };
+    });
+    elRecord.querySelectorAll('.follow').forEach(function (btn) {
+      btn.onclick = function () { followUp(btn); };
+    });
+    elRecord.querySelectorAll('.review').forEach(function (btn) {
+      btn.onclick = function () { review(btn); };
+    });
+  }
+
+  function jumpToEvidence(btn) {
+    var paperId = btn.getAttribute('data-paper');
+    var page = parseInt(btn.getAttribute('data-page'), 10);
+    var paper = papers.filter(function (p) { return p.id === paperId; })[0];
+    if (!paper) {
+      setStatus('这篇论文不在论文库里，无法跳转');
+      return;
+    }
+    var evidence = null;
+    (current.claims || []).forEach(function (claim) {
+      (claim.evidence || []).forEach(function (ev) {
+        if (ev.paper_id === paperId && ev.page === page && !evidence) evidence = ev;
+      });
+    });
+    var candidate = evidence && (evidence.candidates || [])[0];
+    openPaper(paper, candidate ? { paper_id: paperId, page: page, start: candidate.start, end: candidate.end } : { paper_id: paperId, page: page });
+  }
+
+  function followUp(btn) {
+    var claimId = btn.getAttribute('data-claim');
+    var claim = (current.claims || []).filter(function (c) { return c.id === claimId; })[0];
+    if (!claim) return;
+    var payload = {
+      record_id: current.id,
+      claim_id: claim.id,
+      question: current.question,
+      claim: claim.text,
+      stance: claim.stance,
+      evidence: (claim.evidence || []).map(function (ev) {
+        return { paper_id: ev.paper_id, page: ev.page, quote: ev.quote };
+      })
+    };
+    callAction('chat.sendBatch', { events: [
+      { type: 'research-record', content: JSON.stringify(payload) },
+      { type: 'user', content: '就研究记录《' + (current.title || current.id) + '》里的这条结论继续追问：' + claim.text + '——请给出原文依据，并说明还有哪些证据缺口。' }
+    ] }).then(function () {
+      setStatus('已带着这条记录发送给 Agent');
+    }).catch(function (err) { setStatus('发送失败：' + err.message); });
+  }
+
+  function review(btn) {
+    var value = btn.getAttribute('data-value');
+    fetch('/api/research/records/' + encodeURIComponent(current.id) + '/acceptance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acceptance: value, note: '面板人工复核' })
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (updated) {
+        current = updated;
+        renderRecord(updated);
+        return refreshRecords();
+      })
+      .then(function () { setStatus('已更新可信度状态'); })
+      .catch(function (err) { setStatus('更新失败：' + err.message); });
+  }
+
+  // ---------- 视图切换与数据 ----------
+
+  function refreshPapers() {
+    return fetch('/api/papers').then(function (r) { return r.json(); })
+      .then(function (data) { papers = data.papers || []; renderList(); return papers; });
+  }
+
+  function refreshRecords() {
+    return fetch('/api/research/records').then(function (r) { return r.json(); })
+      .then(function (data) { records = data.records || []; renderList(); return records; });
+  }
+
+  function switchView(next) {
+    view = next;
+    current = null;
+    elPage.hidden = next === 'records';
+    elRecord.hidden = next !== 'records';
+    btnPrev.hidden = next === 'records';
+    btnNext.hidden = next === 'records';
+    btnSend.hidden = next === 'records';
+    elPager.hidden = next === 'records';
+    tabPapers.classList.toggle('on', next === 'papers');
+    tabRecords.classList.toggle('on', next === 'records');
+    elSideTitle.textContent = next === 'papers' ? '论文库' : '研究记录';
+    elTitle.textContent = next === 'papers' ? '未选择论文' : '未选择记录';
+    elRecord.innerHTML = '';
+    renderList();
+    if (next === 'records') {
+      elPage.innerHTML = '<div id="empty">从左边选一条研究记录，或让 Agent 用 <code>ResearchRecord</code> 工具保存一条。</div>';
+    } else {
+      elPage.innerHTML = '<div id="empty">从左边选一篇论文开始读。</div>';
+    }
+  }
+
+  tabPapers.onclick = function () { switchView('papers'); };
+  tabRecords.onclick = function () { switchView('records'); };
+
+  // ---------- 导入 ----------
 
   function doImport(path) {
     if (!path) { elErr.textContent = '请填写 PDF 的路径'; return; }
     elErr.textContent = '导入中…（解析大 PDF 需要几秒）';
     btnImport.disabled = true;
     fetch('/api/papers/import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: path })
     })
       .then(function (r) {
@@ -274,10 +536,8 @@
         });
       })
       .then(function (meta) {
-        elErr.textContent = '';
-        elImp.hidden = true;
-        elPath.value = '';
-        return refresh().then(function () { open(meta); });
+        elErr.textContent = ''; elImp.hidden = true; elPath.value = '';
+        return refreshPapers().then(function () { openPaper(meta); });
       })
       .catch(function (err) { elErr.textContent = '导入失败：' + err.message; })
       .then(function () { btnImport.disabled = false; });
@@ -308,15 +568,12 @@
   };
 
   btnImport.onclick = function () { doImport(elPath.value.trim()); };
-  elPath.onkeydown = function (e) {
-    if (e.key === 'Enter') { doImport(elPath.value.trim()); }
-  };
+  elPath.onkeydown = function (e) { if (e.key === 'Enter') doImport(elPath.value.trim()); };
 
-  refresh()
-    .then(function (list) { if (list.length) open(list[0]); })
-    .catch(function (err) {
-      elPage.innerHTML = '<div id="empty">读取论文库失败：' + err.message + '</div>';
-    });
+  // ---------- 启动 ----------
+
+  refreshPapers().then(function (list) { if (list.length) openPaper(list[0]); });
+  refreshRecords().catch(function () { /* 目录读不到不影响读论文 */ });
 })();
 </script>
 </body>

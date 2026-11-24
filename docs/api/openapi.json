@@ -1,6 +1,24 @@
 {
   "components": {
     "schemas": {
+      "AcceptanceReq": {
+        "properties": {
+          "acceptance": {
+            "title": "Acceptance",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "acceptance"
+        ],
+        "title": "AcceptanceReq",
+        "type": "object"
+      },
       "AddCronReq": {
         "properties": {
           "repeat_rule": {
@@ -4616,6 +4634,118 @@
         "summary": "Resolve Request Api",
         "tags": [
           "Agent Requests"
+        ]
+      }
+    },
+    "/api/research/records": {
+      "get": {
+        "description": "列出研究记录。",
+        "operationId": "list_records_api_research_records_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Records",
+        "tags": [
+          "Research Records"
+        ]
+      }
+    },
+    "/api/research/records/{record_id}": {
+      "get": {
+        "description": "读一条研究记录。",
+        "operationId": "get_record_api_research_records__record_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "record_id",
+            "required": true,
+            "schema": {
+              "title": "Record Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Record",
+        "tags": [
+          "Research Records"
+        ]
+      }
+    },
+    "/api/research/records/{record_id}/acceptance": {
+      "post": {
+        "description": "人工复核：改记录的可信度状态。\n\n复核是人工动作，所以要留下说明；改动直接落在记录上，并记下上一次的状态。",
+        "operationId": "set_acceptance_api_research_records__record_id__acceptance_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "record_id",
+            "required": true,
+            "schema": {
+              "title": "Record Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptanceReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Acceptance",
+        "tags": [
+          "Research Records"
         ]
       }
     },

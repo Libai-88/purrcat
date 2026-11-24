@@ -27,6 +27,7 @@ ROUTERS = {
     "acp": "src.server.api.acp",
     "webmin": "src.server.api.webmin",
     "papers": "src.server.api.papers_api",
+    "research": "src.server.api.research_api",
 }
 
 # (path, methods, endpoint name)，顺序即 FastAPI 匹配顺序，必须逐字保持。
@@ -239,6 +240,15 @@ EXPECTED_ROUTES = {
         ("/acp/stream", "GET", "acp_stream"),
         ("/acp/file", "POST", "acp_upload_file"),
         ("/acp/file", "GET", "acp_download_file"),
+    ],
+    "research": [
+        ("/api/research/records", "GET", "list_records"),
+        ("/api/research/records/{record_id}", "GET", "get_record"),
+        (
+            "/api/research/records/{record_id}/acceptance",
+            "POST",
+            "set_acceptance",
+        ),
     ],
     "papers": [
         ("/api/papers", "GET", "list_papers"),
