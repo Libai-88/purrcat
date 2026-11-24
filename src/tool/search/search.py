@@ -139,12 +139,23 @@ def Search(route: str, query: str, topk: int = 5, **kwargs) -> str:
     if route_type in ["local", "skill"]:
         lines.append("\n## Skills:")
         if not skills:
-            lines.append("（未找到匹配的本地技能）")
+            lines.append("（未找到匹配的技能）")
+        has_uninstalled = False
         for res in skills:
             skill = res.get("skill", {})
             desc = skill.get("description", "无")[:80].replace("\n", " ")
+            installed = skill.get("installed", True)
+            if not installed:
+                has_uninstalled = True
+            tag = "已安装" if installed else "未安装"
+            category = skill.get("category_zh")
+            suffix = f"·{category}" if category else ""
             lines.append(
-                f"- [Skill] {skill.get('name', 'unknown')} (得分: {res.get('score', 0)}) - {desc}"
+                f"- [Skill] {skill.get('name', 'unknown')} ({tag}{suffix}, 得分: {res.get('score', 0)}) - {desc}"
+            )
+        if has_uninstalled:
+            lines.append(
+                "\n注：标记「未安装」的条目来自科研技能目录，用 `Fetch` 取用时会自动安装后加载。"
             )
 
     if route_type in ["local", "mcp"]:

@@ -7,9 +7,13 @@ from typing import Dict, List
 import numpy as np
 
 from src.tool.search import _shared
+from src.tool.search.catalog_search import search_catalog
 from src.tool.search.semantic_utils import LocalEmbeddingSearcher
 from src.utils.config import SKILL_DIR
 from src.utils.skill_helper import _parse_skill_md
+
+# 已安装技能相对目录条目的归一化加权
+_INSTALLED_BONUS = 0.05
 
 
 class SkillSearcher:
@@ -216,20 +220,57 @@ def rebuild_skill_vectors_async():
     threading.Thread(target=_worker, daemon=True, name="Skill-Vector-Build").start()
 
 
+def merge_skill_results(local_results, catalog_results, top_k: int) -> list:
+    """合并本地已装技能与目录条目。
+
+    两组结果的分数来自不同语料，量纲不可直接比较，先各自按组内最大值归一化，
+    再给已安装项一个小幅加权——已装的技能即刻可用，应排在同等相关的目录条目前面。
+    """
+    normalized = []
+    for results, bonus, installed in (
+        (local_results, _INSTALLED_BONUS, True),
+        (catalog_results, 0.0, False),
+    ):
+        if not results:
+            continue
+        peak = max((float(r.get("score", 0)) for r in results), default=0.0)
+        if peak <= 0:
+            continue
+        for result in results:
+            skill = dict(result.get("skill") or {})
+            skill["installed"] = installed
+            normalized.append(
+                {
+                    "score": round(float(result.get("score", 0)) / peak + bonus, 4),
+                    "skill": skill,
+                }
+            )
+    normalized.sort(key=lambda r: r["score"], reverse=True)
+    return normalized[:top_k]
+
+
 def search_skills(query: str, top_k: int = 3) -> tuple:
     """
-    搜索技能
-
-    Args:
-        query: 搜索查询词
-        top_k: 返回前 K 个结果
+    搜索技能：本地已安装技能与科研技能目录条目合并返回。
 
     Returns:
         (results, error_message)
     """
+    local_results, local_error = [], None
     try:
-        skill_searcher = SkillSearcher(SKILL_DIR)
-        results = skill_searcher.search(query, top_k)
-        return results, None
+        local_results = SkillSearcher(SKILL_DIR).search(query, top_k)
     except Exception as e:
-        return [], f"Skill搜索异常: {e}"
+        local_error = f"Skill搜索异常: {e}"
+
+    catalog_results, catalog_error = [], None
+    try:
+        catalog_results, catalog_error = search_catalog(query, top_k)
+    except Exception as e:
+        catalog_error = f"科研技能目录检索异常: {e}"
+
+    if local_error and catalog_error:
+        return [], f"{local_error} | {catalog_error}"
+
+    return merge_skill_results(local_results, catalog_results, top_k), (
+        local_error or catalog_error
+    )
