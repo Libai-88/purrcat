@@ -53,7 +53,9 @@ class LocalShellBackend:
             self.start()
 
         argv = self.shell.argv(command)
-        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
+        creationflags = (
+            getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
+        )
         proc = subprocess.Popen(
             argv,
             cwd=self.workspace,

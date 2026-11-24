@@ -70,9 +70,7 @@ class ExecutionBackend(Protocol):
     def stop(self) -> None: ...
 
 
-def resolve_shell(
-    platform: str | None = None, which=shutil.which
-) -> ShellSpec:
+def resolve_shell(platform: str | None = None, which=shutil.which) -> ShellSpec:
     """按平台挑选本机 shell：Windows 优先 Git Bash，其次 PowerShell。"""
     plat = platform or sys.platform
     if plat == "win32":
