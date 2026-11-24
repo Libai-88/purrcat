@@ -38,6 +38,7 @@ TOOL_FUNC_MAP = {
     "memo": "Memo",
     "paper": "Paper",
     "request": "Request",
+    "research": "Research",
     "search": "Search",
     "fetch": "Fetch",
     "task": "Task",

@@ -1,4 +1,4 @@
-"""Paper 工具的注册红线（SPEC-026 AC-8）。"""
+"""Paper 与 Research 工具的注册红线（SPEC-026 AC-8）。"""
 
 from __future__ import annotations
 
@@ -25,6 +25,13 @@ def test_paper_tool_is_exposed_and_registered():
     names = {schema["name"] for schema in SCHEMAS}
     assert "Paper" in names
     assert TOOL_FUNC_MAP.get("paper") == "Paper"
+
+
+def test_research_tool_is_exposed_and_registered():
+    """AC-8：Research 同样暴露给模型并注册。"""
+    names = {schema["name"] for schema in SCHEMAS}
+    assert "Research" in names
+    assert TOOL_FUNC_MAP.get("research") == "Research"
 
 
 def test_paper_schema_properties_are_accepted():

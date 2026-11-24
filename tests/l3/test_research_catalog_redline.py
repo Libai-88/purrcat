@@ -11,7 +11,8 @@ from src.tool.utils.route import TOOL_FUNC_MAP
 SCHEMAS = [entry.get("function", entry) for entry in AGENT_TOOL_SCHEMA]
 TOOL_NAMES = {schema["name"] for schema in SCHEMAS}
 
-_FORBIDDEN = {"catalog", "research", "researchcatalog", "researchskill"}
+# 只禁目录专属的工具名。Research（研究记录）与目录无关，不在此列。
+_FORBIDDEN = {"catalog", "researchcatalog", "researchskill", "skillcatalog"}
 
 
 def test_no_catalog_tool_was_added():

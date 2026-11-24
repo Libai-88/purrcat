@@ -14,6 +14,7 @@ from .filesystem import FILESYSTEM_TOOL_SCHEMA
 from .memo import MEMO_TOOL_SCHEMA
 from .paper import PAPER_TOOL_SCHEMA
 from .request import REQUEST_TOOL_SCHEMA
+from .research import RESEARCH_TOOL_SCHEMA
 from .search import SEARCH_TOOL_SCHEMA
 from .task import TASK_TOOL_SCHEMA
 from .kernelupgrade import KERNELUPGRADE_TOOL_SCHEMA
@@ -36,6 +37,7 @@ AGENT_TOOL_SCHEMA = [
     MEMO_TOOL_SCHEMA,
     PAPER_TOOL_SCHEMA,
     REQUEST_TOOL_SCHEMA,
+    RESEARCH_TOOL_SCHEMA,
     SEARCH_TOOL_SCHEMA,
     TASK_TOOL_SCHEMA,
     MCP_TOOL_SCHEMA,
