@@ -249,7 +249,6 @@ function resolveAppIcon() {
 const STAGE_RULES = [
   { key: 'done', percent: 100, re: /PurrCat installed successfully/i },
   { key: 'register', percent: 90, re: /PurrCat CLI launcher|Added .* to (user )?PATH|Register/i },
-  { key: 'docker', percent: 76, re: /Docker/i },
   { key: 'embedding', percent: 64, re: /embedding model/i },
   { key: 'node', percent: 48, re: /Installing desktop dependencies|npm install/i },
   { key: 'python', percent: 24, re: /Syncing Python dependencies|uv sync/i },

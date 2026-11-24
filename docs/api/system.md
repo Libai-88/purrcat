@@ -19,9 +19,9 @@
 ```json
 {
   "os": "Windows",
-  "installed": { "docker": true },
-  "recommend": "docker",
-  "recommend_reason": "检测到已安装 Docker。"
+  "installed": { "docker": false, "local": true },
+  "recommend": "local",
+  "recommend_reason": "默认使用本机 shell 执行命令，无需 Docker。如需容器隔离，可设置 PURRCAT_EXEC_BACKEND=docker。"
 }
 ```
 
@@ -153,7 +153,7 @@ curl -X POST 'http://127.0.0.1:8000/api/system/image/pull' \
 **响应**
 
 ```json
-{ "status": "started", "message": "开始安装 docker 环境...", "progress": 0 }
+{ "status": "completed", "message": "本地执行无需安装容器环境。", "progress": 100 }
 ```
 
 已在安装中时返回 `{"status": "installing", "message": "正在安装中，请稍候...", "progress": <当前进度>}`。

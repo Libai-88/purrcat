@@ -7,8 +7,6 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
-import docker
-from docker.errors import DockerException, ImageNotFound
 from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
@@ -20,6 +18,23 @@ from src.utils.config import (
 from src.model.manager.usage_tracer import usage_tracer
 
 router = APIRouter(prefix="/api/system", tags=["System Environment"])
+
+
+def _docker_sdk():
+    """按需加载 Docker SDK——没装 docker 包也能正常启动服务。
+
+    Docker 是可选增强：默认走本机 shell，只有显式切到 docker 后端、
+    真的要连容器时才需要这个包。
+    """
+    try:
+        import docker
+        from docker.errors import DockerException, ImageNotFound
+
+        return docker, DockerException, ImageNotFound
+    except ImportError as exc:
+        raise RuntimeError(
+            "没装 Docker SDK（pip install docker），容器后端不可用"
+        ) from exc
 
 
 class EnvStatusResponse(BaseModel):
@@ -193,7 +208,8 @@ def get_image_status(image_name: str = "my_agent_env:latest"):
 
     try:
         get_container_engine()  # 校验 docker 存在，缺失时抛 RuntimeError
-        client = docker.from_env()
+        sdk, DockerException, ImageNotFound = _docker_sdk()
+        client = sdk.from_env()
         try:
             client.images.get(image_name)
             return ImageStatusResponse(exists=True, image_name=image_name)
@@ -212,7 +228,8 @@ def _pull_image_task(image_name: str):
     _install_status = "installing"
     _install_progress = 5
     try:
-        client = docker.from_env()
+        sdk, _DockerException, _ImageNotFound = _docker_sdk()
+        client = sdk.from_env()
         client.images.pull(image_name)
         _install_progress = 100
         _install_status = "completed"
@@ -239,8 +256,6 @@ def pull_image(request: PullImageRequest, background_tasks: BackgroundTasks):
         )
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    except DockerException as e:
-        raise HTTPException(status_code=500, detail=f"Docker 连接失败: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"镜像拉取启动失败: {str(e)}")
 

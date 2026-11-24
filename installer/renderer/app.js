@@ -43,8 +43,7 @@
       'progress.python': '安装 Python 依赖',
       'progress.node': '安装桌面端依赖',
       'progress.embedding': '准备向量模型',
-      'progress.docker': '配置 Docker',
-      'progress.register': '注册命令行工具',
+        'progress.register': '注册命令行工具',
       'progress.done': '完成',
       'progress.starting': '正在启动',
       'progress.backOptions': '安装选项',
@@ -165,7 +164,6 @@
       'progress.python': 'Installing Python dependencies',
       'progress.node': 'Installing desktop dependencies',
       'progress.embedding': 'Preparing embedding model',
-      'progress.docker': 'Setting up Docker',
       'progress.register': 'Registering command line tool',
       'progress.done': 'Finished',
       'progress.starting': 'Starting',
@@ -1187,8 +1185,7 @@
           ['python', 24],
           ['node', 48],
           ['embedding', 64],
-          ['docker', 76],
-          ['register', 90],
+                  ['register', 90],
           ['done', 100],
         ];
         stages.forEach(([stage, percent], index) => {

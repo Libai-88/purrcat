@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PurrCat one-line installer (source mode)
 # Usage: curl -fsSL https://raw.githubusercontent.com/PurrPod/purrcat/main/install.sh | bash
-# Auto-installs missing prerequisites (git / uv / Node.js 18+ / Docker / embedding model)
+# Auto-installs missing prerequisites (git / uv / Node.js 18+ / embedding model); Docker is optional
 # and registers a global `purrcat` command.
 set -euo pipefail
 
