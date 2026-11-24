@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>环境</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; overflow: hidden;
+    font-family: var(--wm-font, system-ui, -apple-system, "Segoe UI", sans-serif);
+    font-size: 13px; color: var(--wm-ink, #1f2430);
+    background: var(--wm-bg-base, #fff);
+  }
+  #side {
+    width: 210px; flex: none; display: flex; flex-direction: column;
+    border-right: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-sidebar, #f7f8fa);
+  }
+  #sidehead {
+    display: flex; align-items: center; gap: 6px; padding: 8px 10px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec);
+  }
+  #sidehead h2 { margin: 0; flex: 1; font-size: 12px; font-weight: 600; color: var(--wm-label-2nd, #5b6474); }
+  #list { flex: 1; overflow-y: auto; }
+  .item {
+    padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--wm-border-soft, #eef0f4);
+    color: var(--wm-label, #3a4152);
+  }
+  .item:hover { background: var(--wm-bg-hover, #eef1f6); }
+  .item.active { background: var(--wm-bg-active, #e4ebf7); color: var(--wm-ink, #1f2430); }
+  .item .t { display: block; line-height: 1.35; }
+  .item .m { display: block; margin-top: 3px; font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #bar {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-panel, #fbfbfd);
+  }
+  #bar .title { flex: 1; font-weight: 600; }
+  button {
+    font: inherit; padding: 4px 10px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-panel, #fff);
+    color: var(--wm-ink, #1f2430); cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--wm-bg-hover, #eef1f6); }
+  #body { flex: 1; overflow-y: auto; padding: 14px 18px 40px; line-height: 1.7; }
+  .card {
+    padding: 10px 12px; margin-bottom: 10px; border: 1px solid var(--wm-border-soft, #eef0f4);
+    border-radius: var(--wm-radius-sm, 6px); background: var(--wm-bg-panel, #fbfbfd);
+  }
+  .card h3 { margin: 0 0 6px; font-size: 13px; }
+  .row { font-size: 12px; color: var(--wm-label-2nd, #5b6474); margin: 2px 0; }
+  .row code { font-family: var(--wm-mono, ui-monospace, Menlo, Consolas, monospace); font-size: 11px; }
+  .badge {
+    display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px;
+    border: 1px solid var(--wm-border, #d7dbe3); color: var(--wm-label-2nd, #5b6474);
+  }
+  .badge.ready { border-color: #4a8f5c; color: #2f6b3e; }
+  .badge.missing { border-color: #b4463c; color: #8f362e; }
+  .badge.unknown { border-style: dashed; }
+  #body h2 { font-size: 13px; margin: 16px 0 8px; }
+  .cannot {
+    margin-top: 6px; padding: 6px 9px; font-size: 12px;
+    border-left: 2px solid #d8a13a; background: var(--wm-bg-input, #f8f8f9);
+    color: var(--wm-label-2nd, #5b6474);
+  }
+  .boundary {
+    margin-bottom: 14px; padding: 8px 10px; font-size: 12px;
+    border-left: 3px solid var(--wm-accent, #3b6ea5); background: var(--wm-bg-panel, #fbfbfd);
+  }
+  .empty { color: var(--wm-label-dim, #8b93a3); font-size: 12px; }
+</style>
+<link rel="stylesheet" href="/minimal/assets/async-state.css" />
+</head>
+<body>
+  <div id="side">
+    <div id="sidehead"><h2>环境</h2></div>
+    <div id="list"></div>
+  </div>
+  <div id="main">
+    <div id="bar">
+      <span class="title" id="title">科研环境</span>
+      <button id="refresh">重新观察</button>
+    </div>
+    <div id="body"></div>
+  </div>
+<script src="/minimal/assets/async-state.js"></script>
+<script>
+(function () {
+  var elList = document.getElementById('list');
+  var elBody = document.getElementById('body');
+  var btnRefresh = document.getElementById('refresh');
+  var bodyRegion = new PurrCatAsync.Region(elBody);
+  var report = null;
+  var view = 'overview';
+
+  function esc(text) { return PurrCatAsync.esc(text); }
+  function api(path, options) {
+    return fetch(path, options).then(function (r) {
+      return r.json().then(function (b) {
+        if (!r.ok) throw new Error((b.detail && b.detail.message) || b.detail || ('HTTP ' + r.status));
+        return b;
+      });
+    });
+  }
+
+  function readinessBadge(r) {
+    var map = { ready: '就绪', missing: '缺失', unknown: '未知' };
+    return '<span class="badge ' + esc(r) + '">' + esc(map[r] || r || '') + '</span>';
+  }
+
+  function renderList() {
+    elList.innerHTML = '';
+    var rows = [
+      { id: 'overview', t: '总览', m: report ? (report.observed_at || '').replace('T', ' ') : '—' },
+      { id: 'capabilities', t: '能力声明', m: report ? (report.capabilities || []).length + ' 种' : '—' }
+    ];
+    if (report) {
+      Object.keys(report.observations || {}).forEach(function (id) {
+        var item = report.observations[id];
+        rows.push({ id: id, t: item.name || id, m: item.readiness || '—' });
+      });
+    }
+    rows.forEach(function (item) {
+      var row = document.createElement('div');
+      row.className = 'item' + (view === item.id ? ' active' : '');
+      row.innerHTML = '<span class="t"></span><span class="m"></span>';
+      row.querySelector('.t').textContent = item.t;
+      row.querySelector('.m').textContent = item.m;
+      row.onclick = function () { view = item.id; renderList(); renderBody(); };
+      elList.appendChild(row);
+    });
+  }
+
+  function renderBody() {
+    if (!report) return;
+    if (view === 'capabilities') { renderCapabilities(); return; }
+    if (view === 'overview') { renderOverview(); return; }
+    var item = report.observations[view];
+    if (!item) return;
+    var html = '<div class="card"><h3>' + esc(item.name) + ' ' + readinessBadge(item.readiness) + '</h3>';
+    html += '<div class="row">可执行文件：<code>' + esc(item.executable || '未找到') + '</code></div>';
+    html += '<div class="row">版本：<code>' + esc(item.version || '未取得') + '</code></div>';
+    html += '<div class="row">观察时刻：' + esc(item.observed_at || '') + '（' + esc(item.observed_by || '') + '）</div>';
+    if (item.note) html += '<div class="row">' + esc(item.note) + '</div>';
+    html += '</div>';
+    html += '<div class="boundary">观察 ≠ 授权 ≠ 验证。这里只说观察到什么，不说它能跑什么实验，更不说用它算出来的结果可不可信。</div>';
+    elBody.innerHTML = html;
+  }
+
+  function renderOverview() {
+    var html = '';
+    html += '<div class="boundary">观察 ≠ 授权 ≠ 验证。观察到软件在，不代表它能跑某个实验，更不代表用它算出来的结果是对的。</div>';
+    html += '<div class="row">观察时刻：<code>' + esc(report.observed_at || '') + '</code>　·　执行后端：<code>' + esc(report.exec_backend || '') + '</code></div>';
+    html += '<h2>工具</h2>';
+    Object.keys(report.observations || {}).forEach(function (id) {
+      var item = report.observations[id];
+      html += '<div class="card"><h3>' + esc(item.name) + ' ' + readinessBadge(item.readiness) + '</h3>';
+      html += '<div class="row"><code>' + esc(item.executable || '未找到') + '</code>　' + esc(item.version || '未取得版本') + '</div>';
+      html += '</div>';
+    });
+    elBody.innerHTML = html;
+  }
+
+  function renderCapabilities() {
+    var html = '<div class="boundary">能力声明只说能做什么；「不能推出什么」才是边界所在。</div>';
+    (report.capabilities || []).forEach(function (cap) {
+      html += '<div class="card"><h3>' + esc(cap.name) + '（<code>' + esc(cap.id) + '</code>）</h3>';
+      html += '<div class="row">能：' + esc(cap.can) + '</div>';
+      html += '<div class="cannot">不能推出：' + esc(cap.cannot) + '</div>';
+      html += '</div>';
+    });
+    elBody.innerHTML = html;
+  }
+
+  function load() {
+    bodyRegion.begin('refresh');
+    return api('/api/environments').then(function (data) {
+      report = data;
+      bodyRegion.settle({ data: 'complete', request: 'idle', result: 'ok' }, function () {
+        renderList(); renderBody();
+      });
+    }).catch(function (err) {
+      bodyRegion.fail(err, function () { load(); });
+    });
+  }
+
+  btnRefresh.onclick = function () { load(); };
+  load();
+})();
+</script>
+</body>
+</html>

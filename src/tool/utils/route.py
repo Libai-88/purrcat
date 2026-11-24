@@ -36,6 +36,7 @@ TOOL_FUNC_MAP = {
     "brainstorm": "BrainStorm",
     "cron": "Cron",
     "data": "Data",
+    "environments": "Environments",
     "callmcp": "CallMCP",
     "connectors": "Connectors",
     "memo": "Memo",

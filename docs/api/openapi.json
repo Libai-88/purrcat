@@ -3557,6 +3557,147 @@
         ]
       }
     },
+    "/api/environments": {
+      "get": {
+        "description": "观察全部工具 + 执行后端。",
+        "operationId": "observe_all_api_environments_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Observe All",
+        "tags": [
+          "Environments"
+        ]
+      }
+    },
+    "/api/environments/capabilities": {
+      "get": {
+        "description": "能力声明：每种能力能做什么、不能推出什么。",
+        "operationId": "list_capabilities_api_environments_capabilities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Capabilities",
+        "tags": [
+          "Environments"
+        ]
+      }
+    },
+    "/api/environments/capabilities/{capability_id}": {
+      "get": {
+        "operationId": "read_capability_api_environments_capabilities__capability_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "capability_id",
+            "required": true,
+            "schema": {
+              "title": "Capability Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Capability",
+        "tags": [
+          "Environments"
+        ]
+      }
+    },
+    "/api/environments/tools": {
+      "get": {
+        "description": "工具目录（不探测）。",
+        "operationId": "list_tools_api_environments_tools_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Tools",
+        "tags": [
+          "Environments"
+        ]
+      }
+    },
+    "/api/environments/tools/{tool_id}": {
+      "get": {
+        "description": "只读观察一个工具。",
+        "operationId": "observe_tool_api_environments_tools__tool_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tool_id",
+            "required": true,
+            "schema": {
+              "title": "Tool Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Observe Tool",
+        "tags": [
+          "Environments"
+        ]
+      }
+    },
     "/api/evolve/diff": {
       "get": {
         "operationId": "get_diff_api_api_evolve_diff_get",

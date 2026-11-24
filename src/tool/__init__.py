@@ -13,6 +13,7 @@ from .connectors import CONNECTORS_TOOL_SCHEMA
 from .cron import CRON_TOOL_SCHEMA
 from .data import DATA_TOOL_SCHEMA
 from .fetch import FETCH_TOOL_SCHEMA
+from .environments import ENVIRONMENTS_TOOL_SCHEMA
 from .filesystem import FILESYSTEM_TOOL_SCHEMA
 from .memo import MEMO_TOOL_SCHEMA
 from .notebook import NOTEBOOK_TOOL_SCHEMA
@@ -39,6 +40,7 @@ AGENT_TOOL_SCHEMA = [
     CONNECTORS_TOOL_SCHEMA,
     CRON_TOOL_SCHEMA,
     DATA_TOOL_SCHEMA,
+    ENVIRONMENTS_TOOL_SCHEMA,
     FETCH_TOOL_SCHEMA,
     FILESYSTEM_TOOL_SCHEMA,
     MEMO_TOOL_SCHEMA,

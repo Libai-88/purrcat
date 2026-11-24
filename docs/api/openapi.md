@@ -1567,6 +1567,80 @@ ACP 接入状态：relay 部署情况 / 端口 / uv 可用性
 | --- | --- | --- |
 | 200 | Successful Response | - |
 
+## Environments
+
+### `GET /api/environments`
+
+**标题**：Observe All
+
+观察全部工具 + 执行后端。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `GET /api/environments/capabilities`
+
+**标题**：List Capabilities
+
+能力声明：每种能力能做什么、不能推出什么。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `GET /api/environments/capabilities/{capability_id}`
+
+**标题**：Read Capability
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| capability_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/environments/tools`
+
+**标题**：List Tools
+
+工具目录（不探测）。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `GET /api/environments/tools/{tool_id}`
+
+**标题**：Observe Tool
+
+只读观察一个工具。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| tool_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
 ## Evolution Factory
 
 ### `GET /api/evolve/diff`

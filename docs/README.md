@@ -60,6 +60,12 @@ PurrCat 专属的四类扩展插件的开发指南，含各自专有词汇表与
 
 - [科研连接器](connectors.md)
 
+## 科研环境（`docs/environments.md`）
+
+只读探测本机的 Python、Git、uv、Node、Docker 与执行能力。
+
+- [科研环境](environments.md)
+
 ## 面板异步状态（`docs/async-state.md`）
 
 论文 / 数据 / 笔记三个面板共用的状态语义：有哪些数据、请求在做什么、
