@@ -324,6 +324,49 @@
         "title": "ImageStatusResponse",
         "type": "object"
       },
+      "ImportReq": {
+        "properties": {
+          "dataset_id": {
+            "default": "",
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "dataset",
+            "title": "Kind",
+            "type": "string"
+          },
+          "license": {
+            "default": "",
+            "title": "License",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "project_ref": {
+            "default": "",
+            "title": "Project Ref",
+            "type": "string"
+          },
+          "source": {
+            "default": "",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "ImportReq",
+        "type": "object"
+      },
       "InitReq": {
         "properties": {
           "goal": {
@@ -623,6 +666,49 @@
           "message"
         ],
         "title": "PullImageResponse",
+        "type": "object"
+      },
+      "QueryReq": {
+        "properties": {
+          "asset_id": {
+            "default": "",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "denominator": {
+            "default": "",
+            "title": "Denominator",
+            "type": "string"
+          },
+          "grain": {
+            "default": "",
+            "title": "Grain",
+            "type": "string"
+          },
+          "interpretations": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Interpretations",
+            "type": "object"
+          },
+          "question": {
+            "default": "",
+            "title": "Question",
+            "type": "string"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Spec",
+            "type": "object"
+          },
+          "unit": {
+            "default": "",
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "title": "QueryReq",
         "type": "object"
       },
       "RenameSessionReq": {
@@ -2351,6 +2437,302 @@
         "summary": "Api Setup Status",
         "tags": [
           "Configuration"
+        ]
+      }
+    },
+    "/api/data/datasets": {
+      "get": {
+        "description": "列出数据集。",
+        "operationId": "list_datasets_api_data_datasets_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Datasets",
+        "tags": [
+          "Data Library"
+        ]
+      }
+    },
+    "/api/data/datasets/import": {
+      "post": {
+        "description": "导入一个数据文件；给了 dataset_id 就是给该数据集追加一个版本。",
+        "operationId": "import_dataset_api_data_datasets_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Dataset",
+        "tags": [
+          "Data Library"
+        ]
+      }
+    },
+    "/api/data/datasets/{dataset_id}": {
+      "get": {
+        "description": "取一个数据集及其版本。",
+        "operationId": "get_dataset_api_data_datasets__dataset_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Dataset",
+        "tags": [
+          "Data Library"
+        ]
+      }
+    },
+    "/api/data/datasets/{dataset_id}/inspection": {
+      "get": {
+        "description": "检查某一版：字段画像与质量报告。",
+        "operationId": "inspect_version_api_data_datasets__dataset_id__inspection_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "asset_id",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Asset Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "interpretations",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Interpretations",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Inspect Version",
+        "tags": [
+          "Data Library"
+        ]
+      }
+    },
+    "/api/data/datasets/{dataset_id}/query": {
+      "post": {
+        "description": "跑一次查询，留下收据。",
+        "operationId": "run_query_api_data_datasets__dataset_id__query_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Query",
+        "tags": [
+          "Data Library"
+        ]
+      }
+    },
+    "/api/data/receipts": {
+      "get": {
+        "description": "列出查询收据。",
+        "operationId": "list_receipts_api_data_receipts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Receipts",
+        "tags": [
+          "Data Library"
+        ]
+      }
+    },
+    "/api/data/receipts/{query_id}": {
+      "get": {
+        "description": "读一条查询收据。",
+        "operationId": "get_receipt_api_data_receipts__query_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "query_id",
+            "required": true,
+            "schema": {
+              "title": "Query Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Receipt",
+        "tags": [
+          "Data Library"
         ]
       }
     },

@@ -28,6 +28,7 @@ ROUTERS = {
     "webmin": "src.server.api.webmin",
     "papers": "src.server.api.papers_api",
     "research": "src.server.api.research_api",
+    "data": "src.server.api.data_api",
 }
 
 # (path, methods, endpoint name)，顺序即 FastAPI 匹配顺序，必须逐字保持。
@@ -240,6 +241,19 @@ EXPECTED_ROUTES = {
         ("/acp/stream", "GET", "acp_stream"),
         ("/acp/file", "POST", "acp_upload_file"),
         ("/acp/file", "GET", "acp_download_file"),
+    ],
+    "data": [
+        ("/api/data/datasets", "GET", "list_datasets"),
+        ("/api/data/datasets/import", "POST", "import_dataset"),
+        ("/api/data/datasets/{dataset_id}", "GET", "get_dataset"),
+        (
+            "/api/data/datasets/{dataset_id}/inspection",
+            "GET",
+            "inspect_version",
+        ),
+        ("/api/data/datasets/{dataset_id}/query", "POST", "run_query"),
+        ("/api/data/receipts", "GET", "list_receipts"),
+        ("/api/data/receipts/{query_id}", "GET", "get_receipt"),
     ],
     "research": [
         ("/api/research/records", "GET", "list_records"),

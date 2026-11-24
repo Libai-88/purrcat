@@ -30,6 +30,7 @@ def create_app(port: int | None = None) -> FastAPI:
     from src.server.api.acp import router as acp_router
     from src.server.api.chat import router as chat_router
     from src.server.api.config import router as config_router
+    from src.server.api.data_api import router as data_router
     from src.server.api.evolve import router as evolve_router
     from src.server.api.filesystem import router as filesystem_router
     from src.server.api.graph import router as graph_router
@@ -59,6 +60,7 @@ def create_app(port: int | None = None) -> FastAPI:
     app.include_router(graph_router)
     app.include_router(task_router)
     app.include_router(config_router)
+    app.include_router(data_router)
     app.include_router(memory_router)
     app.include_router(tools_router)
     app.include_router(system_router)

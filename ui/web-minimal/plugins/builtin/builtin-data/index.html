@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>数据</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; overflow: hidden;
+    font-family: var(--wm-font, system-ui, -apple-system, "Segoe UI", sans-serif);
+    font-size: 13px; color: var(--wm-ink, #1f2430);
+    background: var(--wm-bg-base, #fff);
+  }
+  #side {
+    width: 250px; flex: none; display: flex; flex-direction: column;
+    border-right: 1px solid var(--wm-border, #e3e6ec);
+    background: var(--wm-bg-sidebar, #f7f8fa);
+  }
+  #sidehead {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px; border-bottom: 1px solid var(--wm-border, #e3e6ec);
+  }
+  #sidehead h2 { margin: 0; flex: 1; font-size: 12px; font-weight: 600; color: var(--wm-label-2nd, #5b6474); }
+  #imp { padding: 8px 10px; border-bottom: 1px solid var(--wm-border, #e3e6ec); }
+  #imp input {
+    width: 100%; font: inherit; padding: 5px 7px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-input, #fff); color: var(--wm-ink, #1f2430);
+  }
+  #imp .row { display: flex; gap: 6px; margin-top: 6px; }
+  #imp .row button { flex: 1; }
+  #err { margin-top: 6px; font-size: 11px; color: #b4463c; line-height: 1.5; word-break: break-all; }
+  #list { flex: 1; overflow-y: auto; }
+  .item {
+    padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--wm-border-soft, #eef0f4);
+    color: var(--wm-label, #3a4152);
+  }
+  .item:hover { background: var(--wm-bg-hover, #eef1f6); }
+  .item.active { background: var(--wm-bg-active, #e4ebf7); color: var(--wm-ink, #1f2430); }
+  .item .t { display: block; line-height: 1.35; }
+  .item .m { display: block; margin-top: 3px; font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  .item .m .bad { color: #b4463c; }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #bar {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-panel, #fbfbfd);
+  }
+  #bar .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  button {
+    font: inherit; padding: 4px 10px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-panel, #fff);
+    color: var(--wm-ink, #1f2430); cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--wm-bg-hover, #eef1f6); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: #fff; }
+  button.primary:hover:not(:disabled) { background: var(--wm-accent-hi, #2f5c8d); }
+  button.link {
+    border: none; background: none; color: var(--wm-accent, #3b6ea5);
+    padding: 0 3px; text-decoration: underline; cursor: pointer; font-size: 12px;
+  }
+  button.link:hover:not(:disabled) { background: none; opacity: .75; }
+  select {
+    font: inherit; padding: 3px 6px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-panel, #fff); color: var(--wm-ink, #1f2430);
+  }
+  #body { flex: 1; overflow-y: auto; padding: 18px 26px; line-height: 1.7; }
+  #empty { color: var(--wm-label-dim, #8b93a3); }
+  #body h3 { font-size: 12px; color: var(--wm-label-2nd, #5b6474); margin: 20px 0 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td {
+    text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--wm-border-soft, #eef0f4);
+    vertical-align: top;
+  }
+  th { color: var(--wm-label-2nd, #5b6474); font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .badge {
+    display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 11px;
+    border: 1px solid var(--wm-border, #d7dbe3); color: var(--wm-label-2nd, #5b6474);
+  }
+  .badge.ok { border-color: #4a8f5c; color: #2f6b3e; }
+  .badge.warn { border-color: #d8a13a; color: #9a6c14; }
+  .badge.bad { border-color: #b4463c; color: #8f362e; }
+  #body .meta { color: var(--wm-label-dim, #8b93a3); font-size: 12px; margin-bottom: 4px; }
+  #body .note {
+    margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--wm-border, #e3e6ec);
+    color: var(--wm-label-dim, #8b93a3); font-size: 12px; line-height: 1.7;
+  }
+  #status { padding: 7px 12px; border-top: 1px solid var(--wm-border, #e3e6ec); color: var(--wm-label-dim, #8b93a3); font-size: 12px; background: var(--wm-bg-panel, #fbfbfd); }
+</style>
+</head>
+<body>
+  <div id="side">
+    <div id="sidehead">
+      <h2>数据集</h2>
+      <button id="pick">导入数据</button>
+    </div>
+    <div id="imp" hidden>
+      <input id="path" type="text" placeholder="CSV / TSV / JSON 文件的绝对路径" spellcheck="false" />
+      <div class="row">
+        <button id="browse">选择文件</button>
+        <button id="doimport" class="primary">导入</button>
+      </div>
+      <div id="err"></div>
+    </div>
+    <div id="list"></div>
+  </div>
+  <div id="main">
+    <div id="bar">
+      <span class="title" id="title">未选择数据集</span>
+      <select id="version"></select>
+      <span id="vlabel"></span>
+      <button id="ask" class="primary" disabled>问 Agent</button>
+    </div>
+    <div id="body"><div id="empty">从左边选一个数据集，或导入一个数据文件。</div></div>
+    <div id="status">选中一个数据集查看它的结构与质量</div>
+  </div>
+<script>
+(function () {
+  var seq = 0;
+  function callAction(actionId, payload) {
+    return new Promise(function (resolve, reject) {
+      var id = ++seq;
+      function onMsg(e) {
+        var m = e.data;
+        if (m && m.type === 'callActionResult' && m.id === id) {
+          window.removeEventListener('message', onMsg);
+          if (m.ok) resolve(m.data); else reject(new Error(m.error || '调用失败'));
+        }
+      }
+      window.addEventListener('message', onMsg);
+      window.parent.postMessage({ type: 'callAction', id: id, actionId: actionId, payload: payload || {} }, '*');
+    });
+  }
+
+  var datasets = [];
+  var current = null;      // 当前数据集（含版本明细）
+  var assetId = '';        // 当前查看的版本
+  var inspection = null;   // 当前版本的检查结果
+  var interpretations = {}; // 显式解释为数字的列
+
+  var elList = document.getElementById('list');
+  var elTitle = document.getElementById('title');
+  var elBody = document.getElementById('body');
+  var elStatus = document.getElementById('status');
+  var elVersion = document.getElementById('version');
+  var elVLabel = document.getElementById('vlabel');
+  var elImp = document.getElementById('imp');
+  var elPath = document.getElementById('path');
+  var elErr = document.getElementById('err');
+  var btnPick = document.getElementById('pick');
+  var btnBrowse = document.getElementById('browse');
+  var btnImport = document.getElementById('doimport');
+  var btnAsk = document.getElementById('ask');
+
+  function esc(text) {
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ---------- 列表 ----------
+
+  function renderList() {
+    elList.innerHTML = '';
+    if (!datasets.length) {
+      var empty = document.createElement('div');
+      empty.className = 'item';
+      empty.style.cursor = 'default';
+      empty.textContent = '（暂无）';
+      elList.appendChild(empty);
+      return;
+    }
+    datasets.forEach(function (item) {
+      var latest = item.latest || {};
+      var row = document.createElement('div');
+      row.className = 'item' + (current && item.id === current.id ? ' active' : '');
+      row.innerHTML = '<span class="t"></span><span class="m"></span>';
+      row.querySelector('.t').textContent = item.name;
+      var meta = row.querySelector('.m');
+      meta.textContent = item.version_count + ' 个版本 · ' + (latest.format || '?') + ' · ' + (latest.size || 0) + ' 字节';
+      if (latest.availability && latest.availability !== 'present') {
+        var flag = document.createElement('span');
+        flag.className = 'bad';
+        flag.textContent = ' · ' + (latest.availability === 'missing' ? '原文件丢失' : '原文件已变');
+        meta.appendChild(flag);
+      }
+      row.onclick = function () { openDataset(item); };
+      elList.appendChild(row);
+    });
+  }
+
+  // ---------- 详情 ----------
+
+  function openDataset(item) {
+    current = item;
+    interpretations = {};
+    assetId = (item.latest || {}).id || '';
+    elTitle.textContent = item.name;
+    renderList();
+    renderVersions();
+    loadInspection();
+  }
+
+  function renderVersions() {
+    elVersion.innerHTML = '';
+    var details = current.version_details || [];
+    details.forEach(function (asset, index) {
+      var option = document.createElement('option');
+      option.value = asset.id;
+      option.textContent = 'v' + (index + 1) + ' · ' + asset.format + ' · ' + (asset.availability || '?');
+      if (asset.id === assetId) option.selected = true;
+      elVersion.appendChild(option);
+    });
+    elVersion.hidden = details.length <= 1;
+  }
+
+  function loadInspection() {
+    if (!current || !assetId) return;
+    elBody.innerHTML = '<div id="empty">载入中…</div>';
+    btnAsk.disabled = true;
+    var url = '/api/data/datasets/' + encodeURIComponent(current.id) + '/inspection'
+      + '?asset_id=' + encodeURIComponent(assetId);
+    if (Object.keys(interpretations).length) {
+      url += '&interpretations=' + encodeURIComponent(JSON.stringify(interpretations));
+    }
+    fetch(url)
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) { inspection = data; renderInspection(); })
+      .catch(function (err) {
+        elBody.innerHTML = '<div id="empty">检查失败：' + esc(err.message) + '</div>';
+      });
+  }
+
+  function renderInspection() {
+    if (!inspection) return;
+    var report = inspection.report;
+    var asset = inspection.asset || {};
+    var html = '';
+
+    html += '<div class="meta">版本 <strong>' + esc(inspection.version_label) + '</strong> · ';
+    html += 'SHA-256 <code>' + esc(asset.sha256 || '') + '</code> · ';
+    html += '可用性 <span class="badge ' + (asset.availability === 'present' ? 'ok' : 'bad') + '">'
+      + esc(asset.availability || '?') + '</span> · 解析器 ' + esc(report.parser_version) + '</div>';
+    html += '<div class="meta">' + report.row_count + ' 行 · ' + report.field_count + ' 列</div>';
+
+    html += '<h3>字段</h3><table><thead><tr>'
+      + '<th>字段</th><th>观察到的类型</th><th>缺字段</th><th>显式 null</th><th>空字符串</th><th>解释</th><th>转换失败</th>'
+      + '</tr></thead><tbody>';
+    report.fields.forEach(function (field) {
+      html += '<tr>';
+      html += '<td>' + esc(field.name) + '</td>';
+      html += '<td>' + esc((field.kinds || []).join(', ') || '—') + '</td>';
+      html += '<td class="num">' + field.missing + '</td>';
+      html += '<td class="num">' + field.nulls + '</td>';
+      html += '<td class="num">' + field.empty + '</td>';
+      html += '<td>' + (field.interpretation ? '数字' : '文本') + ' ';
+      if (!field.interpretation) {
+        html += '<button class="link interpret" data-field="' + esc(field.name) + '">解释为数字</button>';
+      }
+      html += '</td>';
+      html += '<td class="num">' + (field.conversion_failures || 0) + '</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+
+    html += '<h3>质量</h3><table><tbody>'
+      + '<tr><td>缺字段（字段不存在）</td><td class="num">' + report.missing + '</td></tr>'
+      + '<tr><td>显式 null</td><td class="num">' + report.nulls + '</td></tr>'
+      + '<tr><td>空字符串</td><td class="num">' + report.empty + '</td></tr>'
+      + '<tr><td>重复行</td><td class="num">' + report.duplicate_rows + '</td></tr>'
+      + '<tr><td>转换失败</td><td class="num">' + report.conversion_failures + '</td></tr>'
+      + '<tr><td>跳过的空行</td><td class="num">' + report.blank_lines + '</td></tr>'
+      + '</tbody></table>';
+
+    if (inspection.sample && inspection.sample.length) {
+      html += '<h3>样本（前 ' + inspection.sample.length + ' 行）</h3><table><thead><tr><th>行</th><th>源行</th>';
+      var first = inspection.sample[0];
+      (first.cells || []).forEach(function (cell, index) {
+        html += '<th>' + esc((inspection.fields || [])[index] || ('col' + (index + 1))) + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+      inspection.sample.forEach(function (row) {
+        html += '<tr><td class="num">' + row.row + '</td><td class="num">' + row.source_line + '</td>';
+        (row.cells || []).forEach(function (cell) {
+          var text = cell.kind === 'null' ? 'NULL' : (cell.kind === 'missing' ? '（缺字段）' : (cell.text || ''));
+          html += '<td>' + esc(String(text).slice(0, 60)) + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    html += '<div class="note">这些检查描述的是文件本身，不构成对数据科学意义的判断。<br />'
+      + 'CSV / TSV 的值一律按文本处理；要做数值比较或求和，请先把该列显式解释为数字。</div>';
+
+    elBody.innerHTML = html;
+    elBody.querySelectorAll('.interpret').forEach(function (btn) {
+      btn.onclick = function () { interpretField(btn.getAttribute('data-field')); };
+    });
+    btnAsk.disabled = false;
+    elStatus.textContent = '检查的是这一个固定版本；换版本会重新检查';
+  }
+
+  function interpretField(field) {
+    interpretations[field] = 'number';
+    elStatus.textContent = '已把「' + field + '」解释为数字，正在重新检查…';
+    loadInspection();
+  }
+
+  // ---------- 问 Agent ----------
+
+  btnAsk.onclick = function () {
+    if (!current || !assetId) return;
+    var asset = (inspection && inspection.asset) || {};
+    // 检查失败时不给行数据，只给身份信息——明确禁止编造记录
+    var inspected = !!(inspection && inspection.report);
+    var prompt = inspected
+      ? '分析这个数据集视图：检查缺失与来源，给结论时带上记录出处。'
+      : '这个数据集是一个没有表格的原始文件。只用它的身份、来源与校验和，不要编造记录或数据摘要。';
+    var payload = {
+      dataset_id: current.id,
+      asset_id: assetId,
+      sha256: asset.sha256 || '',
+      record_count: inspected ? inspection.report.row_count : 0,
+      field_count: inspected ? inspection.report.field_count : 0,
+      inspected: inspected
+    };
+    callAction('chat.sendBatch', { events: [
+      { type: 'dataset-view', content: JSON.stringify(payload) },
+      { type: 'user', content: prompt }
+    ] }).then(function () {
+      elStatus.textContent = '已把这个数据集发送给 Agent';
+    }).catch(function (err) {
+      elStatus.textContent = '发送失败：' + err.message;
+    });
+  };
+
+  // ---------- 导入 ----------
+
+  function refresh() {
+    return fetch('/api/data/datasets')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        datasets = data.datasets || [];
+        renderList();
+        return datasets;
+      });
+  }
+
+  function doImport(path) {
+    if (!path) { elErr.textContent = '请填写文件路径'; return; }
+    elErr.textContent = '导入中…';
+    btnImport.disabled = true;
+    fetch('/api/data/datasets/import', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: path })
+    })
+      .then(function (r) {
+        return r.json().then(function (d) {
+          if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+          return d;
+        });
+      })
+      .then(function (imported) {
+        elErr.textContent = ''; elImp.hidden = true; elPath.value = '';
+        return refresh().then(function () { openDataset(imported.dataset); });
+      })
+      .catch(function (err) { elErr.textContent = '导入失败：' + err.message; })
+      .then(function () { btnImport.disabled = false; });
+  }
+
+  btnPick.onclick = function () {
+    elImp.hidden = !elImp.hidden;
+    elErr.textContent = '';
+    if (!elImp.hidden) elPath.focus();
+  };
+
+  btnBrowse.onclick = function () {
+    // 原生文件选择只在桌面端可用：插件与宿主同源，可以直接读宿主暴露的 preload 能力。
+    var host = window.parent;
+    if (!host || !host.purrcat || !host.purrcat.openDialog) {
+      elErr.textContent = '当前环境没有原生文件选择，请直接填写文件路径';
+      return;
+    }
+    callAction('dialog.files', {})
+      .then(function (paths) {
+        if (paths && paths.length) elPath.value = paths[0];
+        else elErr.textContent = '没有选择文件';
+      })
+      .catch(function (err) {
+        elErr.textContent = '原生文件选择不可用（' + err.message + '），请直接填写路径';
+      });
+  };
+
+  btnImport.onclick = function () { doImport(elPath.value.trim()); };
+  elPath.onkeydown = function (e) { if (e.key === 'Enter') doImport(elPath.value.trim()); };
+
+  elVersion.onchange = function () {
+    assetId = elVersion.value;
+    interpretations = {};
+    loadInspection();
+  };
+
+  refresh().then(function (list) { if (list.length) openDataset(list[0]); });
+})();
+</script>
+</body>
+</html>

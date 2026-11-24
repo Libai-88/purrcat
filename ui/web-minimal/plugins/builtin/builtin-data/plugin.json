@@ -1,0 +1,12 @@
+{
+  "id": "builtin-data",
+  "root": "builtin",
+  "name": "数据",
+  "description": "数据工作台：导入数据文件、查看结构与质量、按版本查询，每个查询都留下一条可引用的收据。",
+  "description-en": "Data workbench: import data files, inspect structure and quality, query a fixed version; every query leaves a citable receipt.",
+  "icon": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><ellipse cx='12' cy='5' rx='8' ry='3'/><path d='M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5'/><path d='M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3'/></svg>",
+  "slot": { "area": "panel" },
+  "entry": "index.html",
+  "dependency": [],
+  "configSchema": []
+}

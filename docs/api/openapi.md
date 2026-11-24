@@ -1088,6 +1088,158 @@ ACP 接入状态：relay 部署情况 / 端口 / uv 可用性
 | 200 | Successful Response | - |
 | 422 | Validation Error | HTTPValidationError |
 
+## Data Library
+
+### `GET /api/data/datasets`
+
+**标题**：List Datasets
+
+列出数据集。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| include_archived | query | boolean | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `POST /api/data/datasets/import`
+
+**标题**：Import Dataset
+
+导入一个数据文件；给了 dataset_id 就是给该数据集追加一个版本。
+
+#### 请求体
+
+**Schema**：`ImportReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| path | string | 是 |  |
+| name | string | 否 |  |
+| kind | string | 否 |  |
+| source | string | 否 |  |
+| license | string | 否 |  |
+| project_ref | string | 否 |  |
+| dataset_id | string | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/data/datasets/{dataset_id}`
+
+**标题**：Get Dataset
+
+取一个数据集及其版本。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| dataset_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/data/datasets/{dataset_id}/inspection`
+
+**标题**：Inspect Version
+
+检查某一版：字段画像与质量报告。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| dataset_id | path | string | 是 |  |
+| asset_id | query | string | 否 |  |
+| interpretations | query | string | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `POST /api/data/datasets/{dataset_id}/query`
+
+**标题**：Run Query
+
+跑一次查询，留下收据。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| dataset_id | path | string | 是 |  |
+
+#### 请求体
+
+**Schema**：`QueryReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| asset_id | string | 否 |  |
+| question | string | 否 |  |
+| spec | object | 否 |  |
+| interpretations | object | 否 |  |
+| unit | string | 否 |  |
+| grain | string | 否 |  |
+| denominator | string | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/data/receipts`
+
+**标题**：List Receipts
+
+列出查询收据。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `GET /api/data/receipts/{query_id}`
+
+**标题**：Get Receipt
+
+读一条查询收据。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| query_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
 ## Default
 
 ### `GET /api/health`
