@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>自动化</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; overflow: hidden;
+    font-family: var(--wm-font, system-ui, -apple-system, "Segoe UI", sans-serif);
+    font-size: 13px; color: var(--wm-ink, #1f2430);
+    background: var(--wm-bg-base, #fff);
+  }
+  #side {
+    width: 260px; flex: none; display: flex; flex-direction: column;
+    border-right: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-sidebar, #f7f8fa);
+  }
+  #sidehead {
+    display: flex; align-items: center; gap: 6px; padding: 8px 10px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec);
+  }
+  #sidehead h2 { margin: 0; flex: 1; font-size: 12px; font-weight: 600; color: var(--wm-label-2nd, #5b6474); }
+  #form { padding: 10px; border-bottom: 1px solid var(--wm-border, #e3e6ec); }
+  #form label { display: block; font-size: 11px; color: var(--wm-label-dim, #8b93a3); margin: 8px 0 3px; }
+  #form input, #form textarea, #form select {
+    width: 100%; font: inherit; padding: 5px 7px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-input, #fff); color: var(--wm-ink, #1f2430);
+  }
+  #form textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+  #form .row { display: flex; gap: 6px; margin-top: 10px; }
+  #form .row button { flex: 1; }
+  #err { margin-top: 6px; font-size: 11px; color: #b4463c; line-height: 1.5; }
+  #list { flex: 1; overflow-y: auto; }
+  .item {
+    padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--wm-border-soft, #eef0f4);
+    color: var(--wm-label, #3a4152);
+  }
+  .item:hover { background: var(--wm-bg-hover, #eef1f6); }
+  .item.active { background: var(--wm-bg-active, #e4ebf7); color: var(--wm-ink, #1f2430); }
+  .item .t { display: block; line-height: 1.35; }
+  .item .m { display: block; margin-top: 3px; font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  .item .m .bad { color: #b4463c; }
+  .item .m .off { color: var(--wm-label-dim, #8b93a3); }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #bar {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border-bottom: 1px solid var(--wm-border, #e3e6ec); background: var(--wm-bg-panel, #fbfbfd);
+  }
+  #bar .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  button {
+    font: inherit; padding: 4px 10px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border, #d7dbe3); background: var(--wm-bg-panel, #fff);
+    color: var(--wm-ink, #1f2430); cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--wm-bg-hover, #eef1f6); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--wm-accent, #3b6ea5); border-color: var(--wm-accent, #3b6ea5); color: #fff; }
+  button.primary:hover:not(:disabled) { background: var(--wm-accent-hi, #2f5c8d); }
+  button.link {
+    border: none; background: none; color: var(--wm-accent, #3b6ea5);
+    padding: 0 3px; text-decoration: underline; cursor: pointer; font-size: 12px;
+  }
+  #body { flex: 1; overflow-y: auto; padding: 14px 18px 40px; line-height: 1.7; }
+  #body h3 { font-size: 12px; color: var(--wm-label-2nd, #5b6474); margin: 18px 0 6px; }
+  #body .meta { font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  #body .instr {
+    margin-top: 8px; padding: 8px 10px; border-radius: var(--wm-radius-sm, 4px);
+    border: 1px solid var(--wm-border-soft, #eef0f4); background: var(--wm-bg-panel, #fbfbfd);
+    font-family: var(--wm-mono, ui-monospace, Menlo, Consolas, monospace); font-size: 12px;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  #body .note { margin-top: 14px; font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  .run {
+    display: flex; align-items: baseline; gap: 8px; padding: 6px 0;
+    border-bottom: 1px solid var(--wm-border-soft, #eef0f4); font-size: 12px;
+  }
+  .run .st {
+    flex: none; padding: 1px 7px; border-radius: 999px; font-size: 11px;
+    border: 1px solid var(--wm-border, #d7dbe3); color: var(--wm-label-2nd, #5b6474);
+  }
+  .run .st.succeeded { border-color: #4a8f5c; color: #2f6b3e; }
+  .run .st.failed { border-color: #b4463c; color: #8f362e; }
+  .run .st.cancelled { border-color: #d8a13a; color: #9a6c14; }
+  .run .st.running { border-color: #3b6ea5; color: #2f5c8d; }
+  .run .st.queued { border-style: dashed; }
+  .run .when { flex: none; font-size: 11px; color: var(--wm-label-dim, #8b93a3); }
+  .run .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .empty { color: var(--wm-label-dim, #8b93a3); font-size: 12px; padding: 10px 0; }
+</style>
+<link rel="stylesheet" href="/minimal/assets/async-state.css" />
+</head>
+<body>
+  <div id="side">
+    <div id="sidehead">
+      <h2>自动化</h2>
+      <button id="new">新建</button>
+    </div>
+    <div id="form" hidden>
+      <label for="f-title">名字</label>
+      <input id="f-title" type="text" placeholder="查新论文" spellcheck="false" />
+      <label for="f-instr">到点让 Agent 做什么</label>
+      <textarea id="f-instr" placeholder="看看 arXiv 上有没有和「生存分析」相关的新论文，有的话把摘要记到研究笔记里。"></textarea>
+      <label for="f-time">触发时刻（24 小时制 HH:MM）</label>
+      <input id="f-time" type="text" placeholder="08:30" spellcheck="false" />
+      <label for="f-repeat">重复</label>
+      <select id="f-repeat">
+        <option value="none">只跑一次</option>
+        <option value="everyday">每天</option>
+        <option value="weekly_1">每周一</option>
+        <option value="weekly_2">每周二</option>
+        <option value="weekly_3">每周三</option>
+        <option value="weekly_4">每周四</option>
+        <option value="weekly_5">每周五</option>
+        <option value="weekly_6">每周六</option>
+        <option value="weekly_7">每周日</option>
+      </select>
+      <div class="row">
+        <button id="save" class="primary">保存</button>
+        <button id="cancel">取消</button>
+      </div>
+      <div id="err"></div>
+    </div>
+    <div id="list"></div>
+  </div>
+  <div id="main">
+    <div id="bar">
+      <span class="title" id="title">未选择自动化</span>
+      <button id="runnow" disabled>手动跑一次</button>
+      <button id="toggle" disabled>停用</button>
+      <button id="remove" disabled>删除</button>
+    </div>
+    <div id="body"></div>
+  </div>
+<script src="/minimal/assets/async-state.js"></script>
+<script>
+(function () {
+  var automations = [];
+  var runs = [];
+  var current = null;
+  var editingId = '';
+
+  var elList = document.getElementById('list');
+  var elTitle = document.getElementById('title');
+  var elBody = document.getElementById('body');
+  var elForm = document.getElementById('form');
+  var elErr = document.getElementById('err');
+  var fTitle = document.getElementById('f-title');
+  var fInstr = document.getElementById('f-instr');
+  var fTime = document.getElementById('f-time');
+  var fRepeat = document.getElementById('f-repeat');
+  var btnRun = document.getElementById('runnow');
+  var btnToggle = document.getElementById('toggle');
+  var btnRemove = document.getElementById('remove');
+  // 列表与正文各自一个状态机：局部加载，不清空整个页面。
+  var listRegion = new PurrCatAsync.Region(elList);
+  var bodyRegion = new PurrCatAsync.Region(elBody);
+
+  function esc(text) {
+    return PurrCatAsync.esc(text);
+  }
+
+  function api(path, options) {
+    return fetch(path, options).then(function (r) {
+      return r.json().then(function (body) {
+        if (!r.ok) throw new Error(body.detail || ('HTTP ' + r.status));
+        return body;
+      });
+    });
+  }
+
+  // ---------- 列表 ----------
+
+  function renderList() {
+    elList.innerHTML = '';
+    if (!automations.length) {
+      var hint = document.createElement('div');
+      hint.className = 'item';
+      hint.style.cursor = 'default';
+      hint.textContent = '（还没有自动化）';
+      elList.appendChild(hint);
+      return;
+    }
+    automations.forEach(function (item) {
+      var row = document.createElement('div');
+      row.className = 'item' + (current && current.id === item.id ? ' active' : '');
+      row.innerHTML = '<span class="t"></span><span class="m"></span>';
+      row.querySelector('.t').textContent = item.title || item.id;
+      var meta = row.querySelector('.m');
+      meta.textContent = item.trigger_time + ' · ' + repeatText(item.repeat_rule);
+      if (!item.enabled) {
+        var off = document.createElement('span');
+        off.className = 'off';
+        off.textContent = ' · 已停用';
+        meta.appendChild(off);
+      }
+      row.onclick = function () { open(item.id); };
+      elList.appendChild(row);
+    });
+  }
+
+  function repeatText(rule) {
+    var map = {
+      none: '只跑一次', everyday: '每天',
+      weekly_1: '每周一', weekly_2: '每周二', weekly_3: '每周三', weekly_4: '每周四',
+      weekly_5: '每周五', weekly_6: '每周六', weekly_7: '每周日'
+    };
+    return map[rule] || rule || '只跑一次';
+  }
+
+  function refresh() {
+    listRegion.begin('refresh');
+    return api('/api/automations').then(function (data) {
+      automations = data.automations || [];
+      runs = data.runs || [];
+      listRegion.settle({ data: 'complete', request: 'idle', result: 'ok' }, function () {
+        renderList();
+      });
+      if (current) {
+        var found = null;
+        for (var i = 0; i < automations.length; i++) {
+          if (automations[i].id === current.id) found = automations[i];
+        }
+        current = found;
+        if (current) renderDetail();
+        else { current = null; elBody.innerHTML = ''; elTitle.textContent = '未选择自动化'; }
+      }
+    }).catch(function (err) {
+      listRegion.fail(err, function () { refresh(); });
+    });
+  }
+
+  // ---------- 详情 ----------
+
+  function open(id) {
+    current = null;
+    for (var i = 0; i < automations.length; i++) {
+      if (automations[i].id === id) current = automations[i];
+    }
+    if (!current) return;
+    renderList();
+    renderDetail();
+    bodyRegion.begin('refresh');
+    api('/api/automations/' + encodeURIComponent(id)).then(function (data) {
+      runs = data.runs || [];
+      bodyRegion.settle({ data: 'complete', request: 'idle', result: 'ok' }, function () {
+        renderDetail();
+      });
+    }).catch(function (err) {
+      bodyRegion.fail(err, function () { open(id); });
+    });
+  }
+
+  function renderDetail() {
+    if (!current) return;
+    elTitle.textContent = current.title || current.id;
+    btnRun.disabled = false;
+    btnToggle.disabled = false;
+    btnRemove.disabled = false;
+    btnToggle.textContent = current.enabled ? '停用' : '启用';
+
+    var mine = runs.filter(function (r) { return r.automation_id === current.id; });
+    var html = '';
+    html += '<div class="meta">触发时刻 <strong>' + esc(current.trigger_time) + '</strong> · '
+      + esc(repeatText(current.repeat_rule)) + ' · '
+      + (current.enabled ? '启用中' : '已停用') + '</div>';
+    html += '<div class="meta">下次触发 ' + esc(current.next_run_at || '—')
+      + ' · 上次触发 ' + esc(current.last_run_at || '—') + '</div>';
+    html += '<div class="instr">' + esc(current.instruction || '') + '</div>';
+
+    html += '<h3>运行回执</h3>';
+    if (!mine.length) {
+      html += '<div class="empty">还没有跑过。</div>';
+    } else {
+      mine.forEach(function (run) {
+        html += '<div class="run">';
+        html += '<span class="st ' + esc(run.state) + '">' + esc(stateText(run.state)) + '</span>';
+        html += '<span class="when">' + esc((run.finished_at || run.queued_at || '').replace('T', ' ').replace('+00:00', ' UTC')) + '</span>';
+        html += '<span class="what">' + esc(run.detail || run.title || '') + '</span>';
+        html += '</div>';
+      });
+    }
+    html += '<div class="note">回执只说这次运行怎么样（排上了 / 跑完了 / 挂了），'
+      + '不说明它核对出来的结论可不可信——那是可信度状态的事。</div>';
+    elBody.innerHTML = html;
+  }
+
+  function stateText(state) {
+    var map = {
+      queued: '已排上', running: '正在跑', succeeded: '跑完了',
+      failed: '出错了', cancelled: '已取消'
+    };
+    return map[state] || state || '未知';
+  }
+
+  // ---------- 新建 / 编辑 ----------
+
+  function openForm(item) {
+    editingId = item ? item.id : '';
+    elErr.textContent = '';
+    fTitle.value = item ? (item.title || '') : '';
+    fInstr.value = item ? (item.instruction || '') : '';
+    fTime.value = item ? (item.trigger_time || '') : '';
+    fRepeat.value = item ? (item.repeat_rule || 'none') : 'none';
+    elForm.hidden = false;
+    fTitle.focus();
+  }
+
+  document.getElementById('new').onclick = function () { openForm(null); };
+  document.getElementById('cancel').onclick = function () {
+    elForm.hidden = true;
+    editingId = '';
+  };
+
+  document.getElementById('save').onclick = function () {
+    var payload = {
+      title: fTitle.value.trim(),
+      instruction: fInstr.value.trim(),
+      trigger_time: fTime.value.trim(),
+      repeat_rule: fRepeat.value
+    };
+    if (!payload.title || !payload.instruction || !payload.trigger_time) {
+      elErr.textContent = '名字、指示和触发时刻都要填。';
+      return;
+    }
+    var request = editingId
+      ? api('/api/automations/' + encodeURIComponent(editingId), {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+      : api('/api/automations', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+    request.then(function () {
+      elForm.hidden = true;
+      editingId = '';
+      refresh();
+    }).catch(function (err) {
+      elErr.textContent = err.message;
+    });
+  };
+
+  // ---------- 操作 ----------
+
+  btnRun.onclick = function () {
+    if (!current) return;
+    btnRun.disabled = true;
+    api('/api/automations/' + encodeURIComponent(current.id) + '/run', { method: 'POST' })
+      .then(function () { refresh(); })
+      .catch(function (err) { elBody.innerHTML = '<div class="empty">跑不起来：' + esc(err.message) + '</div>'; })
+      .then(function () { btnRun.disabled = false; });
+  };
+
+  btnToggle.onclick = function () {
+    if (!current) return;
+    api('/api/automations/' + encodeURIComponent(current.id), {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: !current.enabled })
+    }).then(function () { refresh(); })
+      .catch(function (err) { elBody.innerHTML = '<div class="empty">改不了：' + esc(err.message) + '</div>'; });
+  };
+
+  btnRemove.onclick = function () {
+    if (!current) return;
+    var title = current.title || current.id;
+    if (!window.confirm('确定要删掉自动化「' + title + '」吗？已经跑完的回执会留着。')) return;
+    api('/api/automations/' + encodeURIComponent(current.id), { method: 'DELETE' })
+      .then(function () {
+        current = null;
+        elTitle.textContent = '未选择自动化';
+        elBody.innerHTML = '';
+        btnRun.disabled = true;
+        btnToggle.disabled = true;
+        btnRemove.disabled = true;
+        refresh();
+      })
+      .catch(function (err) { elBody.innerHTML = '<div class="empty">删不掉：' + esc(err.message) + '</div>'; });
+  };
+
+  // ---------- 启动 ----------
+
+  refresh();
+})();
+</script>
+</body>
+</html>

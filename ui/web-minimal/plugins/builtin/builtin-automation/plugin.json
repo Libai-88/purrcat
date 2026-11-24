@@ -1,0 +1,12 @@
+{
+  "id": "builtin-automation",
+  "root": "builtin",
+  "name": "自动化",
+  "description": "定时自动化：到点让 Agent 跑一段指定的任务，并留下每次运行的回执。",
+  "description-en": "Scheduled automations: run a specified Agent task on a schedule, with a receipt for every run.",
+  "icon": "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3.5 2'/></svg>",
+  "slot": { "area": "panel" },
+  "entry": "index.html",
+  "dependency": [],
+  "configSchema": []
+}

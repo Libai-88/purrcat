@@ -5,6 +5,7 @@
 import threading
 
 # 导入所有工具的 Schema
+from .automation import AUTOMATION_TOOL_SCHEMA
 from .bash import BASH_TOOL_SCHEMA
 from .brainstorm import BRAINSTORM_TOOL_SCHEMA
 from .callmcp import MCP_TOOL_SCHEMA
@@ -31,6 +32,7 @@ from .callmcp.callmcp import reload_mcp_schema, initialize_mcp_sync
 # --- 暴露的两套 Schema 列表 ---
 
 AGENT_TOOL_SCHEMA = [
+    AUTOMATION_TOOL_SCHEMA,
     BASH_TOOL_SCHEMA,
     BRAINSTORM_TOOL_SCHEMA,
     CRON_TOOL_SCHEMA,

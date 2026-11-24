@@ -28,6 +28,7 @@ def create_app(port: int | None = None) -> FastAPI:
 
     # Routers are imported lazily to keep entry-point startup fast.
     from src.server.api.acp import router as acp_router
+    from src.server.api.automation_api import router as automation_router
     from src.server.api.chat import router as chat_router
     from src.server.api.config import router as config_router
     from src.server.api.data_api import router as data_router
@@ -56,6 +57,7 @@ def create_app(port: int | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
+    app.include_router(automation_router)
     app.include_router(chat_router)
     app.include_router(projects_router)
     app.include_router(graph_router)
@@ -106,6 +108,19 @@ def create_app(port: int | None = None) -> FastAPI:
         @app.on_event("shutdown")
         def _clear_runtime_port():
             clear_runtime_state()
+
+        # 🌟 自动化执行器：到点把指示推给 Agent，并留下运行回执。
+        # 只在真的起服务时才跑——离线装配（生成 API 文档等）不该拉起线程。
+        # 与心跳线程一样等 Agent 空闲再推，两者不会并发注入。
+        from src.automation.runner import get_runner as _get_automation_runner
+
+        @app.on_event("startup")
+        def _start_automation_runner():
+            _get_automation_runner().start()
+
+        @app.on_event("shutdown")
+        def _stop_automation_runner():
+            _get_automation_runner().stop()
 
     # 🌟 健康检查必须注册在静态挂载之前！
     # Starlette 按注册顺序匹配路由，静态文件挂载是贪婪前缀匹配，

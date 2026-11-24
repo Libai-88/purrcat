@@ -145,8 +145,10 @@ def test_create_app_route_table_is_port_independent():
         return [(route.path, getattr(route, "methods", None)) for route in app.routes]
 
     assert _routes(offline) == _routes(online)
+    # 离线装配不注册 startup 钩子；在线启动注册两个：端口落盘 + 自动化执行器。
+    # 自动化执行器只在真的起服务时才拉起，离线装配不该起线程。
     assert offline.router.on_startup == []
-    assert len(online.router.on_startup) == 1
+    assert len(online.router.on_startup) == 2
 
 
 def test_real_app_openapi_covers_all_api_routes():

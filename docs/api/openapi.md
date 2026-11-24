@@ -171,6 +171,133 @@ SSE：按 ACP session 订阅对应 purrcat 会话的事件流
 | 200 | Successful Response | - |
 | 422 | Validation Error | HTTPValidationError |
 
+## Automation
+
+### `GET /api/automations`
+
+**标题**：List All
+
+列出自动化与最近的回执。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `POST /api/automations`
+
+**标题**：Create Automation
+
+建一条自动化。
+
+#### 请求体
+
+**Schema**：`AutomationReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| title | string | 是 |  |
+| instruction | string | 是 |  |
+| trigger_time | string | 是 |  |
+| repeat_rule | string | 否 |  |
+| enabled | boolean | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/automations/{automation_id}`
+
+**标题**：Read Automation
+
+读一条自动化与它的回执。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| automation_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `PUT /api/automations/{automation_id}`
+
+**标题**：Update Automation
+
+改一条自动化。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| automation_id | path | string | 是 |  |
+
+#### 请求体
+
+**Schema**：`AutomationUpdateReq`
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| title | string \| null | 否 |  |
+| instruction | string \| null | 否 |  |
+| trigger_time | string \| null | 否 |  |
+| repeat_rule | string \| null | 否 |  |
+| enabled | boolean \| null | 否 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `DELETE /api/automations/{automation_id}`
+
+**标题**：Delete Automation
+
+删掉一条自动化。已经跑完的回执留着——那是历史。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| automation_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `POST /api/automations/{automation_id}/run`
+
+**标题**：Run Now
+
+手动触发一次。
+
+#### 参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| automation_id | path | string | 是 |  |
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
 ## Chat & Sessions
 
 ### `GET /api/agent/token`

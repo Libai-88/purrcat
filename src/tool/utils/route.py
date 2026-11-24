@@ -30,6 +30,7 @@ from src.utils.config import BUFFER_DIR
 
 # 工具名到函数名的映射表
 TOOL_FUNC_MAP = {
+    "automation": "Automation",
     "filesystem": "FileSystem",
     "bash": "Bash",
     "brainstorm": "BrainStorm",
