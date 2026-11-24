@@ -96,6 +96,10 @@ uv run pytest -m l3             # 静态红线
 | Hook @引用 / 沙盒路径 | `src/agent/hook_refs.py`、`src/agent/hook_paths.py` |
 | 会话目录与索引 | `src/agent/session_layout.py` + `session_store.py` |
 | 新增工具 | `src/tool/<name>/` → `src/tool/__init__.py` → `route.py` 的 `TOOL_FUNC_MAP` |
+| 科研技能目录（检索/分类/安装） | `src/utils/research_catalog.py`、`src/tool/search/catalog_search.py`、`src/server/api/research_install.py` |
+| 科研技能目录采集与更新 | `scripts/research_skills/`（`collect.py` → `publish.py`） |
+| 到 GitHub 取数（重试/断点续传/限流等待） | `src/utils/http_fetch.py` |
+| 论文库与证据核对 | `src/papers/`（库）+ `src/tool/paper/`（工具） |
 | 会话/聊天接口 | `src/server/api/chat.py` |
 | DAG 节点 | `src/harness/node/extensions/<type>/` |
 | DAG 调度 / 检查点 | `src/harness/task_scheduler.py`、`src/harness/task_persistence.py` |

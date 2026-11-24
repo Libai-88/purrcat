@@ -44,6 +44,19 @@ PurrCat 除通用的 **Skill**（技能包）与 **MCP**（外部工具服务）
 
 前端通过 `/api/tools/market/<类型>` 拉取 `registry.json`，通过对应的 `install` / `uninstall` 接口安装与卸载。详见 [../api/tools.md](../api/tools.md)。
 
+## 科研技能目录
+
+除官方市场外，PurrCat 另有一份**科研技能目录**：把公开第三方仓库里的科研 `SKILL.md` 整理成索引，
+让 Agent 能检索到尚未安装的科研技能，取用时按需安装。
+
+- 目录条目只描述「哪个仓库的哪个 commit 里的哪个技能」与该技能的文件清单，技能本体始终从上游取。
+- `Search(route="skill")` 会把目录里未安装的条目一并返回，带「未安装」标记。
+- `Fetch(source="skill")` 取用未安装的目录技能时会自动安装后加载，Agent 无需感知安装过程。
+- 安装按 commit 定位，且只取该技能自己的目录文件，不下载整个上游仓库。
+- 目录随发行版携带（`src/utils/research_catalog.json`），用户可用 `~/.purrcat/research-catalog.json` 覆盖。
+
+目录的采集与更新方式见 [../../scripts/research_skills/README.md](../../scripts/research_skills/README.md)。
+
 ## 组合关系
 
 ```text

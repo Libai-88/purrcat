@@ -27,6 +27,13 @@ PurrCat 专属的四类扩展插件的开发指南，含各自专有词汇表与
   - [AgentLoop 开发（主循环范式）](plugins/agentloop.md)
   - [UI Plugin 开发（极简模式界面插件）](plugins/ui-plugin.md)
 
+## 论文库（`docs/papers.md`）
+
+面向科研场景的内核能力：PDF 导入本机论文库，按页读原文、把引文定位到具体页码、
+核对断言是否有原文支撑。
+
+- [论文库与证据核对](papers.md)
+
 ---
 
 > API 文档与 `src/server` 真实路由的一致性由 `scripts/check_api_docs.py` 校验（CI 工作流 `.github/workflows/api-docs.yml`）。
