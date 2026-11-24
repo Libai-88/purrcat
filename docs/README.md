@@ -34,6 +34,12 @@ PurrCat 专属的四类扩展插件的开发指南，含各自专有词汇表与
 
 - [论文库与证据核对](papers.md)
 
+## 数据工作台（`docs/data.md`）
+
+把本机数据文件变成可回指的数据集：导入、检查结构与质量、查询并留下可引用的收据。
+
+- [数据工作台](data.md)
+
 ---
 
 > API 文档与 `src/server` 真实路由的一致性由 `scripts/check_api_docs.py` 校验（CI 工作流 `.github/workflows/api-docs.yml`）。
