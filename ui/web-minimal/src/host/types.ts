@@ -100,6 +100,7 @@ export interface WebminManifest {
   rail?: RailState;
   panelContainer?: PanelContainerStored;
   active?: Record<string, string>;
+  mode?: { value?: string };
 }
 
 /** iframe 实例：slot -> [ { iframe, pluginId, el } ] */

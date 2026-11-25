@@ -216,6 +216,38 @@ body.rail-1 .rail-brand { display: flex; }
   color: #fff; background: var(--wm-accent, #16191d);
   border-radius: 6px; padding: 3px 5px; letter-spacing: 0.3px;
 }
+/* 工作模式切换器（work / science）：白条顶部、区域图标之上。
+   收起态只显示 emoji 字形；展开态显示 文字。active = 当前模式。 */
+.wm-rail .rail-mode {
+  flex: none;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px;
+  padding: 6px 2px 8px;
+  border-bottom: 1px solid var(--wm-border-soft);
+}
+.wm-rail .rail-mode-btn {
+  flex: none;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; background: transparent; color: var(--wm-label-2nd);
+  font-size: 16px; line-height: 1; cursor: pointer; border-radius: 8px;
+  padding: 0 6px; overflow: hidden;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.wm-rail .rail-mode-btn:hover { background: var(--wm-bg-hover); color: var(--wm-label); }
+.wm-rail .rail-mode-btn.active {
+  background: var(--wm-bg-active); color: var(--wm-label);
+  box-shadow: inset 2px 0 0 var(--wm-accent);
+}
+.wm-rail .rail-mode-btn:focus-visible { outline: 2px solid var(--wm-accent); outline-offset: 1px; }
+.wm-rail .rail-mode-btn .mode-glyph { flex: none; line-height: 1; font-size: 15px; }
+.wm-rail .rail-mode-btn .rail-name { display: none; flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+body.rail-1 .wm-rail .rail-mode-btn { width: 100%; justify-content: flex-start; }
+body.rail-1 .wm-rail .rail-mode-btn .rail-name { display: inline; }
+/* 收起态两枚模式按钮并排更紧凑：纵向排列保留，但 glyph 独占且不再溢出 */
+body:not(.rail-1) .wm-rail .rail-mode { flex-direction: row; justify-content: center; padding: 6px 2px; }
+body:not(.rail-1) .wm-rail .rail-mode-btn { width: 20px; padding: 0; }
+
 .wm-rail .rail-icons {
   flex: 1;
   display: flex;

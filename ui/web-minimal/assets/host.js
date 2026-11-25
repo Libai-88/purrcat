@@ -954,6 +954,61 @@
     return { status: "ok" };
   }
 
+  // ui/web-minimal/src/host/mode.ts
+  var mode = "work";
+  var listeners = [];
+  var SCIENCE_TABS = ["builtin-paper", "builtin-data", "builtin-notebook"];
+  function getMode() {
+    return mode;
+  }
+  function onModeChange(fn) {
+    listeners.push(fn);
+  }
+  function emit() {
+    listeners.forEach((fn) => {
+      try {
+        fn(mode);
+      } catch (_) {
+      }
+    });
+  }
+  function enterScience() {
+    SCIENCE_TABS.forEach((id) => {
+      if (groupState.plugins.some((p) => p.id === id)) openPanelTab(id);
+    });
+    setContainerHidden(false);
+  }
+  function enterWork() {
+    setContainerHidden(true);
+  }
+  function setMode(next, opts) {
+    if (next === mode) return;
+    mode = next;
+    if (next === "science") enterScience();
+    else enterWork();
+    if (!opts || opts.persist !== false) {
+      try {
+        HOST.fetch("/api/webmin/config", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: { value: mode } })
+        }).catch(() => {
+        });
+      } catch (_) {
+      }
+    }
+    emit();
+  }
+  function restoreMode(saved) {
+    if (saved === "science" || saved === "work") {
+      mode = saved;
+    }
+  }
+  function applyModeLayout() {
+    if (mode === "science") enterScience();
+    else enterWork();
+  }
+
   // ui/web-minimal/src/host/utils.ts
   function effectiveConfig(desc) {
     const sch = desc.configSchema || [];
@@ -979,6 +1034,7 @@
     groupState.plugins.forEach((p) => {
       configByPlugin[p.id] = effectiveConfig(p);
     });
+    restoreMode((manifest.mode || {}).value);
     const railSaved = manifest.rail;
     if (railSaved && typeof railSaved === "object") {
       const stage = Number(railSaved.stage);
@@ -1028,6 +1084,7 @@
     applyPersistedHidden();
     buildRail();
     applyPanelContainerCfg();
+    applyModeLayout();
   }
 
   // ui/web-minimal/src/host/settings-cards.ts
@@ -1728,12 +1785,12 @@
     const tb = HOST.document.createElement("div");
     tb.className = "cfg-toolbar";
     ["\u5361\u7247", "JSON"].forEach(function(label, i) {
-      const mode = i === 0 ? "cards" : "json";
+      const mode2 = i === 0 ? "cards" : "json";
       const seg = HOST.document.createElement("button");
-      seg.className = "cfg-seg" + ((cfgState.mode[key] || "cards") === mode ? " active" : "");
+      seg.className = "cfg-seg" + ((cfgState.mode[key] || "cards") === mode2 ? " active" : "");
       seg.textContent = label;
       seg.addEventListener("click", function() {
-        cfgState.mode[key] = mode;
+        cfgState.mode[key] = mode2;
         fn(main, key);
       });
       tb.appendChild(seg);
@@ -4487,6 +4544,32 @@
   function bindRailToggle() {
     const t = HOST.document.getElementById("railToggle");
     if (t) t.addEventListener("click", cycleRail);
+    bindModeSwitcher();
+  }
+  function bindModeSwitcher() {
+    const workBtn = HOST.document.getElementById("modeWork");
+    const sciBtn = HOST.document.getElementById("modeScience");
+    if (!workBtn || !sciBtn) return;
+    const paint = () => {
+      const cur = getMode();
+      workBtn.setAttribute("aria-selected", cur === "work" ? "true" : "false");
+      sciBtn.setAttribute("aria-selected", cur === "science" ? "true" : "false");
+      workBtn.classList.toggle("active", cur === "work");
+      sciBtn.classList.toggle("active", cur === "science");
+    };
+    workBtn.addEventListener("click", function() {
+      setMode("work");
+      paint();
+    });
+    sciBtn.addEventListener("click", function() {
+      setMode("science");
+      paint();
+    });
+    onModeChange(function() {
+      paint();
+      buildRail();
+    });
+    paint();
   }
   function setPluginHidden(id, hidden) {
     if (!railState.hidden) railState.hidden = {};

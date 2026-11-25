@@ -34,6 +34,12 @@
         <span class="brand-beta">beta</span>
       </div>
     </div>
+    <!-- 工作模式切换：work=对话为主 / science=科研工作台为主。
+         用户当前的任务类型决定看到哪组工具——这是信息架构的第一层。 -->
+    <div class="rail-mode" id="railMode" role="tablist" aria-label="工作模式">
+      <button class="rail-mode-btn" id="modeWork" role="tab" title="工作模式：对话为主" aria-label="工作模式"><span class="mode-glyph">💬</span><span class="rail-name">工作</span></button>
+      <button class="rail-mode-btn" id="modeScience" role="tab" title="科研模式：论文 / 数据 / 笔记" aria-label="科研模式"><span class="mode-glyph">🔬</span><span class="rail-name">科研</span></button>
+    </div>
     <div class="rail-icons" id="railIcons"></div>
     <!-- 底部固定区：设置（宿主固有入口，独立归类为「设置」） -->
     <div class="rail-foot" id="railFoot"></div>

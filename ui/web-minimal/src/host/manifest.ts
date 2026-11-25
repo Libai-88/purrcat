@@ -3,6 +3,7 @@ import { PANEL_CONTAINER_ID } from './areas.js';
 import { buildSlotIndex, mountAll } from './mount.js';
 import { applyPanelContainerCfg, loadPanelShell, panelContainerCfg, panelDesiredWidth, panelSavedWidth, panelTabs, setPanelSavedWidth, setPanelDesiredWidth } from './panel.js';
 import { applyPersistedHidden, buildRail, persistActive } from './rail.js';
+import { restoreMode, applyModeLayout } from './mode.js';
 import { activeBySlot, configByPlugin, groupState, railState } from './state.js';
 import { effectiveConfig } from './utils.js';
 import type { WebminManifest } from './types.js';
@@ -16,6 +17,8 @@ import type { WebminManifest } from './types.js';
     // 否则设置面板展示默认值、整体保存时还会把它的已存配置覆写丢失。
     groupState.plugins.forEach((p) => { configByPlugin[p.id] = effectiveConfig(p); });
     // 图标栏持久化状态
+    // 工作模式（work / science）：先恢复，mountAll 完成后统一应用布局
+    restoreMode((manifest.mode || {}).value);
     const railSaved = manifest.rail;
     if (railSaved && typeof railSaved === 'object') {
       const stage = Number(railSaved.stage);
@@ -72,5 +75,7 @@ import type { WebminManifest } from './types.js';
     applyPersistedHidden();
     buildRail();
     applyPanelContainerCfg();
+    // 恢复上次的工作模式布局（science 自动打开科研三件套 / work 收起容器）
+    applyModeLayout();
   }
 

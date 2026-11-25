@@ -2,6 +2,7 @@
 import { PANEL_CONTAINER_ID, areaLabel, makeAreaRailButton, railAreaList } from './areas.js';
 import { syncNativeCover } from './bus.js';
 import { reflowFloats } from './float.js';
+import { getMode, onModeChange, setMode } from './mode.js';
 import { paintIcon } from './icons.js';
 import { refreshFixedSlot } from './mount.js';
 import { applyPanelWidth, panelBar, panelContainerVisible, thirdPartyContainerPlugin } from './panel.js';
@@ -118,6 +119,26 @@ import { slotOfPlugin } from './utils.js';
   export function bindRailToggle() {
     const t = HOST.document.getElementById('railToggle');
     if (t) t.addEventListener('click', cycleRail);
+    bindModeSwitcher();
+  }
+  // 模式切换器（work / science）：白条顶部的两个按钮。
+  // aria-selected 跟随当前模式；点击即切换并应用对应布局。
+  export function bindModeSwitcher() {
+    const workBtn = HOST.document.getElementById('modeWork');
+    const sciBtn = HOST.document.getElementById('modeScience');
+    if (!workBtn || !sciBtn) return;
+    const paint = () => {
+      const cur = getMode();
+      workBtn.setAttribute('aria-selected', cur === 'work' ? 'true' : 'false');
+      sciBtn.setAttribute('aria-selected', cur === 'science' ? 'true' : 'false');
+      workBtn.classList.toggle('active', cur === 'work');
+      sciBtn.classList.toggle('active', cur === 'science');
+    };
+    workBtn.addEventListener('click', function () { setMode('work'); paint(); });
+    sciBtn.addEventListener('click', function () { setMode('science'); paint(); });
+    // 模式切换后重建白条（图标字形/名称跟随当前区域状态）
+    onModeChange(function () { paint(); buildRail(); });
+    paint();
   }
   export function setPluginHidden(id: string, hidden: boolean) {
     if (!railState.hidden) railState.hidden = {};

@@ -233,6 +233,11 @@ def api_webmin_put_config(body: dict):
     if isinstance(body.get("active"), dict):
         # 单例槽（fixed 各 area 与共享的 panel 容器）当前选中的插件 id
         cfg["active"] = webmin_manifest.normalize_active(body["active"])
+    if isinstance(body.get("mode"), dict):
+        # 宿主工作模式（work / science）：双模式布局的全局开关
+        value = str(body["mode"].get("value") or "").strip()
+        if value in ("work", "science"):
+            cfg["mode"] = {"value": value}
     _save_webmin_config(cfg)
     return {"status": "ok"}
 
