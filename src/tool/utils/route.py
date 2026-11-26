@@ -15,6 +15,7 @@ import time
 import traceback
 from typing import Any
 
+from src.tool.registry import PROCESS_ISOLATED_TOOLS, TOOL_FUNC_MAP
 from src.tool.utils.execution import execute_tool as _execute_tool_impl
 from src.tool.utils.media import handle_media_content, is_openai_content_parts
 from src.tool.utils.output_limit import (
@@ -28,41 +29,9 @@ from src.tool.utils.token_limit import (
 )
 from src.utils.config import BUFFER_DIR
 
-# 工具名到函数名的映射表
-TOOL_FUNC_MAP = {
-    "automation": "Automation",
-    "filesystem": "FileSystem",
-    "bash": "Bash",
-    "brainstorm": "BrainStorm",
-    "cron": "Cron",
-    "data": "Data",
-    "environments": "Environments",
-    "callmcp": "CallMCP",
-    "contributions": "Contributions",
-    "connectors": "Connectors",
-    "memo": "Memo",
-    "notebook": "Notebook",
-    "paper": "Paper",
-    "request": "Request",
-    "research": "Research",
-    "search": "Search",
-    "fetch": "Fetch",
-    "task": "Task",
-    "kernelupgrade": "KernelUpgrade",  # 🌟 新增注册
-}
-
-# 🌟 进程隔离名单：只有这些「易卡死」的工具才丢进子进程执行（可被物理级 terminate）
-# 其余工具（memo/filesystem/cron/task/brainstorm/callmcp/kernelupgrade）持有进程内状态
-# （如 brainstorm/task 会 lazy import AgentManager、callmcp 持有 MCP 长连接），
-# 子进程化会出灾难性后果，保持进程内执行
-# ⚠️ callmcp 曾被隔离导致 MCP 连接随子进程退出被销毁（Chrome 等被连带关闭），
-# 防卡死改由 tool_caller 中的 asyncio.wait_for 超时兜底
-PROCESS_ISOLATED_TOOLS = {
-    "bash",  # 长时命令 / 死循环
-    "request",  # 网络请求
-    "fetch",  # 网络抓取
-    "search",  # 向量检索（含嵌入计算）
-}
+# 工具名到函数名映射、进程隔离名单由 src/tool/registry.py 统一登记后派生，
+# 本模块只负责解析与分发。历史教训（callmcp 不可隔离：MCP 连接随子进程销毁）
+# 记在注册表的注释里，改动隔离名单只改一处。
 
 # 系统注入参数：模型不可见，由 Agent / Harness / dispatch 自动补齐。
 # 注入点：agent.py（Bash 的 session_id、Task 的 _session_id/_request_bytes/

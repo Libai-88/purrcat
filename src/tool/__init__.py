@@ -4,26 +4,8 @@
 
 import threading
 
-# 导入所有工具的 Schema
-from .automation import AUTOMATION_TOOL_SCHEMA
-from .bash import BASH_TOOL_SCHEMA
-from .brainstorm import BRAINSTORM_TOOL_SCHEMA
-from .callmcp import MCP_TOOL_SCHEMA
-from .contributions import CONTRIBUTIONS_TOOL_SCHEMA
-from .connectors import CONNECTORS_TOOL_SCHEMA
-from .cron import CRON_TOOL_SCHEMA
-from .data import DATA_TOOL_SCHEMA
-from .fetch import FETCH_TOOL_SCHEMA
-from .environments import ENVIRONMENTS_TOOL_SCHEMA
-from .filesystem import FILESYSTEM_TOOL_SCHEMA
-from .memo import MEMO_TOOL_SCHEMA
-from .notebook import NOTEBOOK_TOOL_SCHEMA
-from .paper import PAPER_TOOL_SCHEMA
-from .request import REQUEST_TOOL_SCHEMA
-from .research import RESEARCH_TOOL_SCHEMA
-from .search import SEARCH_TOOL_SCHEMA
-from .task import TASK_TOOL_SCHEMA
-from .kernelupgrade import KERNELUPGRADE_TOOL_SCHEMA
+# 注册表是唯一事实来源；Schema / 路由映射 / 隔离名单全部由它派生。
+from .registry import AGENT_TOOL_SCHEMA, BASE_TASK_TOOL_SCHEMA
 
 # 导入路由模块
 from .utils.route import dispatch_tool
@@ -31,38 +13,6 @@ from .utils.route import dispatch_tool
 # 导入所需的热更新接口
 from .search.skill_search import reload_skill_index
 from .callmcp.callmcp import reload_mcp_schema, initialize_mcp_sync
-
-# --- 暴露的两套 Schema 列表 ---
-
-AGENT_TOOL_SCHEMA = [
-    AUTOMATION_TOOL_SCHEMA,
-    BASH_TOOL_SCHEMA,
-    BRAINSTORM_TOOL_SCHEMA,
-    CONNECTORS_TOOL_SCHEMA,
-    CONTRIBUTIONS_TOOL_SCHEMA,
-    CRON_TOOL_SCHEMA,
-    DATA_TOOL_SCHEMA,
-    ENVIRONMENTS_TOOL_SCHEMA,
-    FETCH_TOOL_SCHEMA,
-    FILESYSTEM_TOOL_SCHEMA,
-    MEMO_TOOL_SCHEMA,
-    NOTEBOOK_TOOL_SCHEMA,
-    PAPER_TOOL_SCHEMA,
-    REQUEST_TOOL_SCHEMA,
-    RESEARCH_TOOL_SCHEMA,
-    SEARCH_TOOL_SCHEMA,
-    TASK_TOOL_SCHEMA,
-    MCP_TOOL_SCHEMA,
-    KERNELUPGRADE_TOOL_SCHEMA,
-]
-
-BASE_TASK_TOOL_SCHEMA = [
-    BASH_TOOL_SCHEMA,
-    FILESYSTEM_TOOL_SCHEMA,
-    SEARCH_TOOL_SCHEMA,
-    MCP_TOOL_SCHEMA,
-    FETCH_TOOL_SCHEMA,  # 🌟 修复：移除 Request，加入 Fetch
-]
 
 # --- 系统重型组件初始化逻辑 ---
 
