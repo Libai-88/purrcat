@@ -5,7 +5,14 @@ import os
 import threading
 import time
 
-from src.agent import epoch, hint_search, lifecycle, memory_ops, tool_batch
+from src.agent import (
+    capabilities,
+    epoch,
+    hint_search,
+    lifecycle,
+    memory_ops,
+    tool_batch,
+)
 from src.agent.history import repair_toolchain
 from src.agent.hook_handler import HookHandler
 from src.agent.session_store import SessionStore
@@ -70,6 +77,8 @@ class Agent:
         self.current_history = [
             snapshot_message(msg, session_id) for msg in self.current_history
         ]
+        # 🌟 会话级能力快照：决定本轮暴露哪些工具域，创建后不再随 UI 模式变化。
+        self.capabilities = capabilities.resolve(session_id)
         self.hook_handler = (
             hook_handler if hook_handler is not None else HookHandler(paradigm_path)
         )
@@ -168,11 +177,10 @@ class Agent:
             pass
 
     def _get_tool_schema(self):
-        from src.tool import (
-            AGENT_TOOL_SCHEMA,
-        )  # 延迟 import，打破与 src.tool 的循环依赖
+        from src.tool.registry import schemas_for
 
-        return AGENT_TOOL_SCHEMA
+        # 🌟 按会话能力域取 Schema，子集顺序与全量声明一致，请求前缀因此稳定。
+        return schemas_for(self.capabilities)
 
     def _get_current_interaction_id(self):
         return self._interaction_id

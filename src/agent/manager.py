@@ -80,7 +80,20 @@ class AgentManager:
 
         get_heartbeat_manager().start()
 
-        self._notify_save()
+        if session_id in all_sessions:
+            self._notify_save()
+        else:
+            # 全新会话：把当前模式固化成能力快照，避免首轮就用错工具集。
+            from src.agent import capabilities as session_caps
+
+            snap = session_caps.snapshot()
+            self._agent.capabilities = snap["capabilities"]
+            SessionStore.save_session(
+                session_id,
+                self._agent.snapshot_history(),
+                mode=snap["mode"],
+                capabilities=snap["capabilities"],
+            )
         print(f"[Success] Agent 已启动，当前挂载会话: {session_id}")
         return session_id
 
@@ -118,6 +131,10 @@ class AgentManager:
             self._agent.current_history = history
             self._agent.window_token = window_token
             self._agent.consumed_tokens = consumed_tokens
+            # 能力域随会话一起切换；老会话缺快照时按全量处理。
+            from src.agent import capabilities
+
+            self._agent.capabilities = capabilities.resolve(session_id)
 
     # ==========================================
     # 2. 交互与通信 (Interaction)
@@ -218,6 +235,10 @@ class AgentManager:
         new_id = SessionStore._generate_id()
         clean_history = [{"role": "system", "content": fresh_prompt}]
 
+        from src.agent import capabilities as session_caps
+
+        snap = session_caps.snapshot()
+
         SessionStore.save_session(
             session_id=new_id,
             history=clean_history,
@@ -225,6 +246,8 @@ class AgentManager:
             alias=branch_alias,
             paradigm=paradigm,
             project_id=project_id or None,
+            mode=snap["mode"],
+            capabilities=snap["capabilities"],
         )
 
         self._adopt_session(new_id, clean_history, 0, 0)

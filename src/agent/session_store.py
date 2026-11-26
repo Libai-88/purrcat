@@ -445,6 +445,8 @@ class SessionStore:
         action=None,
         consumed_tokens=None,
         project_id=None,
+        capabilities=None,
+        mode=None,
     ):
         """🌟 重构：线程安全地进行多文件分支隔离归档，并追溯分叉拓扑"""
         directory = session_dir(SESSIONS_DIR, session_id)
@@ -486,6 +488,11 @@ class SessionStore:
                 meta_data["parent_id"] = parent_id
             if project_id:
                 meta_data["project_id"] = project_id
+            # 🌟 能力快照只在创建会话时写入一次；后续保存不带这两个参数，不会覆盖。
+            if mode:
+                meta_data["mode"] = mode
+            if capabilities:
+                meta_data["capabilities"] = list(capabilities)
 
             if "branches" not in meta_data:
                 meta_data["branches"] = {}
