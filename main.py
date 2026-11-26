@@ -7,6 +7,17 @@ import argparse
 
 from src.api_port import DEFAULT_API_PORT, resolve_api_port
 
+# 🌟 默认只绑回环：桌面壳、iframe 插件、CLI 全在同一台机器上，没有任何理由把
+# 文件系统/终端/模型配置接口暴露到局域网。需要跨设备访问时显式设置 PURRCAT_BIND。
+DEFAULT_BIND_HOST = "127.0.0.1"
+
+
+def resolve_bind_host() -> str:
+    """解析监听地址；``PURRCAT_BIND`` 是唯一的显式放开入口（且仍受 token 保护）。"""
+
+    raw = (os.environ.get("PURRCAT_BIND") or "").strip()
+    return raw or DEFAULT_BIND_HOST
+
 
 def _preflight_explicit_api_port() -> None:
     """Reject an explicitly unusable port before importing heavy agent modules."""
@@ -47,7 +58,7 @@ def _preflight_explicit_api_port() -> None:
         return
 
     try:
-        resolve_api_port(requested)
+        resolve_api_port(requested, host=resolve_bind_host())
     except ValueError as exc:
         print(f"PurrCat API startup error: {exc}", file=sys.stderr)
         raise SystemExit(2) from exc
@@ -279,13 +290,14 @@ async def shutdown_core():
     await asyncio.to_thread(shutdown_agent)
 
 
-async def run_api(host: str = "0.0.0.0", port: int = DEFAULT_API_PORT):
+async def run_api(host: str | None = None, port: int = DEFAULT_API_PORT):
     import logging
 
     import uvicorn
 
     from src.server.app import create_app
 
+    host = host or resolve_bind_host()
     app = create_app(port)
 
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
@@ -308,8 +320,9 @@ async def main_async(enable_api: bool, api_port: int, cli_session: str = None, c
 
     tasks = []
     if enable_api:
-        print(f"[*] API server: http://0.0.0.0:{api_port}")
-        api_task = asyncio.create_task(run_api(port=api_port))
+        bind_host = resolve_bind_host()
+        print(f"[*] API server: http://{bind_host}:{api_port}")
+        api_task = asyncio.create_task(run_api(host=bind_host, port=api_port))
         tasks.append(api_task)
 
     try:

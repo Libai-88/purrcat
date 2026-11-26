@@ -47,13 +47,13 @@ class ApiPortTests(unittest.TestCase):
 
     def test_explicit_available_port_is_preserved(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
-            server.bind(("0.0.0.0", 0))
+            server.bind(("127.0.0.1", 0))
             port = server.getsockname()[1]
         self.assertEqual(resolve_api_port(str(port)), port)
 
     def test_explicit_occupied_port_does_not_fallback(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
-            server.bind(("0.0.0.0", 0))
+            server.bind(("127.0.0.1", 0))
             server.listen()
             port = server.getsockname()[1]
             with self.assertRaisesRegex(ValueError, rf"API port {port} is unavailable"):
@@ -61,7 +61,7 @@ class ApiPortTests(unittest.TestCase):
 
     def test_scan_falls_back_when_start_is_occupied(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
-            server.bind(("0.0.0.0", 0))
+            server.bind(("127.0.0.1", 0))
             server.listen()
             start = server.getsockname()[1]
             self.assertGreater(resolve_api_port(None, start=start, attempts=5), start)

@@ -53,12 +53,24 @@ def create_app(port: int | None = None) -> FastAPI:
 
     app = FastAPI(title="PurrCat API System")
 
+    # 🌟 只信任本机宿主自身：Electron 与 iframe 插件都从 127.0.0.1:<port> 加载。
+    # 原先的 "*" 等于允许任意网页跨域调用本地文件系统、终端与模型配置接口。
+    allowed_origins = (
+        [f"http://127.0.0.1:{port}", f"http://localhost:{port}"]
+        if port is not None
+        else ["http://127.0.0.1", "http://localhost"]
+    )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=allowed_origins,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allow_headers=["Content-Type", "X-PurrCat-Token"],
     )
+
+    # 🌟 本地 API 边界：同源 cookie + 显式 token 头，豁免仅健康检查与静态首屏。
+    from src.server.auth import guard_local_api
+
+    app.middleware("http")(guard_local_api)
 
     app.include_router(automation_router)
     app.include_router(chat_router)

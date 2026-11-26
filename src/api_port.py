@@ -37,7 +37,7 @@ def parse_port(value: object | None) -> int | None:
     return port
 
 
-def is_port_available(port: int, host: str = "0.0.0.0") -> bool:
+def is_port_available(port: int, host: str = "127.0.0.1") -> bool:
     """Return whether the API can bind ``host:port`` at this moment."""
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -51,7 +51,7 @@ def is_port_available(port: int, host: str = "0.0.0.0") -> bool:
 def resolve_api_port(
     requested: object | None,
     *,
-    host: str = "0.0.0.0",
+    host: str = "127.0.0.1",
     start: int = DEFAULT_API_PORT,
     attempts: int = DEFAULT_SCAN_ATTEMPTS,
 ) -> int:
