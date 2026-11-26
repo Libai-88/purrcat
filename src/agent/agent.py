@@ -48,6 +48,11 @@ class Agent:
         self.memo = memo if memo is not None else SessionStore.load_global_memo()
 
         self._state = "idle"
+        # 🌟 空闲事件：state 回 idle 时 set、进入忙碌时 clear。等待方因此不再空转
+        # CPU；200ms 兜底轮询防 clear/set 与 wait 的竞态丢唤醒。
+        self._idle_event = threading.Event()
+        self._idle_event.set()
+        self._busy_since = None
         self._interaction_id = 0
         self.pending_force_push = []
         self.window_token = 0
@@ -160,7 +165,34 @@ class Agent:
 
     @state.setter
     def state(self, value):
+        previous = self._state
         self._state = value
+        if value == "idle":
+            self._busy_since = None
+            self._idle_event.set()
+            return
+        if previous == "idle":
+            # 只在「idle → 忙碌」的跃迁上记录起点，避免重复覆盖真实等待时长。
+            self._busy_since = time.time()
+        self._idle_event.clear()
+
+    def wait_until_idle(self, timeout: float | None = None) -> bool:
+        """等待回到 idle，返回是否真的空闲。
+
+        ``timeout=None`` 表示愿意一直等（后台任务用），但等的是事件而不是空转；
+        交互路径传具体秒数，超时就返回 False 让调用方给用户明确反馈。
+        """
+
+        deadline = None if timeout is None else time.monotonic() + timeout
+        while self._state != "idle":
+            if deadline is None:
+                self._idle_event.wait(0.2)
+                continue
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return False
+            self._idle_event.wait(min(remaining, 0.2))
+        return True
 
     def _set_live_phase(self, phase: str):
         """🌟 ACP 总线：阶段变化事件（thinking/processing/idle）。

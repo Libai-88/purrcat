@@ -58,6 +58,16 @@ def get_agent_status():
         "live_phase": getattr(_manager_instance._agent, "_live_phase", "idle")
         if getattr(_manager_instance, "_agent", None)
         else "idle",
+        # 🌟 排队可观测：waiting 表示是否有请求在等空闲，waiting_since 是起点（秒）。
+        "waiting": bool(getattr(_manager_instance._agent, "_busy_since", None))
+        if getattr(_manager_instance, "_agent", None)
+        else False,
+        "waiting_since": getattr(_manager_instance._agent, "_busy_since", None)
+        if getattr(_manager_instance, "_agent", None)
+        else None,
+        "queue_depth": len(getattr(_manager_instance._agent, "pending_force_push", []))
+        if getattr(_manager_instance, "_agent", None)
+        else 0,
     }
 
 

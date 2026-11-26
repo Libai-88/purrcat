@@ -136,8 +136,8 @@ def ensure_active_and_push(purr_session_id: str, message: str, source: str = "ac
 
     with _switch_lock:
         if manager._agent.session_id != purr_session_id:
-            while manager._agent.state != "idle":
-                time.sleep(0.3)
+            # 事件等待（不空转 CPU）；ACP 是后台注入，可以一直等。
+            manager._wait_until_idle("[Wait] ACP 注入等待当前回复结束...", timeout=None)
             manager.switch_session(purr_session_id)
 
         # 🌟 真人输入统一 type="user"（与 chat.py UI 路径一致）——

@@ -18,20 +18,30 @@ def test_wait_until_idle_returns_immediately_when_idle():
     manager._wait_until_idle("waiting")
 
 
-def test_wait_until_idle_waits_for_idle(monkeypatch):
+def test_wait_until_idle_waits_for_idle():
     manager = object.__new__(AgentManager)
     manager._agent = SimpleNamespace(state="handling")
-    slept = []
 
-    def fake_sleep(_):
-        slept.append(1)
+    calls = []
+
+    def fake_wait(timeout=None):
+        calls.append(timeout)
         manager._agent.state = "idle"
+        return True
 
-    monkeypatch.setattr("src.agent.manager.time.sleep", fake_sleep)
+    manager._agent.wait_until_idle = fake_wait
 
-    manager._wait_until_idle("waiting")
+    assert manager._wait_until_idle("waiting") is True
+    assert calls, "忙等必须真正走一次等待，而不是直接跳过"
 
-    assert slept
+
+def test_wait_until_idle_reports_timeout():
+    manager = object.__new__(AgentManager)
+    manager._agent = SimpleNamespace(
+        state="handling", wait_until_idle=lambda t=None: False
+    )
+
+    assert manager._wait_until_idle("waiting", timeout=0.1) is False
 
 
 def test_adopt_session_switches_all_fields_under_lock():

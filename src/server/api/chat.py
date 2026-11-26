@@ -68,16 +68,14 @@ def _ensure_manager_initialized():
 
 def _run_agent_task(session_id: str, message: str):
     from src.agent.manager import AgentManager
-    import time
 
     manager = AgentManager()
     if manager._agent is None:
         manager.init_agent()
 
     if manager._agent.session_id != session_id:
-        if manager._agent.state != "idle":
-            while manager._agent.state != "idle":
-                time.sleep(0.3)
+        # 后台任务可以一直等，但不能空转 CPU；切会话的尝试交给 switch_session。
+        manager._wait_until_idle("[Wait] 等待当前回复结束后再切换会话...", timeout=None)
         manager.switch_session(session_id)
 
     manager.agent_force_push(message, type="user")
@@ -85,7 +83,6 @@ def _run_agent_task(session_id: str, message: str):
 
 def _run_agent_batch_task(session_id: str, events: list):
     from src.agent.manager import AgentManager
-    import time
 
     manager = AgentManager()
     if manager._agent is None:
@@ -96,9 +93,7 @@ def _run_agent_batch_task(session_id: str, events: list):
         session_id = manager.get_active_session_id()
 
     if manager._agent.session_id != session_id:
-        if manager._agent.state != "idle":
-            while manager._agent.state != "idle":
-                time.sleep(0.3)
+        manager._wait_until_idle("[Wait] 等待当前回复结束后再切换会话...", timeout=None)
         manager.switch_session(session_id)
 
     manager.agent_force_push_batch(events)

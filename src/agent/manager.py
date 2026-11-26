@@ -1,6 +1,5 @@
 import os
 import threading
-import time
 
 from src.agent.agent import Agent
 from src.agent.session_store import SessionStore
@@ -111,12 +110,19 @@ class AgentManager:
     # ==========================================
     # 1.1 会话切换的内部原子操作
     # ==========================================
-    def _wait_until_idle(self, message: str) -> None:
-        """阻塞等待 Agent 释放资源，确保会话/分支切换安全。"""
-        if self._agent.state != "idle":
-            print(message)
-            while self._agent.state != "idle":
-                time.sleep(0.5)
+    def _wait_until_idle(self, message: str, timeout: float | None = 30.0) -> bool:
+        """等待 Agent 释放资源，确保会话/分支切换安全。
+
+        事件驱动，不再 0.5s 轮询空转；超时返回 False 由调用方决定中止还是继续，
+        交互路径不再无限阻塞。
+        """
+        if self._agent.state == "idle":
+            return True
+        print(message)
+        done = self._agent.wait_until_idle(timeout)
+        if not done:
+            print(f"[Warn] Agent 在 {timeout}s 内未回到 idle，本次操作放弃等待")
+        return done
 
     def _adopt_session(
         self,
@@ -173,9 +179,11 @@ class AgentManager:
         if self._agent.session_id == target_session_id:
             return True
 
-        self._wait_until_idle(
-            "[Wait] 正在阻塞等待 Agent 释放资源，以安全检出目标会话..."
-        )
+        if not self._wait_until_idle(
+            "[Wait] 正在等待 Agent 释放资源，以安全检出目标会话..."
+        ):
+            print("[Warn] 切换会话被放弃：Agent 仍在处理上一个请求")
+            return False
 
         self._notify_save()
 
@@ -208,7 +216,8 @@ class AgentManager:
         if not self._agent:
             self.init_agent()
 
-        self._wait_until_idle("[Wait] 正在阻塞等待 Agent 完成当前回复...")
+        if not self._wait_until_idle("[Wait] 正在等待 Agent 完成当前回复..."):
+            raise TimeoutError("Agent 仍在处理上一个请求，请稍后新建会话")
 
         self._notify_save()
 
@@ -288,9 +297,10 @@ class AgentManager:
         if not self._agent:
             self.init_agent()
 
-        self._wait_until_idle(
-            "[Wait] 正在阻塞等待 Agent 完成当前回复，以确保安全拉取分支..."
-        )
+        if not self._wait_until_idle(
+            "[Wait] 正在等待 Agent 完成当前回复，以确保安全拉取分支..."
+        ):
+            raise TimeoutError("Agent 仍在处理上一个请求，请稍后创建分支")
 
         self._notify_save()
         safe_history = self._agent.get_history()

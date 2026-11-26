@@ -32,6 +32,8 @@ def build_session_status(status: dict, session_id: str) -> dict:
             "compressing": status.get("compressing", False),
             "live_reasoning": "",
             "phase": "idle",
+            "queue_depth": 0,
+            "waiting_since": None,
         }
     state = status.get("state", "idle")
     is_thinking = state != "idle"
@@ -48,6 +50,9 @@ def build_session_status(status: dict, session_id: str) -> dict:
         "live_reasoning": status.get("live_reasoning", "") if is_thinking else "",
         # thinking=模型推理中 / processing=工具执行中 / aborting=打断等待收尾 / idle=空闲
         "phase": phase,
+        # 排队可观测：忙了多久（秒级时间戳）与还没被消费的消息条数
+        "queue_depth": status.get("queue_depth", 0),
+        "waiting_since": status.get("waiting_since") if is_thinking else None,
     }
 
 

@@ -136,6 +136,8 @@ def test_build_session_status_masks_non_current_session():
         "compressing": True,
         "live_reasoning": "",
         "phase": "idle",
+        "queue_depth": 0,
+        "waiting_since": None,
     }
 
 
@@ -157,7 +159,21 @@ def test_build_session_status_current_session_phases():
         "compressing": False,
         "live_reasoning": "推理中",
         "phase": "processing",
+        "queue_depth": 0,
+        "waiting_since": None,
     }
+
+    queued = chat_views.build_session_status(
+        {
+            "session_id": "s1",
+            "state": "handling",
+            "queue_depth": 2,
+            "waiting_since": 1700000000.0,
+        },
+        "s1",
+    )
+    assert queued["queue_depth"] == 2
+    assert queued["waiting_since"] == 1700000000.0
 
     idle = chat_views.build_session_status(
         {"session_id": "s1", "state": "idle", "live_reasoning": "旧内容"},
