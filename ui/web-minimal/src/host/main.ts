@@ -26,6 +26,7 @@ import './actions.js';
 import './bus.js';
 import './float.js';
 import './panel.js';
+import './queue-status.js';
 import './links.js';
 import './mount.js';
 import './manifest.js';

@@ -954,6 +954,114 @@
     return { status: "ok" };
   }
 
+  // ui/web-minimal/src/host/queue-status.ts
+  var POLL_MS = 2e3;
+  var STYLE_ID = "wm-status-style";
+  var BADGE_ID = "wm-queue-badge";
+  var timer = null;
+  var lastKey = "";
+  function ensureStyle() {
+    if (HOST.document.getElementById(STYLE_ID)) return;
+    const st = HOST.document.createElement("style");
+    st.id = STYLE_ID;
+    st.textContent = [
+      ".wm-queue-badge{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;",
+      "display:none;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;",
+      'font:12px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;background:Canvas;color:CanvasText;',
+      "border:1px solid color-mix(in srgb,CanvasText 18%,Canvas);box-shadow:0 2px 10px rgba(0,0,0,.12);",
+      "pointer-events:none;white-space:nowrap}",
+      '.wm-queue-badge[data-on="1"]{display:inline-flex}',
+      ".wm-queue-dot{width:6px;height:6px;border-radius:50%;background:#f59e0b}",
+      ".wm-toast{position:fixed;left:50%;bottom:48px;transform:translateX(-50%);z-index:61;",
+      "max-width:min(560px,86vw);padding:8px 14px;border-radius:10px;",
+      'font:13px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;background:Canvas;color:CanvasText;',
+      "border:1px solid color-mix(in srgb,CanvasText 18%,Canvas);box-shadow:0 6px 24px rgba(0,0,0,.16);",
+      "pointer-events:none}"
+    ].join("");
+    HOST.document.head.appendChild(st);
+  }
+  function toast(message, ms = 3200) {
+    try {
+      ensureStyle();
+      const el = HOST.document.createElement("div");
+      el.className = "wm-toast";
+      el.textContent = message;
+      HOST.document.body.appendChild(el);
+      HOST.setTimeout(function() {
+        try {
+          el.remove();
+        } catch (_) {
+        }
+      }, ms);
+    } catch (_) {
+    }
+  }
+  function badge() {
+    const doc = HOST.document;
+    let el = doc.getElementById(BADGE_ID);
+    if (el) return el;
+    el = doc.createElement("div");
+    el.id = BADGE_ID;
+    el.className = "wm-queue-badge";
+    const dot = doc.createElement("span");
+    dot.className = "wm-queue-dot";
+    const text = doc.createElement("span");
+    text.id = BADGE_ID + "-text";
+    el.appendChild(dot);
+    el.appendChild(text);
+    doc.body.appendChild(el);
+    return el;
+  }
+  function render(status) {
+    const el = badge();
+    if (!el) return;
+    const busy = !!(status && status.is_thinking);
+    if (!busy) {
+      if (lastKey !== "") {
+        el.setAttribute("data-on", "0");
+        lastKey = "";
+      }
+      return;
+    }
+    const queued = Number(status && status.queue_depth ? status.queue_depth : 0);
+    const sinceRaw = status && status.waiting_since;
+    const since = typeof sinceRaw === "number" ? Math.max(0, Math.round(Date.now() / 1e3 - sinceRaw)) : null;
+    let text = "\u5904\u7406\u4E2D";
+    if (since !== null && since >= 1) text += " " + since + "s";
+    if (queued > 0) text = "\u6392\u961F " + queued + " \u6761 \xB7 " + text;
+    const key = text;
+    if (key === lastKey) return;
+    lastKey = key;
+    const label = HOST.document.getElementById(BADGE_ID + "-text");
+    if (label) label.textContent = text;
+    el.setAttribute("data-on", "1");
+  }
+  async function tick() {
+    const sid = groupState.activeSessionId;
+    if (!sid) {
+      render(null);
+      return;
+    }
+    try {
+      const r = await HOST.fetch("/api/sessions/" + encodeURIComponent(sid) + "/status");
+      if (!r.ok) {
+        render(null);
+        return;
+      }
+      render(await r.json());
+    } catch (_) {
+      render(null);
+    }
+  }
+  function initQueueStatus() {
+    ensureStyle();
+    if (timer !== null) return;
+    timer = HOST.setInterval(function() {
+      void tick();
+    }, POLL_MS);
+    void tick();
+  }
+
   // ui/web-minimal/src/host/mode.ts
   var mode = "work";
   var listeners = [];
@@ -997,6 +1105,9 @@
       } catch (_) {
       }
     }
+    if (groupState.activeSessionId) {
+      toast("\u5DF2\u5207\u5230" + modeLabel(mode) + "\uFF1A\u80FD\u529B\u53D8\u66F4\u5BF9\u65B0\u4F1A\u8BDD\u751F\u6548\uFF0C\u5F53\u524D\u4F1A\u8BDD\u4FDD\u6301\u539F\u6709\u5DE5\u5177\u96C6");
+    }
     emit();
   }
   function restoreMode(saved) {
@@ -1007,6 +1118,9 @@
   function applyModeLayout() {
     if (mode === "science") enterScience();
     else enterWork();
+  }
+  function modeLabel(m) {
+    return m === "science" ? "\u79D1\u7814\u6A21\u5F0F" : "\u5DE5\u4F5C\u6A21\u5F0F";
   }
 
   // ui/web-minimal/src/host/utils.ts
@@ -2149,10 +2263,10 @@
         nm.textContent = name;
         nm.title = name;
         titleRow.appendChild(nm);
-        const badge = HOST.document.createElement("span");
-        badge.className = "cfg-chip type";
-        badge.textContent = kind;
-        titleRow.appendChild(badge);
+        const badge2 = HOST.document.createElement("span");
+        badge2.className = "cfg-chip type";
+        badge2.textContent = kind;
+        titleRow.appendChild(badge2);
         const meta = HOST.document.createElement("div");
         meta.className = "entry-card-meta";
         meta.textContent = (isObj && val.url ? String(val.url) : isObj && val.command ? String(val.command) : "\u672A\u914D\u7F6E\u542F\u52A8\u547D\u4EE4") + (envCount ? " \xB7 " + envCount + " \u4E2A\u73AF\u5883\u53D8\u91CF" : "");
@@ -4676,6 +4790,7 @@
     } catch (_) {
     }
     updateEmpty();
+    initQueueStatus();
   }
 
   // ui/web-minimal/src/host/main.ts

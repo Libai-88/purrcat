@@ -11,6 +11,7 @@
 // 设置几个插件的 hidden 状态 + 打开指定标签页，全部走既有机制。
 import { HOST, groupState } from './state.js';
 import { openPanelTab, setContainerHidden } from './panel.js';
+import { toast } from './queue-status.js';
 
 export type WorkMode = 'work' | 'science';
 
@@ -63,6 +64,11 @@ export function setMode(next: WorkMode, opts?: { persist?: boolean }): void {
         body: JSON.stringify({ mode: { value: mode } }),
       }).catch(() => {});
     } catch (_) {}
+  }
+  // 能力域在会话创建时固化，切模式不会改写已开会话的工具集；
+  // 这条提示让用户知道"要生效需要新会话"，而不是以为工具丢了。
+  if (groupState.activeSessionId) {
+    toast('已切到' + modeLabel(mode) + '：能力变更对新会话生效，当前会话保持原有工具集');
   }
   emit();
 }

@@ -4,6 +4,7 @@ import { openUrlInBrowserPanel } from './links.js';
 import { applyManifestState } from './manifest.js';
 import { buildSlotIndex, mountAll } from './mount.js';
 import { applyPanelContainerCfg, closePanelMenus, loadPanelShell } from './panel.js';
+import { initQueueStatus } from './queue-status.js';
 import { applyPersistedHidden, applyRailOpacity, applySlotHidden, bindRailToggle, buildRail } from './rail.js';
 import { broadcastSessions, updateEmpty } from './sessions.js';
 import { closeSettingsMenus } from './settings-tabs.js';
@@ -79,4 +80,6 @@ import { HOST, groupState } from './state.js';
       }
     } catch (_) { /* 无会话时保持空 */ }
     updateEmpty();
+    // 排队态可见：按 /status 的 queue_depth / waiting_since 显示一行"处理中/排队"
+    initQueueStatus();
   }
