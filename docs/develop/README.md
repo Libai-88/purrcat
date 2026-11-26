@@ -62,6 +62,8 @@ npm run dev:split    # 跳过宿主预构建（仅同步 vendor），要求产�
 
 `scripts/dev.mjs`：选可用端口 → 起后端 → 探测端口就绪 → 起 Electron（`ELECTRON_DEV=1`）→ 任一进程退出即整体清理。
 
+后端默认只监听回环 `127.0.0.1`，且所有 `/api/*` 都要凭证（`X-PurrCat-Token` 头或 `/minimal` 首次加载下发的 `purrcat_token` cookie，二者同源）。需要局域网访问时显式设 `PURRCAT_BIND`；这是唯一的放开入口，端口可用性探测也会跟随该 host。
+
 ## 常用命令
 
 ```powershell

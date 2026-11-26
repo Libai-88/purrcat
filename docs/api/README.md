@@ -21,10 +21,13 @@
 ## 通用约定
 
 - **基地址**：默认 `http://127.0.0.1:8000`（端口可用环境变量 `PURRCAT_API_PORT` 或 `main.py --api-port` 指定）。
+- **监听地址**：默认只绑回环 `127.0.0.1`；需要局域网访问时显式设置 `PURRCAT_BIND`（唯一放开入口），否则端口探测与启动都按回环处理。
 - **数据格式**：除文件上传（`multipart/form-data`）与静态托管外，请求与响应均为 `application/json`。
-- **鉴权**：仅 ACP 网关（`/acp/*`）需要，通过请求头 `X-PurrCat-Token` 携带 `~/.purrcat/acp_token` 内容；其余接口无鉴权（本地优先）。
+- **鉴权**：所有 `/api/*` 都需要凭证，二选一——请求头 `X-PurrCat-Token`（内容同 `~/.purrcat/acp_token`），或同源 `purrcat_token` cookie（首次加载 `/minimal` 时由服务端下发，`HttpOnly; SameSite=Strict`）。豁免仅 `/api/health` 与 `/minimal` 静态宿主；`/acp/*` 沿用同一 token。缺失或错误凭证返回 `401 {"detail":"invalid API token"}`。
+- **CORS**：只放行 `http://127.0.0.1:<port>` 与 `http://localhost:<port>`，允许请求头 `Content-Type`、`X-PurrCat-Token`。
 - **错误**：HTTP 状态码 + `{ "detail": "<reason>" }`（FastAPI 默认错误体）。
 - **异步语义**：`/api/chat`、`/api/chat/batch`、`/api/chat/compress-memory`、`/api/config/deploy/{item}` 等为**后台异步**接口，立即返回受理态，实际进度走对应轮询/SSE 接口。
+- **会话状态轮询**：`GET /api/sessions/{id}/status` 返回 `is_thinking`、`state`、`phase`、`compressing`、`live_reasoning`，以及排队可观测字段 `queue_depth`（尚未被消费的消息条数）与 `waiting_since`（本轮开始忙碌的 epoch 秒，空闲时为 `null`）；非当前会话一律按 idle 返回。
 
 ## 模块索引
 

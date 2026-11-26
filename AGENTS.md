@@ -86,6 +86,10 @@ uv run pytest -m l3             # 静态红线
 15. 注释保持简洁：只解释非显而易见的意图或约束，不复述代码、不写改动历史。
 16. 所有改动完成后检查文档是否同步（`docs/`、README、本文），避免代码与文档脱节。
 17. 重构只做搬运与拆层：不得顺手改提示词文本、消息顺序、字段名或日志文案；确需修正行为另开功能/修复提交。
+18. 工具事实源只有 `src/tool/registry.py`：schema 列表、函数映射、隔离白名单、会话可见能力全部由 `SPECS` 派生，禁止在 `tool/__init__.py` 或 `route.py` 另建手工表。
+19. 会话能力在创建时固化为 `meta.capabilities`；老会话缺该字段一律按全量放行，切 UI 模式不改动已有会话。
+20. 会话写路径默认 journal 增量追加；`PURRCAT_STORE=legacy` 是整段回退开关，回退时不得残留半截 journal。
+21. API 默认只绑回环 `127.0.0.1` 且 `/api/*` 全部要凭证；`PURRCAT_BIND` 是唯一的显式放开入口，不得为方便调试把 host 或豁免前缀放宽。
 
 ## 常见改动落点
 
@@ -95,7 +99,8 @@ uv run pytest -m l3             # 静态红线
 | 主 Agent 单轮编排 / 工具批次 | `src/agent/epoch.py`、`src/agent/tool_batch.py` |
 | Hook @引用 / 沙盒路径 | `src/agent/hook_refs.py`、`src/agent/hook_paths.py` |
 | 会话目录与索引 | `src/agent/session_layout.py` + `session_store.py` |
-| 新增工具 | `src/tool/<name>/` → `src/tool/__init__.py` → `route.py` 的 `TOOL_FUNC_MAP` |
+| 新增工具 | `src/tool/<name>/` → 在 `src/tool/registry.py` 的 `SPECS` 加一条（唯一事实源，其余表自动派生） |
+| 会话能力域 | `src/agent/capabilities.py`（模式映射 + 会话快照） |
 | 科研技能目录（检索/分类/安装） | `src/utils/research_catalog.py`、`src/tool/search/catalog_search.py`、`src/server/api/research_install.py` |
 | 科研技能目录采集与更新 | `scripts/research_skills/`（`collect.py` → `publish.py`） |
 | 到 GitHub 取数（重试/断点续传/限流等待） | `src/utils/http_fetch.py` |
