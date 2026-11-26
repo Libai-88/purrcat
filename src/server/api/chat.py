@@ -179,8 +179,16 @@ def checkout_session_api(session_id: str):
         from src.agent import switch_session
 
         _ensure_manager_initialized()
-        switch_session(session_id)
+        switched = switch_session(session_id)
+        if switched is False:
+            # Agent 仍在处理上一轮：明确告诉调用方"没切成功"，
+            # 否则前端会把"看着切了、事件还落在旧会话"当成后端 bug
+            raise HTTPException(
+                status_code=409, detail="Agent 仍在处理上一轮，请稍后再切换会话"
+            )
         return {"status": "ok"}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"[ERROR] /api/sessions/{session_id}/checkout - 异常: {e}")
         traceback.print_exc()
@@ -228,6 +236,9 @@ def create_new_session(req: NewSessionReq):
             project_id=req.project_id.strip() or None,
         )
         return {"id": session_id, "alias": req.alias or session_id}
+    except TimeoutError as e:
+        # Agent 忙超时：新建会话被安全放弃，用 409 让前端提示而不是 500
+        raise HTTPException(status_code=409, detail=str(e)) from e
     except Exception as e:
         print(f"[ERROR] /api/sessions/new - 异常: {e}")
         traceback.print_exc()
@@ -287,6 +298,8 @@ def branch_session_api(session_id: str, req: BranchSessionReq):
         new_id = branch_session(branch_alias=req.alias)
 
         return {"id": new_id, "alias": req.alias}
+    except TimeoutError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
     except Exception as e:
         print(f"[ERROR] /api/sessions/{session_id}/branch - 异常: {e}")
         traceback.print_exc()

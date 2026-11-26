@@ -3940,7 +3940,7 @@
         }
         if (target) {
           const res = await fetch("/api/sessions/" + encodeURIComponent(target) + "/checkout", { method: "POST" });
-          if (!res.ok) throw new Error(await res.text() || "\u5207\u6362\u4F1A\u8BDD\u5931\u8D25");
+          if (!res.ok) throw new Error(await apiErrorMessage(res, "\u5207\u6362\u4F1A\u8BDD\u5931\u8D25"));
           groupState.activeSessionId = target;
           await refreshSessions();
           updateEmpty();
@@ -3974,7 +3974,7 @@
           const other = groupState.sessions.find((s) => s.id !== sid);
           if (other) {
             const co = await fetch("/api/sessions/" + encodeURIComponent(other.id) + "/checkout", { method: "POST" });
-            if (!co.ok) throw new Error(await co.text() || "\u5207\u6362\u4F1A\u8BDD\u5931\u8D25");
+            if (!co.ok) throw new Error(await apiErrorMessage(co, "\u5207\u6362\u4F1A\u8BDD\u5931\u8D25"));
           }
         }
         const res = await fetch("/api/sessions/" + encodeURIComponent(sid), { method: "DELETE" });

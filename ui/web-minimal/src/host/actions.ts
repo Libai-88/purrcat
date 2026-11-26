@@ -96,7 +96,7 @@ import { HOST, activeBySlot, configByPlugin, groupState } from './state.js';
           // 未指定 session_id 的外部事件会路由到它；只改前端状态不 checkout，
           // 新事件仍会落进上一个会话。
           const res = await fetch('/api/sessions/' + encodeURIComponent(target) + '/checkout', { method: 'POST' });
-          if (!res.ok) throw new Error((await res.text()) || '切换会话失败');
+          if (!res.ok) throw new Error(await apiErrorMessage(res, '切换会话失败'));
           groupState.activeSessionId = target;
           await refreshSessions();
           updateEmpty();
@@ -132,7 +132,7 @@ import { HOST, activeBySlot, configByPlugin, groupState } from './state.js';
           const other = groupState.sessions.find((s) => s.id !== sid);
           if (other) {
             const co = await fetch('/api/sessions/' + encodeURIComponent(other.id) + '/checkout', { method: 'POST' });
-            if (!co.ok) throw new Error((await co.text()) || '切换会话失败');
+            if (!co.ok) throw new Error(await apiErrorMessage(co, '切换会话失败'));
           }
         }
         const res = await fetch('/api/sessions/' + encodeURIComponent(sid), { method: 'DELETE' });

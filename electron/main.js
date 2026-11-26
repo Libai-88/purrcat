@@ -326,6 +326,9 @@ function createWindow() {
     backgroundColor: '#FAF8F5', // 等后端期间 about:blank 用主题底色，避免白屏闪烁
     width: 1280,
     height: 800,
+    // 自动化冒烟用：隐藏窗口跑完整启动链路（后端自启 → /minimal 加载 → preload 注入），
+    // 默认 false 不影响正常使用。
+    show: process.env.PURRCAT_E2E_NO_SHOW !== '1',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
