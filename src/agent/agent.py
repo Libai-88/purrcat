@@ -194,6 +194,16 @@ class Agent:
         with self._history_lock:
             return copy.deepcopy(self.current_history)
 
+    def snapshot_history(self):
+        """落盘路径用的历史快照：只复制外层列表，消息对象共享。
+
+        消息一旦进入历史就不再改写，因此保存端只需要一个稳定的元素序列，
+        深拷贝整段（图片 base64 可达数 MB）是纯浪费。
+        """
+
+        with self._history_lock:
+            return list(self.current_history)
+
     def _append_history(self, message: dict):
         with self._history_lock:
             self.current_history.append(message)

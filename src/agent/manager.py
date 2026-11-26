@@ -378,7 +378,7 @@ class AgentManager:
     # ==========================================
     def _notify_save(self):
         if self._agent:
-            safe_history = self._agent.get_history()
+            safe_history = self._agent.snapshot_history()
             SessionStore.save_session(
                 self._agent.session_id,
                 safe_history,

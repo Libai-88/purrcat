@@ -4,6 +4,7 @@ import threading
 import time
 import uuid
 
+from src.agent import session_journal as journal
 from src.agent.session_layout import (
     branch_path,
     filter_session_index,
@@ -19,6 +20,30 @@ from src.agent.session_layout import (
 from src.utils.config import SESSION_INDEX_PATH, SESSIONS_DIR
 
 
+def store_mode() -> str:
+    """存储后端开关：``PURRCAT_STORE=legacy`` 回退到全量重写。"""
+
+    return (os.environ.get("PURRCAT_STORE") or "").strip().lower()
+
+
+def _tail_signature(history, count: int) -> str:
+    """已写入前缀的末条指纹，用于识别「回退/改写」而不是盲目追加。
+
+    只取便宜字段：角色、id、内容长度、工具调用条数。压缩重建会让长度大幅变化，
+    足以命中；30 秒一次的压实会把任何漏网误差用全量 snapshot 纠正。
+    """
+
+    if count <= 0 or count > len(history):
+        return ""
+    last = history[count - 1]
+    if not isinstance(last, dict):
+        return "?"
+    content = last.get("content")
+    size = len(content) if isinstance(content, (str, list, dict)) else 0
+    calls = last.get("tool_calls")
+    return f"{last.get('role', '')}|{last.get('id', '')}|{size}|{len(calls or [])}"
+
+
 class SessionStore:
     # 每个会话一份 BrainStorm 总计划（@PLAN 引用读取它）
     PLAN_FILENAME = "plan.md"
@@ -26,6 +51,10 @@ class SessionStore:
     _index_lock = threading.RLock()
     _file_locks = {}
     _file_locks_lock = threading.Lock()
+    # 🌟 每 (session, branch) 已落盘的前缀长度与末条指纹；进程重启后自然为空，
+    # 首次保存走一次全量 snapshot，之后只追加增量。
+    _written: dict[str, tuple[int, str]] = {}
+    _compacted_at: dict[str, float] = {}
 
     @classmethod
     def _get_file_lock(cls, session_id):
@@ -227,15 +256,77 @@ class SessionStore:
 
     @classmethod
     def load_session_history(cls, session_id, branch_id="main"):
-        """🌟 重构：从会话文件夹内的特定分支文件加载历史"""
+        """🌟 重构：从会话文件夹内的特定分支加载历史（snapshot + journal 回放）"""
         path = branch_path(SESSIONS_DIR, session_id, branch_id)
-        if not os.path.exists(path):
-            return []
-        try:
-            return read_json(path)
-        except Exception as e:
-            print(f"[Error] 读取会话 {session_id} 分支 {branch_id} 失败: {e}")
-            return []
+
+        snapshot = []
+        if os.path.exists(path):
+            try:
+                snapshot = read_json(path)
+            except Exception as e:
+                print(f"[Error] 读取会话 {session_id} 分支 {branch_id} 失败: {e}")
+                snapshot = []
+        if not isinstance(snapshot, list):
+            snapshot = []
+
+        if store_mode() == "legacy":
+            return snapshot
+
+        entries = journal.read(path)
+        merged = journal.replay(snapshot, entries) if entries else snapshot
+        # 读与写共享同一份前缀记账，避免「刚加载完就保存」时误判为回退。
+        cls._written[f"{session_id}:{branch_id}"] = (
+            len(merged),
+            _tail_signature(merged, len(merged)),
+        )
+        return merged
+
+    @classmethod
+    def _rebuild_snapshot(cls, key, path, history):
+        """全量重建：写完整 snapshot 并清空 journal。"""
+
+        write_json_atomic(path, history)
+        journal.clear(path)
+        cls._written[key] = (len(history), _tail_signature(history, len(history)))
+        cls._compacted_at[key] = time.monotonic()
+
+    @classmethod
+    def _write_branch(cls, session_id, branch_id, path, history):
+        """把分支历史落盘：默认只追加增量，按阈值压实成全量 snapshot。
+
+        压缩重建、分支回滚都会让前缀变化，指纹不符时直接重建，绝不在旧 snapshot
+        后面拼一段对不上的增量。
+        """
+
+        if store_mode() == "legacy":
+            write_json_atomic(path, history)
+            return
+
+        total = len(history)
+        key = f"{session_id}:{branch_id}"
+        written, signature = cls._written.get(key, (0, ""))
+
+        if written == 0:
+            cls._rebuild_snapshot(key, path, history)
+            return
+
+        if signature != _tail_signature(history, written):
+            cls._rebuild_snapshot(key, path, history)
+            return
+
+        if total == written:
+            return
+
+        journal.append(path, history[written:], written)
+        cls._written[key] = (total, _tail_signature(history, total))
+
+        now = time.monotonic()
+        since = now - cls._compacted_at.get(key, now)
+        if (
+            journal.line_count(path) >= journal.COMPACT_EVERY
+            or since >= journal.COMPACT_INTERVAL_SECONDS
+        ):
+            cls._rebuild_snapshot(key, path, history)
 
     @classmethod
     def set_session_paradigm(cls, session_id, paradigm=None):
@@ -364,7 +455,7 @@ class SessionStore:
         file_lock = cls._get_file_lock(f"{session_id}_{branch_id}")
         with file_lock:
             try:
-                write_json_atomic(path, history)
+                cls._write_branch(session_id, branch_id, path, history)
             except Exception as e:
                 print(f"[Warn] 保存分支 {branch_id} 失败: {e}")
                 return
@@ -492,6 +583,9 @@ class SessionStore:
         with file_lock:
             if os.path.exists(path):
                 os.remove(path)
+            journal.clear(path)
+            cls._written.pop(f"{session_id}:{branch_id}", None)
+            cls._compacted_at.pop(f"{session_id}:{branch_id}", None)
 
         # 2. 从 meta.json 拓扑中抹除
         meta_file = meta_path(SESSIONS_DIR, session_id)
