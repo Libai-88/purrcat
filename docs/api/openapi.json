@@ -2643,6 +2643,108 @@
         ]
       }
     },
+    "/api/config/models/list": {
+      "post": {
+        "description": "用 BASE URL + API Key 探测上游 /models，返回可选模型列表。\n\n这是「不要让用户手抄模型名」的入口；api_key 只在本进程内转发一次，\n不落日志、不写盘、不回显。",
+        "operationId": "api_model_list_api_config_models_list_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Model List",
+        "tags": [
+          "Configuration"
+        ]
+      }
+    },
+    "/api/config/models/providers": {
+      "get": {
+        "description": "provider 预设（前端「一键填充 BASE URL」用），单一事实源在 src/model/catalog.py。",
+        "operationId": "api_model_providers_api_config_models_providers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Model Providers",
+        "tags": [
+          "Configuration"
+        ]
+      }
+    },
+    "/api/config/models/suggest": {
+      "post": {
+        "description": "按模型名给出上下文 / 限速参数建议，并返回依据（matched_by / note）。",
+        "operationId": "api_model_suggest_api_config_models_suggest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Model Suggest",
+        "tags": [
+          "Configuration"
+        ]
+      }
+    },
     "/api/config/sandbox-registry": {
       "get": {
         "operationId": "api_get_sandbox_registry_api_config_sandbox_registry_get",

@@ -1,3 +1,4 @@
+from src.model import catalog
 from src.model.core.llm_client import LLMClient
 from src.model.manager.concurrency import get_key_semaphore
 from src.model.manager.key_manager import key_manager
@@ -35,11 +36,15 @@ class Model:
         self.api_key = key_manager.allocate_key(valid_keys, recovered_key_prefix)
         self.key_prefix = self.api_key[:15]
 
-        limits = model_info.get("limits", {})
-        max_concurrency = limits.get("concurrency", 1)
-        self.semaphore = get_key_semaphore(self.api_key, max_concurrency)
+        limits = catalog.normalized_limits(model_info)
+        self.semaphore = get_key_semaphore(self.api_key, limits["concurrency"])
 
-        self._client = LLMClient(api_key=self.api_key, base_url=self.base_url)
+        self._client = LLMClient(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            rpm=limits["rpm"],
+            tpm=limits["tpm"],
+        )
 
         log(
             f"🔗 任务 {self.task_id} 锁定模型 {self.model_name}，绑定 API Key: {self.key_prefix}..."
@@ -175,10 +180,14 @@ class AgentModel(Model):
 
     def _init_client(self, model_cfg: dict):
         self.key_prefix = self.api_key[:15]
-        limits = model_cfg.get("limits", {})
-        max_concurrency = limits.get("concurrency", 1)
-        self.semaphore = get_key_semaphore(self.api_key, max_concurrency)
-        self._client = LLMClient(api_key=self.api_key, base_url=self.base_url)
+        limits = catalog.normalized_limits(model_cfg)
+        self.semaphore = get_key_semaphore(self.api_key, limits["concurrency"])
+        self._client = LLMClient(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            rpm=limits["rpm"],
+            tpm=limits["tpm"],
+        )
         log(
             f"🤖 全局 Agent 锁定模型 {self.model_name}，使用专属 API Key: {self.key_prefix}..."
         )

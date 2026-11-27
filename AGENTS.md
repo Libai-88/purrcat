@@ -90,6 +90,8 @@ uv run pytest -m l3             # 静态红线
 19. 会话能力在创建时固化为 `meta.capabilities`；老会话缺该字段一律按全量放行，切 UI 模式不改动已有会话。
 20. 会话写路径默认 journal 增量追加；`PURRCAT_STORE=legacy` 是整段回退开关，回退时不得残留半截 journal。
 21. API 默认只绑回环 `127.0.0.1` 且 `/api/*` 全部要凭证；`PURRCAT_BIND` 是唯一的显式放开入口，不得为方便调试把 host 或豁免前缀放宽。
+22. 模型元数据（provider 预设、上下文/限速画像）只在 `src/model/catalog.py` 维护；前端不得另抄一份 provider 表。`suggest()` 会访问 OpenRouter 公共目录，**运行时路径（`normalized_limits`）禁止联网**。
+23. 限速读 `limits.*` 优先、顶层 `rpm/tpm/concurrency` 兜底（`catalog.normalized_limits`）；新增读取点不得再直接 `cfg.get("limits")`。
 
 ## 常见改动落点
 
@@ -101,6 +103,8 @@ uv run pytest -m l3             # 静态红线
 | 会话目录与索引 | `src/agent/session_layout.py` + `session_store.py` |
 | 新增工具 | `src/tool/<name>/` → 在 `src/tool/registry.py` 的 `SPECS` 加一条（唯一事实源，其余表自动派生） |
 | 会话能力域 | `src/agent/capabilities.py`（模式映射 + 会话快照） |
+| 模型元数据（provider 预设 / 参数画像 / 拉模型 / 参数匹配） | `src/model/catalog.py`（唯一事实源），端点见 `src/server/api/config.py` 的 `/models/*` |
+| 限速参数落地（rpm/tpm 滑窗） | `src/model/manager/rate_limit.py` + `src/model/core/llm_client.py` |
 | 科研技能目录（检索/分类/安装） | `src/utils/research_catalog.py`、`src/tool/search/catalog_search.py`、`src/server/api/research_install.py` |
 | 科研技能目录采集与更新 | `scripts/research_skills/`（`collect.py` → `publish.py`） |
 | 到 GitHub 取数（重试/断点续传/限流等待） | `src/utils/http_fetch.py` |

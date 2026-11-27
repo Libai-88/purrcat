@@ -59,6 +59,48 @@ def api_update_model_config(config: Dict[str, Any]):
     raise HTTPException(status_code=500, detail="Failed to save model config")
 
 
+# ── Model Catalog：拉取模型列表 / 参数自动匹配 ──
+@router.get("/models/providers")
+def api_model_providers():
+    """provider 预设（前端「一键填充 BASE URL」用），单一事实源在 src/model/catalog.py。"""
+    from src.model import catalog
+
+    return {"providers": catalog.providers_public()}
+
+
+@router.post("/models/list")
+def api_model_list(body: Dict[str, Any] = Body(default=None)):
+    """用 BASE URL + API Key 探测上游 /models，返回可选模型列表。
+
+    这是「不要让用户手抄模型名」的入口；api_key 只在本进程内转发一次，
+    不落日志、不写盘、不回显。
+    """
+    from src.model import catalog
+
+    body = body or {}
+    try:
+        return catalog.list_models(body.get("base_url"), body.get("api_key"))
+    except catalog.ModelListError as exc:
+        raise HTTPException(
+            status_code=400, detail={"code": exc.code, "message": exc.message}
+        )
+
+
+@router.post("/models/suggest")
+def api_model_suggest(body: Dict[str, Any] = Body(default=None)):
+    """按模型名给出上下文 / 限速参数建议，并返回依据（matched_by / note）。"""
+    from src.model import catalog
+
+    body = body or {}
+    model_id = body.get("model") or body.get("model_id")
+    if not model_id:
+        raise HTTPException(
+            status_code=400, detail={"code": "no_model", "message": "缺少模型名"}
+        )
+    metadata = body.get("metadata") if isinstance(body.get("metadata"), dict) else None
+    return catalog.suggest(str(model_id), body.get("base_url"), metadata)
+
+
 # ── Sensor Config ──
 @router.get("/sensor")
 def api_get_sensor_config():

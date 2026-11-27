@@ -988,6 +988,52 @@ ACP 接入状态：relay 部署情况 / 端口 / uv 可用性
 | 200 | Successful Response | - |
 | 422 | Validation Error | HTTPValidationError |
 
+### `POST /api/config/models/list`
+
+**标题**：Api Model List
+
+用 BASE URL + API Key 探测上游 /models，返回可选模型列表。
+
+#### 请求体
+
+**Schema**：`Body`
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
+### `GET /api/config/models/providers`
+
+**标题**：Api Model Providers
+
+provider 预设（前端「一键填充 BASE URL」用），单一事实源在 src/model/catalog.py。
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+
+### `POST /api/config/models/suggest`
+
+**标题**：Api Model Suggest
+
+按模型名给出上下文 / 限速参数建议，并返回依据（matched_by / note）。
+
+#### 请求体
+
+**Schema**：`Body`
+
+#### 响应
+
+| 状态码 | 描述 | Schema |
+| --- | --- | --- |
+| 200 | Successful Response | - |
+| 422 | Validation Error | HTTPValidationError |
+
 ### `GET /api/config/sandbox-registry`
 
 **标题**：Api Get Sandbox Registry

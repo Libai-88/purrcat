@@ -2131,6 +2131,7 @@
   }
   function modelFormOf(entry, entryKey) {
     const e = entry || {};
+    const lim = e.limits && typeof e.limits === "object" ? e.limits : {};
     const idx = entryKey.indexOf(":");
     const sdk = idx >= 0 ? entryKey.slice(0, idx) : "openai";
     const modelName = idx >= 0 ? entryKey.slice(idx + 1) : entryKey;
@@ -2139,9 +2140,10 @@
       modelName,
       apiKey: Array.isArray(e.api_keys) && e.api_keys[0] ? e.api_keys[0] : "",
       baseUrl: e.base_url || "",
-      rpm: e.rpm != null ? String(e.rpm) : "60",
-      tpm: e.tpm != null ? String(e.tpm) : "1000000",
-      concurrency: e.concurrency != null ? String(e.concurrency) : "3",
+      // limits.* 是当前口径；顶层 rpm/tpm/concurrency 是历史写法，两个都读
+      rpm: String(lim.rpm != null ? lim.rpm : e.rpm != null ? e.rpm : 60),
+      tpm: String(lim.tpm != null ? lim.tpm : e.tpm != null ? e.tpm : 1e6),
+      concurrency: String(lim.concurrency != null ? lim.concurrency : e.concurrency != null ? e.concurrency : 3),
       maxToken: e.max_token != null ? String(e.max_token) : "500000",
       vision: !!e.vision
     };
@@ -2170,20 +2172,70 @@
       });
     });
   }
+  var modelFormSeq = 0;
+  function ensureModelStyles() {
+    const doc = HOST.document;
+    if (doc.getElementById("wm-model-cfg-style")) return;
+    const st = doc.createElement("style");
+    st.id = "wm-model-cfg-style";
+    st.textContent = [
+      ".cfg-inline{display:flex;gap:8px;align-items:center}",
+      ".cfg-inline .cfg-input{flex:1 1 auto;min-width:0}",
+      ".cfg-inline-btn{flex:0 0 auto;white-space:nowrap}",
+      ".cfg-inline-actions{margin-top:10px}",
+      ".cfg-field-note{margin:2px 0 8px;font-size:12px;line-height:1.6;opacity:.78}"
+    ].join("");
+    doc.head.appendChild(st);
+  }
+  async function catalogCall(path, payload) {
+    const res = await fetch("/api/config/models/" + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    let body = null;
+    try {
+      body = await res.json();
+    } catch (_) {
+      body = null;
+    }
+    if (!res.ok) {
+      const d = body && body.detail;
+      throw new Error(String(d && d.message || d || "HTTP " + res.status));
+    }
+    return body || {};
+  }
   function renderModelForm(card, key, data, cat, entryKey, act) {
+    ensureModelStyles();
     const main = card.parentNode;
     const f = modelFormOf((data[cat] || {})[entryKey], entryKey);
     const body = HOST.document.createElement("div");
     body.className = "cfg-card-body";
     const grid = HOST.document.createElement("div");
     grid.className = "cfg-grid";
+    const seq = ++modelFormSeq;
+    const preset = HOST.document.createElement("select");
+    preset.className = "cfg-input";
+    const presetAuto = HOST.document.createElement("option");
+    presetAuto.value = "";
+    presetAuto.textContent = "\uFF08\u81EA\u52A8\u8BC6\u522B\uFF09";
+    preset.appendChild(presetAuto);
+    const presets = {};
     const mk = HOST.document.createElement("input");
     mk.type = "text";
     mk.value = f.modelName;
+    mk.placeholder = "deepseek-v4-flash";
     mk.addEventListener("input", function() {
       f.modelName = mk.value;
     });
-    modelField(grid, "\u6A21\u578B\u540D (key \u540E\u7F00)", mk);
+    const listId = "wm-model-list-" + seq;
+    const dl = HOST.document.createElement("datalist");
+    dl.id = listId;
+    mk.setAttribute("list", listId);
+    const pullBtn = HOST.document.createElement("button");
+    pullBtn.type = "button";
+    pullBtn.className = "btn";
+    pullBtn.textContent = "\u62C9\u53D6\u6A21\u578B";
     const ak = HOST.document.createElement("input");
     ak.type = "password";
     ak.value = f.apiKey;
@@ -2192,7 +2244,6 @@
     ak.addEventListener("input", function() {
       f.apiKey = ak.value;
     });
-    modelField(grid, "API KEY", ak);
     const bu = HOST.document.createElement("input");
     bu.type = "text";
     bu.value = f.baseUrl;
@@ -2201,19 +2252,157 @@
     bu.addEventListener("input", function() {
       f.baseUrl = bu.value;
     });
-    modelField(grid, "BASE URL", bu);
+    const paramInputs = {};
     if (cat !== "vision") {
-      [["rpm", "RPM"], ["tpm", "TPM"], ["concurrency", "\u5E76\u53D1\u6570"], ["maxToken", "MAX TOKEN"]].forEach(function(pair) {
+      [["rpm", "RPM", "60"], ["tpm", "TPM", "1000000"], ["concurrency", "\u5E76\u53D1\u6570", "3"], ["maxToken", "MAX TOKEN", "500000"]].forEach(function(pair) {
         const e2 = HOST.document.createElement("input");
         e2.type = "number";
         e2.value = f[pair[0]];
+        e2.placeholder = pair[2];
         e2.addEventListener("input", function() {
           f[pair[0]] = e2.value;
         });
-        modelField(grid, pair[1], e2);
+        paramInputs[pair[0]] = e2;
       });
     }
+    const noteEl = HOST.document.createElement("div");
+    noteEl.className = "cfg-field-note";
+    noteEl.style.display = "none";
+    let pulled = [];
+    modelField(grid, "\u670D\u52A1\u5546\u9884\u8BBE", preset);
+    const modelRow = HOST.document.createElement("div");
+    modelRow.className = "cfg-field";
+    const ml = HOST.document.createElement("label");
+    ml.className = "cfg-label";
+    ml.textContent = "\u6A21\u578B\u540D\uFF08\u53EF\u76F4\u63A5\u9009\uFF0C\u4E5F\u53EF\u4EE5\u624B\u586B\uFF09";
+    modelRow.appendChild(ml);
+    const mline = HOST.document.createElement("div");
+    mline.className = "cfg-inline";
+    mk.className = "cfg-input";
+    pullBtn.classList.add("cfg-inline-btn");
+    mline.appendChild(mk);
+    mline.appendChild(pullBtn);
+    modelRow.appendChild(mline);
+    modelRow.appendChild(dl);
+    grid.appendChild(modelRow);
+    modelField(grid, "BASE URL", bu);
+    modelField(grid, "API KEY", ak);
+    if (cat !== "vision") {
+      modelField(grid, "RPM", paramInputs.rpm);
+      modelField(grid, "TPM", paramInputs.tpm);
+      modelField(grid, "\u5E76\u53D1\u6570", paramInputs.concurrency);
+      modelField(grid, "MAX TOKEN\uFF08\u4E0A\u4E0B\u6587\u4E0A\u9650\uFF09", paramInputs.maxToken);
+    }
     body.appendChild(grid);
+    body.appendChild(noteEl);
+    function applyPreset(pid) {
+      const p = presets[pid];
+      if (!p) return;
+      if (p.base_url) {
+        f.baseUrl = p.base_url;
+        bu.value = p.base_url;
+      }
+      const d = p.defaults || {};
+      if (cat !== "vision") {
+        [["rpm", "rpm"], ["tpm", "tpm"], ["concurrency", "concurrency"], ["maxToken", "max_token"]].forEach(function(pair) {
+          if (d[pair[1]] != null) {
+            f[pair[0]] = String(d[pair[1]]);
+            paramInputs[pair[0]].value = f[pair[0]];
+          }
+        });
+      }
+      toast("\u5DF2\u586B\u5165 " + p.title + " \u7684 BASE URL \u4E0E\u9ED8\u8BA4\u53C2\u6570");
+    }
+    preset.addEventListener("change", function() {
+      applyPreset(preset.value);
+    });
+    fetch("/api/config/models/providers").then(function(r) {
+      return r.json();
+    }).then(function(j) {
+      (j && j.providers || []).forEach(function(p) {
+        presets[p.id] = p;
+        const o = HOST.document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.title + (p.base_url ? " \xB7 " + p.base_url : "");
+        preset.appendChild(o);
+      });
+      const cur = String(f.baseUrl || "").toLowerCase();
+      const hit = (j && j.providers || []).find(function(p) {
+        return p.base_url && cur.indexOf(String(p.base_url).toLowerCase()) === 0;
+      });
+      if (hit) preset.value = hit.id;
+    }).catch(function() {
+    });
+    pullBtn.addEventListener("click", function() {
+      const base = String(f.baseUrl || "").trim();
+      if (!base) {
+        HOST.alert("\u5148\u9009\u670D\u52A1\u5546\u6216\u586B\u5199 BASE URL");
+        return;
+      }
+      pullBtn.disabled = true;
+      const old = pullBtn.textContent;
+      pullBtn.textContent = "\u62C9\u53D6\u4E2D\u2026";
+      catalogCall("list", { base_url: base, api_key: String(f.apiKey || "").trim() }).then(function(j) {
+        pulled = j && j.models || [];
+        dl.innerHTML = "";
+        pulled.forEach(function(m) {
+          const o = HOST.document.createElement("option");
+          o.value = m.id;
+          dl.appendChild(o);
+        });
+        toast("\u5DF2\u62C9\u53D6 " + pulled.length + " \u4E2A\u6A21\u578B\uFF08\u70B9\u6A21\u578B\u540D\u53F3\u4FA7\u4E0B\u62C9\u53EF\u76F4\u63A5\u9009\uFF09");
+      }).catch(function(e) {
+        HOST.alert("\u62C9\u53D6\u5931\u8D25\uFF1A" + (e && e.message || ""));
+      }).then(function() {
+        pullBtn.disabled = false;
+        pullBtn.textContent = old;
+      });
+    });
+    function autoFill() {
+      const nm = String(f.modelName || "").trim();
+      if (!nm) {
+        HOST.alert("\u5148\u586B\u5199\u6216\u9009\u62E9\u6A21\u578B\u540D");
+        return;
+      }
+      const meta = pulled.find(function(m) {
+        return m.id === nm;
+      }) || null;
+      pullBtn.disabled = true;
+      catalogCall("suggest", { model: nm, base_url: String(f.baseUrl || "").trim(), metadata: meta }).then(function(j) {
+        const fields = j && j.fields || {};
+        if (cat !== "vision") {
+          [["rpm", "rpm"], ["tpm", "tpm"], ["concurrency", "concurrency"], ["maxToken", "max_token"]].forEach(function(pair) {
+            if (fields[pair[1]] != null) {
+              f[pair[0]] = String(fields[pair[1]]);
+              paramInputs[pair[0]].value = f[pair[0]];
+            }
+          });
+          if (fields.vision != null) {
+            f.vision = !!fields.vision;
+            const cb = body.querySelector(".switch input");
+            if (cb) cb.checked = f.vision;
+          }
+        }
+        const src = { provider_metadata: "\u670D\u52A1\u5546\u5143\u6570\u636E", builtin_family: "\u5185\u7F6E\u76EE\u5F55", openrouter: "OpenRouter \u76EE\u5F55", default: "\u4FDD\u5B88\u9ED8\u8BA4" };
+        noteEl.textContent = "\u53C2\u6570\u4F9D\u636E\uFF1A" + (src[j.matched_by] || j.matched_by || "\u672A\u77E5") + " \u2014 " + (j.note || "");
+        noteEl.style.display = "block";
+      }).catch(function(e) {
+        HOST.alert("\u81EA\u52A8\u5339\u914D\u5931\u8D25\uFF1A" + (e && e.message || ""));
+      }).then(function() {
+        pullBtn.disabled = false;
+        pullBtn.textContent = "\u62C9\u53D6\u6A21\u578B";
+      });
+    }
+    const matchBtn = HOST.document.createElement("button");
+    matchBtn.type = "button";
+    matchBtn.className = "btn";
+    matchBtn.textContent = "\u6309\u6A21\u578B\u540D\u81EA\u52A8\u5339\u914D\u53C2\u6570";
+    matchBtn.addEventListener("click", function() {
+      autoFill();
+    });
+    const actionRow = HOST.document.createElement("div");
+    actionRow.className = "cfg-inline cfg-inline-actions";
+    actionRow.appendChild(matchBtn);
     if (cat !== "vision") {
       const swRow = HOST.document.createElement("div");
       swRow.className = "cfg-field switch-row";
@@ -2230,6 +2419,7 @@
       swRow.appendChild(sw);
       body.appendChild(swRow);
     }
+    body.appendChild(actionRow);
     const save = HOST.document.createElement("button");
     save.className = "btn cfg-save";
     save.textContent = "\u4FDD\u5B58";
@@ -2242,9 +2432,15 @@
       const newKey = (f.sdk || "openai") + ":" + nm;
       const obj = { api_keys: [f.apiKey.trim()], base_url: f.baseUrl.trim() };
       if (cat !== "vision") {
-        obj.rpm = Number(f.rpm) || 60;
-        obj.tpm = Number(f.tpm) || 1e6;
-        obj.concurrency = Number(f.concurrency) || 3;
+        const limits = {
+          rpm: Number(f.rpm) || 0,
+          tpm: Number(f.tpm) || 0,
+          concurrency: Number(f.concurrency) || 1
+        };
+        obj.limits = limits;
+        obj.rpm = limits.rpm;
+        obj.tpm = limits.tpm;
+        obj.concurrency = limits.concurrency;
         obj.max_token = Number(f.maxToken) || 5e5;
         obj.vision = f.vision;
       }

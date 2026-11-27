@@ -62,6 +62,29 @@ Hook 阶段固定为 `on_build_system_prompt / on_loop_start / on_loop_epoch / o
 
 注意注册表有一处结构约束：schema 必须保持惰性（`@property` + `importlib.import_module`），且**派生表要在 schema 解析之前算好**，否则 `bash → utils.format → utils/__init__ → route → registry` 会形成循环导入。
 
+## 模型配置与参数目录
+
+`model.json` 的结构是 `{main|task|vision: {"sdk:model": 条目}}`，条目里 `api_keys`、`base_url`、`max_token`、`vision` 是必读项；限速参数有两套写法并存：
+
+- **新口径** `limits: {rpm, tpm, concurrency}`——运行时真正读取的位置；
+- **历史写法** 顶层 `rpm / tpm / concurrency`——早期配置与旧代码在用。
+
+读取统一走 `src/model/catalog.py` 的 `normalized_limits()`：`limits.*` 优先、顶层兜底，缺省 `rpm 60 / tpm 1000000 / concurrency 3`。别在 `Model` / `AgentModel` 里各自 `cfg.get("limits")`——那正是"用户填了不生效"的来源：旧实现只读 `limits.concurrency`，顶层的三个值从来没人消费。
+
+`rpm` / `tpm` 现在会真的阻塞：`src/model/manager/rate_limit.py` 的 `RequestBudget` 是 60 s 滑动窗口，同 API Key 的所有模型实例共享一份（`get_shared_budget`）；`LLMClient.execute_chat` 在拿并发信号量后先 `reserve()`，按「消息字符数/3 + max_tokens」估 token 预算，`rpm=0` 或 `tpm=0` 表示不限。等待按 0.5 s 分段，`cancel_event` 置位立刻放弃。
+
+**模型元数据的唯一事实源是 `src/model/catalog.py`**：`PROVIDERS`（12 个预设，含 Ollama / LM Studio 本地）与 `FAMILIES`（内置参数族）只在这里维护，前端通过三个端点渲染，不要在 TS 里另抄一份：
+
+| 端点 | 用途 |
+| --- | --- |
+| `GET /api/config/models/providers` | provider 预设（一键填 BASE URL 与默认参数） |
+| `POST /api/config/models/list` | 用 `base_url + api_key` 探测 `{base}/models` → `{root}/v1/models` → Ollama `/api/tags`，返回模型 id 列表（服务商带 `context_length` 时一并带回） |
+| `POST /api/config/models/suggest` | 按模型名给上下文/限速建议，返回 `matched_by` 与 `note`（依据必须可见，不猜） |
+
+匹配优先级：服务商 `/models` 元数据 → 内置 `FAMILIES` → OpenRouter 公共目录（无 key，进程内缓存 24 h）→ provider 默认 → 全局默认。`FAMILIES` 只收录来源明确、短期不漂移的条目（DeepSeek V4 系 1M、GPT-4o/4.1 128K、Gemini 1M），其余交给元数据与公共目录——不要凭印象往里写数字。
+
+**运行时不联网**：`normalized_limits()` 只读本地配置；`suggest()` 才会访问 OpenRouter，且只允许在配置页的显式请求里发生。
+
 ## 会话能力域
 
 每个会话在创建时把可用工具集固化成 `meta.json` 的 `capabilities`（`src/agent/capabilities.py`）：`work → ["core"]`、`science → ["core","research"]`。当前模式读 `~/.purrcat/settings.json` 的 `webminConfig.mode.value`。

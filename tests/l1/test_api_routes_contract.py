@@ -86,6 +86,9 @@ EXPECTED_ROUTES = {
     "config": [
         ("/api/config/model", "GET", "api_get_model_config"),
         ("/api/config/model", "PUT", "api_update_model_config"),
+        ("/api/config/models/providers", "GET", "api_model_providers"),
+        ("/api/config/models/list", "POST", "api_model_list"),
+        ("/api/config/models/suggest", "POST", "api_model_suggest"),
         ("/api/config/sensor", "GET", "api_get_sensor_config"),
         ("/api/config/sensor", "PUT", "api_update_sensor_config"),
         ("/api/config/sensor/reload", "POST", "api_reload_sensor_manager"),

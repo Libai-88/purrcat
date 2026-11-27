@@ -1,6 +1,7 @@
 // 配置中心各标签页（model / mcp / sensor / acp / deploy）
 import { syncNativeCover } from './bus.js';
 import { ICON_SVG, ICON_SVG_ATTR } from './icons.js';
+import { toast } from './queue-status.js';
 import { closeSettingsMenus, deployPollT, renderSoulEditor, setDeployPollT } from './settings-tabs.js';
 import { HOST } from './state.js';
 
@@ -253,6 +254,7 @@ import { HOST } from './state.js';
   // 由已有条目构造编辑表单（无条目时给出空白表单，模型名留空）
   export function modelFormOf(entry: any, entryKey: string): Record<string, any> {
     const e = entry || {};
+    const lim = (e.limits && typeof e.limits === 'object') ? e.limits : {};
     const idx = entryKey.indexOf(':');
     const sdk = idx >= 0 ? entryKey.slice(0, idx) : 'openai';
     const modelName = idx >= 0 ? entryKey.slice(idx + 1) : entryKey;
@@ -261,14 +263,15 @@ import { HOST } from './state.js';
       modelName: modelName,
       apiKey: (Array.isArray(e.api_keys) && e.api_keys[0]) ? e.api_keys[0] : '',
       baseUrl: e.base_url || '',
-      rpm: e.rpm != null ? String(e.rpm) : '60',
-      tpm: e.tpm != null ? String(e.tpm) : '1000000',
-      concurrency: e.concurrency != null ? String(e.concurrency) : '3',
+      // limits.* 是当前口径；顶层 rpm/tpm/concurrency 是历史写法，两个都读
+      rpm: String(lim.rpm != null ? lim.rpm : (e.rpm != null ? e.rpm : 60)),
+      tpm: String(lim.tpm != null ? lim.tpm : (e.tpm != null ? e.tpm : 1000000)),
+      concurrency: String(lim.concurrency != null ? lim.concurrency : (e.concurrency != null ? e.concurrency : 3)),
       maxToken: e.max_token != null ? String(e.max_token) : '500000',
       vision: !!e.vision,
     };
   }
-  export function modelField(grid: HTMLElement, label: string, input: HTMLInputElement) {
+  export function modelField(grid: HTMLElement, label: string, input: HTMLElement) {
     const f = HOST.document.createElement('div');
     f.className = 'cfg-field';
     const lb = HOST.document.createElement('label');
@@ -294,26 +297,216 @@ import { HOST } from './state.js';
     });
   }
   // 角色下的单个模型表单：直接平铺展示，保存后写回并热重载
+  let modelFormSeq = 0;
+  // 模型表单新增的行内布局样式就地注入：theme.css 是用户常改的文件，不往里加规则
+  function ensureModelStyles(): void {
+    const doc = HOST.document;
+    if (doc.getElementById('wm-model-cfg-style')) return;
+    const st = doc.createElement('style');
+    st.id = 'wm-model-cfg-style';
+    st.textContent = [
+      '.cfg-inline{display:flex;gap:8px;align-items:center}',
+      '.cfg-inline .cfg-input{flex:1 1 auto;min-width:0}',
+      '.cfg-inline-btn{flex:0 0 auto;white-space:nowrap}',
+      '.cfg-inline-actions{margin-top:10px}',
+      '.cfg-field-note{margin:2px 0 8px;font-size:12px;line-height:1.6;opacity:.78}',
+    ].join('');
+    doc.head.appendChild(st);
+  }
+  async function catalogCall(path: string, payload: Record<string, any>): Promise<any> {
+    const res = await fetch('/api/config/models/' + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    let body: any = null;
+    try { body = await res.json(); } catch (_) { body = null; }
+    if (!res.ok) {
+      const d = body && body.detail;
+      throw new Error(String((d && d.message) || d || ('HTTP ' + res.status)));
+    }
+    return body || {};
+  }
   export function renderModelForm(card: HTMLElement, key: string, data: Record<string, any>, cat: string, entryKey: string, act: HTMLElement) {
+    ensureModelStyles();
     const main = card.parentNode as HTMLElement;   // 所属配置页容器，保存成功后整页重绘
     const f = modelFormOf((data[cat] || {})[entryKey], entryKey);
     const body = HOST.document.createElement('div');
     body.className = 'cfg-card-body';
     const grid = HOST.document.createElement('div');
     grid.className = 'cfg-grid';
-    const mk = HOST.document.createElement('input'); mk.type = 'text'; mk.value = f.modelName; mk.addEventListener('input', function () { f.modelName = mk.value; });
-    modelField(grid, '模型名 (key 后缀)', mk);
-    const ak = HOST.document.createElement('input'); ak.type = 'password'; ak.value = f.apiKey; ak.placeholder = 'sk-...'; ak.spellcheck = false; ak.addEventListener('input', function () { f.apiKey = ak.value; });
-    modelField(grid, 'API KEY', ak);
-    const bu = HOST.document.createElement('input'); bu.type = 'text'; bu.value = f.baseUrl; bu.placeholder = 'https://api.deepseek.com'; bu.spellcheck = false; bu.addEventListener('input', function () { f.baseUrl = bu.value; });
-    modelField(grid, 'BASE URL', bu);
+    const seq = ++modelFormSeq;
+
+    // ---- 控件先建好，再按视觉顺序入格 ----
+    const preset = HOST.document.createElement('select');
+    preset.className = 'cfg-input';
+    const presetAuto = HOST.document.createElement('option');
+    presetAuto.value = '';
+    presetAuto.textContent = '（自动识别）';
+    preset.appendChild(presetAuto);
+    const presets: Record<string, any> = {};
+
+    const mk = HOST.document.createElement('input');
+    mk.type = 'text';
+    mk.value = f.modelName;
+    mk.placeholder = 'deepseek-v4-flash';
+    mk.addEventListener('input', function () { f.modelName = mk.value; });
+    const listId = 'wm-model-list-' + seq;
+    const dl = HOST.document.createElement('datalist');
+    dl.id = listId;
+    mk.setAttribute('list', listId);
+
+    const pullBtn = HOST.document.createElement('button');
+    pullBtn.type = 'button';
+    pullBtn.className = 'btn';
+    pullBtn.textContent = '拉取模型';
+
+    const ak = HOST.document.createElement('input');
+    ak.type = 'password';
+    ak.value = f.apiKey;
+    ak.placeholder = 'sk-...';
+    ak.spellcheck = false;
+    ak.addEventListener('input', function () { f.apiKey = ak.value; });
+
+    const bu = HOST.document.createElement('input');
+    bu.type = 'text';
+    bu.value = f.baseUrl;
+    bu.placeholder = 'https://api.deepseek.com';
+    bu.spellcheck = false;
+    bu.addEventListener('input', function () { f.baseUrl = bu.value; });
+
+    const paramInputs: Record<string, HTMLInputElement> = {};
     if (cat !== 'vision') {
-      [['rpm', 'RPM'], ['tpm', 'TPM'], ['concurrency', '并发数'], ['maxToken', 'MAX TOKEN']].forEach(function (pair) {
-        const e2 = HOST.document.createElement('input'); e2.type = 'number'; e2.value = f[pair[0]]; e2.addEventListener('input', function () { f[pair[0]] = e2.value; });
-        modelField(grid, pair[1], e2);
+      [['rpm', 'RPM', '60'], ['tpm', 'TPM', '1000000'], ['concurrency', '并发数', '3'], ['maxToken', 'MAX TOKEN', '500000']].forEach(function (pair) {
+        const e2 = HOST.document.createElement('input');
+        e2.type = 'number';
+        e2.value = f[pair[0]];
+        e2.placeholder = pair[2];
+        e2.addEventListener('input', function () { f[pair[0]] = e2.value; });
+        paramInputs[pair[0]] = e2;
       });
     }
+
+    const noteEl = HOST.document.createElement('div');
+    noteEl.className = 'cfg-field-note';
+    noteEl.style.display = 'none';
+    let pulled: Array<Record<string, any>> = [];
+
+    // ---- 入格：服务商 → 模型名（+拉取）→ BASE URL → API KEY → 参数 → 提示 ----
+    modelField(grid, '服务商预设', preset);
+    const modelRow = HOST.document.createElement('div');
+    modelRow.className = 'cfg-field';
+    const ml = HOST.document.createElement('label');
+    ml.className = 'cfg-label';
+    ml.textContent = '模型名（可直接选，也可以手填）';
+    modelRow.appendChild(ml);
+    const mline = HOST.document.createElement('div');
+    mline.className = 'cfg-inline';
+    mk.className = 'cfg-input';
+    pullBtn.classList.add('cfg-inline-btn');
+    mline.appendChild(mk);
+    mline.appendChild(pullBtn);
+    modelRow.appendChild(mline);
+    modelRow.appendChild(dl);
+    grid.appendChild(modelRow);
+    modelField(grid, 'BASE URL', bu);
+    modelField(grid, 'API KEY', ak);
+    if (cat !== 'vision') {
+      modelField(grid, 'RPM', paramInputs.rpm);
+      modelField(grid, 'TPM', paramInputs.tpm);
+      modelField(grid, '并发数', paramInputs.concurrency);
+      modelField(grid, 'MAX TOKEN（上下文上限）', paramInputs.maxToken);
+    }
     body.appendChild(grid);
+    body.appendChild(noteEl);
+
+    // ---- 服务商预设：拉一次、选中即填 BASE URL 与默认参数 ----
+    function applyPreset(pid: string): void {
+      const p = presets[pid];
+      if (!p) return;
+      if (p.base_url) { f.baseUrl = p.base_url; bu.value = p.base_url; }
+      const d = p.defaults || {};
+      if (cat !== 'vision') {
+        [['rpm', 'rpm'], ['tpm', 'tpm'], ['concurrency', 'concurrency'], ['maxToken', 'max_token']].forEach(function (pair) {
+          if (d[pair[1]] != null) { f[pair[0]] = String(d[pair[1]]); paramInputs[pair[0]].value = f[pair[0]]; }
+        });
+      }
+      toast('已填入 ' + p.title + ' 的 BASE URL 与默认参数');
+    }
+    preset.addEventListener('change', function () { applyPreset(preset.value); });
+    fetch('/api/config/models/providers').then(function (r) { return r.json(); }).then(function (j) {
+      ((j && j.providers) || []).forEach(function (p: any) {
+        presets[p.id] = p;
+        const o = HOST.document.createElement('option');
+        o.value = p.id;
+        o.textContent = p.title + (p.base_url ? ' · ' + p.base_url : '');
+        preset.appendChild(o);
+      });
+      // 已有配置时给出反查结果（不改值，只标出识别到的服务商）
+      const cur = String(f.baseUrl || '').toLowerCase();
+      const hit = ((j && j.providers) || []).find(function (p: any) {
+        return p.base_url && cur.indexOf(String(p.base_url).toLowerCase()) === 0;
+      });
+      if (hit) preset.value = hit.id;
+    }).catch(function () { /* 预设加载失败不影响手填 */ });
+
+    // ---- 拉取模型列表：直接把服务商的模型 id 灌进 datalist ----
+    pullBtn.addEventListener('click', function () {
+      const base = String(f.baseUrl || '').trim();
+      if (!base) { HOST.alert('先选服务商或填写 BASE URL'); return; }
+      pullBtn.disabled = true;
+      const old = pullBtn.textContent;
+      pullBtn.textContent = '拉取中…';
+      catalogCall('list', { base_url: base, api_key: String(f.apiKey || '').trim() }).then(function (j) {
+        pulled = (j && j.models) || [];
+        dl.innerHTML = '';
+        pulled.forEach(function (m) {
+          const o = HOST.document.createElement('option');
+          o.value = m.id;
+          dl.appendChild(o);
+        });
+        toast('已拉取 ' + pulled.length + ' 个模型（点模型名右侧下拉可直接选）');
+      }).catch(function (e) {
+        HOST.alert('拉取失败：' + ((e && e.message) || ''));
+      }).then(function () {
+        pullBtn.disabled = false;
+        pullBtn.textContent = old;
+      });
+    });
+
+    // ---- 自动匹配参数：模型名 → 上下文/限速建议，并说明依据 ----
+    function autoFill() {
+      const nm = String(f.modelName || '').trim();
+      if (!nm) { HOST.alert('先填写或选择模型名'); return; }
+      const meta = pulled.find(function (m) { return m.id === nm; }) || null;
+      pullBtn.disabled = true;
+      catalogCall('suggest', { model: nm, base_url: String(f.baseUrl || '').trim(), metadata: meta }).then(function (j) {
+        const fields = (j && j.fields) || {};
+        if (cat !== 'vision') {
+          [['rpm', 'rpm'], ['tpm', 'tpm'], ['concurrency', 'concurrency'], ['maxToken', 'max_token']].forEach(function (pair) {
+            if (fields[pair[1]] != null) { f[pair[0]] = String(fields[pair[1]]); paramInputs[pair[0]].value = f[pair[0]]; }
+          });
+          if (fields.vision != null) { f.vision = !!fields.vision; const cb = body.querySelector('.switch input') as HTMLInputElement | null; if (cb) cb.checked = f.vision; }
+        }
+        const src: Record<string, string> = { provider_metadata: '服务商元数据', builtin_family: '内置目录', openrouter: 'OpenRouter 目录', default: '保守默认' };
+        noteEl.textContent = '参数依据：' + (src[j.matched_by] || j.matched_by || '未知') + ' — ' + (j.note || '');
+        noteEl.style.display = 'block';
+      }).catch(function (e) {
+        HOST.alert('自动匹配失败：' + ((e && e.message) || ''));
+      }).then(function () {
+        pullBtn.disabled = false;
+        pullBtn.textContent = '拉取模型';
+      });
+    }
+    const matchBtn = HOST.document.createElement('button');
+    matchBtn.type = 'button';
+    matchBtn.className = 'btn';
+    matchBtn.textContent = '按模型名自动匹配参数';
+    matchBtn.addEventListener('click', function () { autoFill(); });
+    const actionRow = HOST.document.createElement('div');
+    actionRow.className = 'cfg-inline cfg-inline-actions';
+    actionRow.appendChild(matchBtn);
+
     if (cat !== 'vision') {
       const swRow = HOST.document.createElement('div');
       swRow.className = 'cfg-field switch-row';
@@ -328,6 +521,7 @@ import { HOST } from './state.js';
       swRow.appendChild(sw);
       body.appendChild(swRow);
     }
+    body.appendChild(actionRow);
     const save = HOST.document.createElement('button');
     save.className = 'btn cfg-save';
     save.textContent = '保存';
@@ -337,7 +531,16 @@ import { HOST } from './state.js';
       const newKey = (f.sdk || 'openai') + ':' + nm;
       const obj: Record<string, any> = { api_keys: [f.apiKey.trim()], base_url: f.baseUrl.trim() };
       if (cat !== 'vision') {
-        obj.rpm = Number(f.rpm) || 60; obj.tpm = Number(f.tpm) || 1000000; obj.concurrency = Number(f.concurrency) || 3; obj.max_token = Number(f.maxToken) || 500000; obj.vision = f.vision;
+        // limits.* 是运行时真正读取的口径；顶层同值保留给旧版本/旧读取路径
+        const limits = {
+          rpm: Number(f.rpm) || 0,
+          tpm: Number(f.tpm) || 0,
+          concurrency: Number(f.concurrency) || 1,
+        };
+        obj.limits = limits;
+        obj.rpm = limits.rpm; obj.tpm = limits.tpm; obj.concurrency = limits.concurrency;
+        obj.max_token = Number(f.maxToken) || 500000;
+        obj.vision = f.vision;
       }
       if (entryKey && newKey !== entryKey) delete data[cat][entryKey];
       data[cat][newKey] = obj;
