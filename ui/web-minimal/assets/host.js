@@ -955,11 +955,15 @@
   }
 
   // ui/web-minimal/src/host/queue-status.ts
-  var POLL_MS = 2e3;
+  var POLL_BUSY_MS = 1e3;
+  var POLL_IDLE_MS = 2500;
   var STYLE_ID = "wm-status-style";
   var BADGE_ID = "wm-queue-badge";
   var timer = null;
+  var inFlight = false;
+  var inited = false;
   var lastKey = "";
+  var lastCaps = "";
   function ensureStyle() {
     if (HOST.document.getElementById(STYLE_ID)) return;
     const st = HOST.document.createElement("style");
@@ -1023,6 +1027,12 @@
       }
       return;
     }
+    const capsRaw = status && status.capabilities;
+    const caps = Array.isArray(capsRaw) ? capsRaw.slice(0, 8).join(",") : "";
+    if (caps && caps !== lastCaps) {
+      lastCaps = caps;
+      el.setAttribute("data-caps", caps);
+    }
     const queued = Number(status && status.queue_depth ? status.queue_depth : 0);
     const sinceRaw = status && status.waiting_since;
     const since = typeof sinceRaw === "number" ? Math.max(0, Math.round(Date.now() / 1e3 - sinceRaw)) : null;
@@ -1036,29 +1046,57 @@
     if (label) label.textContent = text;
     el.setAttribute("data-on", "1");
   }
+  function schedule(ms) {
+    timer = HOST.setTimeout(function() {
+      void tick();
+    }, ms);
+  }
   async function tick() {
+    timer = null;
+    if (inFlight) {
+      schedule(POLL_IDLE_MS);
+      return;
+    }
+    if (HOST.document.hidden) {
+      schedule(POLL_IDLE_MS);
+      return;
+    }
     const sid = groupState.activeSessionId;
     if (!sid) {
       render(null);
+      schedule(POLL_IDLE_MS);
       return;
     }
+    inFlight = true;
+    let busy = false;
     try {
       const r = await HOST.fetch("/api/sessions/" + encodeURIComponent(sid) + "/status");
       if (!r.ok) {
         render(null);
-        return;
+      } else {
+        const data = await r.json();
+        render(data);
+        busy = !!(data && data.is_thinking);
       }
-      render(await r.json());
     } catch (_) {
       render(null);
+    } finally {
+      inFlight = false;
+      schedule(busy ? POLL_BUSY_MS : POLL_IDLE_MS);
     }
   }
   function initQueueStatus() {
     ensureStyle();
-    if (timer !== null) return;
-    timer = HOST.setInterval(function() {
+    if (inited) return;
+    inited = true;
+    HOST.document.addEventListener("visibilitychange", function() {
+      if (HOST.document.hidden) return;
+      if (timer !== null) {
+        HOST.clearTimeout(timer);
+        timer = null;
+      }
       void tick();
-    }, POLL_MS);
+    });
     void tick();
   }
 

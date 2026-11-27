@@ -5,14 +5,21 @@
 // 用户看到的是「没反应」，误以为卡死。这里不改轮询协议，只消费已有字段：
 //   queue_depth > 0  → 还有几条没被消费
 //   waiting_since    → 这一轮已经跑了多久
+//
+// 轮询节奏按状态自适应（忙 1 s / 闲 2.5 s），页面不可见时直接不发请求：
+// 后台标签页不该为了一行状态字每 2 秒叫醒一次。
 import { HOST, groupState } from './state.js';
 
-const POLL_MS = 2000;
+const POLL_BUSY_MS = 1000;
+const POLL_IDLE_MS = 2500;
 const STYLE_ID = 'wm-status-style';
 const BADGE_ID = 'wm-queue-badge';
 
 let timer: number | null = null;
+let inFlight = false;
+let inited = false;
 let lastKey = '';
+let lastCaps = '';
 
 /** 状态胶囊与轻提示共用一份内联样式：Canvas / CanvasText 是系统色，明暗主题都成立。 */
 function ensureStyle(): void {
@@ -75,6 +82,10 @@ function render(status: Record<string, unknown> | null): void {
     if (lastKey !== '') { el.setAttribute('data-on', '0'); lastKey = ''; }
     return;
   }
+  // 能力域与会话绑定、与忙闲无关：挂到 data-caps 上（会话级工具集对调试与后续 UI 可见）
+  const capsRaw = status && status.capabilities;
+  const caps = Array.isArray(capsRaw) ? capsRaw.slice(0, 8).join(',') : '';
+  if (caps && caps !== lastCaps) { lastCaps = caps; el.setAttribute('data-caps', caps); }
   const queued = Number(status && status.queue_depth ? status.queue_depth : 0);
   const sinceRaw = status && status.waiting_since;
   const since = typeof sinceRaw === 'number' ? Math.max(0, Math.round(Date.now() / 1000 - sinceRaw)) : null;
@@ -89,22 +100,46 @@ function render(status: Record<string, unknown> | null): void {
   el.setAttribute('data-on', '1');
 }
 
+function schedule(ms: number): void {
+  timer = HOST.setTimeout(function () { void tick(); }, ms);
+}
+
 async function tick(): Promise<void> {
+  timer = null;
+  if (inFlight) { schedule(POLL_IDLE_MS); return; }
+  // 页面不可见：不发请求，也不清掉已有显示（回来时 visibilitychange 会立刻补一次）
+  if (HOST.document.hidden) { schedule(POLL_IDLE_MS); return; }
   const sid = groupState.activeSessionId;
-  if (!sid) { render(null); return; }
+  if (!sid) { render(null); schedule(POLL_IDLE_MS); return; }
+
+  inFlight = true;
+  let busy = false;
   try {
     const r = await HOST.fetch('/api/sessions/' + encodeURIComponent(sid) + '/status');
-    if (!r.ok) { render(null); return; }
-    render(await r.json());
+    if (!r.ok) {
+      render(null);
+    } else {
+      const data = (await r.json()) as Record<string, unknown>;
+      render(data);
+      busy = !!(data && data.is_thinking);
+    }
   } catch (_) {
     render(null);
+  } finally {
+    inFlight = false;
+    schedule(busy ? POLL_BUSY_MS : POLL_IDLE_MS);
   }
 }
 
-/** 启动轮询：boot 末尾调一次即可，重复调用不会叠加定时器。 */
+/** 启动轮询：boot 末尾调一次即可，重复调用不会叠加定时器或监听。 */
 export function initQueueStatus(): void {
   ensureStyle();
-  if (timer !== null) return;
-  timer = HOST.setInterval(function () { void tick(); }, POLL_MS);
+  if (inited) return;
+  inited = true;
+  HOST.document.addEventListener('visibilitychange', function () {
+    if (HOST.document.hidden) return;
+    if (timer !== null) { HOST.clearTimeout(timer); timer = null; }
+    void tick();
+  });
   void tick();
 }

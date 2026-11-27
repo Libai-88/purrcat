@@ -92,3 +92,44 @@ def test_base_task_tools_keep_historical_order():
     assert BASE_TASK_TOOL_SCHEMA == [
         BY_NAME[name].schema for name in BASE_TASK_TOOL_NAMES
     ]
+
+
+def test_schema_is_parsed_once_and_reused(monkeypatch):
+    """每轮构建请求都会取 Schema：第二次起必须复用对象，不再 import + getattr。"""
+    import src.tool.registry as registry
+
+    spec = BY_NAME["bash"]
+    spec.__dict__.pop("_schema_cache", None)
+
+    calls = []
+    real_import = registry.importlib.import_module
+
+    def counting_import(name):
+        calls.append(name)
+        return real_import(name)
+
+    monkeypatch.setattr(registry.importlib, "import_module", counting_import)
+
+    first = spec.schema
+    second = spec.schema
+
+    assert first is second
+    assert calls == [spec.module]
+
+
+def test_schemas_for_does_not_reparse_after_warmup():
+    """暖机后按能力域取 Schema 应是零解析：只做 capability 过滤与 list 拷贝。"""
+    for spec in SPECS:
+        spec.__dict__.pop("_schema_cache", None)
+    # 暖机
+    for spec in SPECS:
+        spec.schema
+
+    before = {id(spec): spec.__dict__.get("_schema_cache") for spec in SPECS}
+    out = schemas_for(["core"])
+    after = {id(spec): spec.__dict__.get("_schema_cache") for spec in SPECS}
+
+    assert before == after
+    assert all(isinstance(item, dict) and "function" in item for item in out)
+    # 返回的是新 list（调用方可安全传给请求层），但元素仍是同一批 dict 对象
+    assert out is not AGENT_TOOL_SCHEMA

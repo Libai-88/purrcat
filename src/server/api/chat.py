@@ -1,4 +1,5 @@
 import traceback
+from functools import lru_cache
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
@@ -367,6 +368,37 @@ def chat_batch(req: ChatBatchReq, background_tasks: BackgroundTasks):
         raise
 
 
+def _session_capabilities(session_id: str) -> list[str]:
+    """会话能力域：当前会话直接读内存，其它会话走 ``capabilities.resolve``。
+
+    非当前会话用进程内缓存包住 resolve：能力域按契约在会话创建时固化、之后不再变化，
+    所以缓存不会读到旧值；``/status`` 每 2 s 轮询也就不会反复读 meta.json。
+    缺字段的老会话由 resolve 统一升级为「全量」——语义只有一个出口，本函数不再自造。
+    """
+    try:
+        from src.agent.manager import AgentManager
+
+        agent = getattr(AgentManager(), "_agent", None)
+        if agent is not None and getattr(agent, "session_id", None) == session_id:
+            caps = getattr(agent, "capabilities", None)
+            if caps:
+                return list(caps)
+    except Exception:
+        pass
+    return list(_cached_resolve(session_id))
+
+
+@lru_cache(maxsize=128)
+def _cached_resolve(session_id: str) -> tuple[str, ...]:
+    """``capabilities.resolve`` 的缓存包装（返回 tuple 才可缓存）。"""
+    try:
+        from src.agent.capabilities import resolve
+
+        return tuple(resolve(session_id))
+    except Exception:
+        return ()
+
+
 @router.get("/sessions/{session_id}/status")
 def get_session_status(session_id: str):
     """
@@ -374,7 +406,9 @@ def get_session_status(session_id: str):
     """
     try:
         _ensure_manager_initialized()
-        return build_session_status(get_agent_status(), session_id)
+        return build_session_status(
+            get_agent_status(), session_id, _session_capabilities(session_id)
+        )
     except Exception as e:
         print(f"[ERROR] /api/sessions/{session_id}/status - 异常: {e}")
         traceback.print_exc()

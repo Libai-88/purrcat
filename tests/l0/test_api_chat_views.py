@@ -138,6 +138,7 @@ def test_build_session_status_masks_non_current_session():
         "phase": "idle",
         "queue_depth": 0,
         "waiting_since": None,
+        "capabilities": [],
     }
 
 
@@ -161,6 +162,7 @@ def test_build_session_status_current_session_phases():
         "phase": "processing",
         "queue_depth": 0,
         "waiting_since": None,
+        "capabilities": [],
     }
 
     queued = chat_views.build_session_status(
@@ -188,3 +190,20 @@ def test_build_session_status_current_session_phases():
     )
     assert aborting["phase"] == "aborting"
     assert aborting["is_thinking"] is True
+
+
+def test_build_session_status_carries_capabilities_for_both_branches():
+    """能力域与会话绑定：当前/非当前会话、忙/闲都要原样透出，且各自持有副本。"""
+    caps = ["core", "research"]
+    busy = chat_views.build_session_status(
+        {"session_id": "s1", "state": "thinking"}, "s1", caps
+    )
+    other = chat_views.build_session_status(
+        {"session_id": "s2", "state": "thinking"}, "s1", caps
+    )
+
+    assert busy["capabilities"] == ["core", "research"]
+    assert other["capabilities"] == ["core", "research"]
+    busy["capabilities"].append("extra")
+    assert caps == ["core", "research"]
+    assert other["capabilities"] == ["core", "research"]

@@ -93,3 +93,33 @@ def test_chat_endpoint_returns_processing_even_while_busy(monkeypatch):
     assert out["status"] == "processing"
     assert len(bg.tasks) == 1
     assert bg.tasks[0][1][0] == "session_abc"
+
+
+def test_session_capabilities_resolve_and_cache(tmp_path, monkeypatch):
+    """能力域只从 capabilities.resolve 这一处出口来：缺字段=全量，且只读一次盘。"""
+    import json
+
+    from src.agent.capabilities import ALL_CAPABILITIES
+    from src.server.api import chat as chat_api
+
+    chat_api._cached_resolve.cache_clear()
+    monkeypatch.setattr("src.utils.config.SESSIONS_DIR", str(tmp_path))
+
+    work_dir = tmp_path / "session_work"
+    work_dir.mkdir()
+    (work_dir / "meta.json").write_text(
+        json.dumps({"capabilities": ["core"]}), encoding="utf-8"
+    )
+    legacy_dir = tmp_path / "session_legacy"
+    legacy_dir.mkdir()
+    (legacy_dir / "meta.json").write_text(
+        json.dumps({"alias": "老会话"}), encoding="utf-8"
+    )
+
+    assert chat_api._cached_resolve("session_work") == ("core",)
+    assert chat_api._cached_resolve("session_legacy") == tuple(ALL_CAPABILITIES)
+
+    hits_before = chat_api._cached_resolve.cache_info().hits
+    assert chat_api._cached_resolve("session_work") == ("core",)
+    assert chat_api._cached_resolve.cache_info().hits > hits_before
+    chat_api._cached_resolve.cache_clear()

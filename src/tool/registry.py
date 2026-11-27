@@ -39,8 +39,19 @@ class ToolSpec:
 
     @property
     def schema(self) -> dict:
-        module = importlib.import_module(self.module)
-        return getattr(module, self.schema_attr)
+        """惰性解析 Schema：首次 import 子包取值，之后复用同一对象。
+
+        子包在 import 期会反向 import 本模块，所以不能在模块级做「多个包各导
+        TOOL_SPEC」那套；但也不能每轮请求都重新 import + getattr（19 个工具 ×
+        每轮构建）。这里把解析结果缓存在实例上，代价是**返回对象按只读使用**，
+        调用方不得就地改它。
+        """
+        cached = self.__dict__.get("_schema_cache")
+        if cached is None:
+            module = importlib.import_module(self.module)
+            cached = getattr(module, self.schema_attr)
+            self.__dict__["_schema_cache"] = cached
+        return cached
 
 
 def _spec(

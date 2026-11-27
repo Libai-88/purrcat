@@ -301,6 +301,7 @@ def test_build_session_status_for_current_and_other_sessions():
         "phase": "tools",
         "queue_depth": 0,
         "waiting_since": None,
+        "capabilities": [],
     }
     assert chat.build_session_status(thinking, "s2") == {
         "is_thinking": False,
@@ -310,6 +311,7 @@ def test_build_session_status_for_current_and_other_sessions():
         "phase": "idle",
         "queue_depth": 0,
         "waiting_since": None,
+        "capabilities": [],
     }
     assert (
         chat.build_session_status({"session_id": "s1", "state": "aborting"}, "s1")[

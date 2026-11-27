@@ -23,8 +23,15 @@ def build_session_list(sessions_dict: dict) -> list:
     return sess_list
 
 
-def build_session_status(status: dict, session_id: str) -> dict:
-    """把全局 Agent 状态裁剪为单会话轮询结果（非当前会话一律视为 idle）。"""
+def build_session_status(
+    status: dict, session_id: str, capabilities: list[str] | None = None
+) -> dict:
+    """把全局 Agent 状态裁剪为单会话轮询结果（非当前会话一律视为 idle）。
+
+    ``capabilities`` 是该会话固化的能力域（老会话为空表示"全量"）。它与会话绑定、
+    与是否忙无关，所以两个分支都要原样透出：前端据此显示"这个会话挂了哪些工具"。
+    """
+    caps = list(capabilities or ())
     if status.get("session_id") != session_id:
         return {
             "is_thinking": False,
@@ -34,6 +41,7 @@ def build_session_status(status: dict, session_id: str) -> dict:
             "phase": "idle",
             "queue_depth": 0,
             "waiting_since": None,
+            "capabilities": caps,
         }
     state = status.get("state", "idle")
     is_thinking = state != "idle"
@@ -53,6 +61,8 @@ def build_session_status(status: dict, session_id: str) -> dict:
         # 排队可观测：忙了多久（秒级时间戳）与还没被消费的消息条数
         "queue_depth": status.get("queue_depth", 0),
         "waiting_since": status.get("waiting_since") if is_thinking else None,
+        # 会话级能力域：与会话绑定，不随忙闲变化
+        "capabilities": caps,
     }
 
 
