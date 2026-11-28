@@ -1,9 +1,11 @@
 // 宿主入口 boot 与 Electron 窗口控制
 import { broadcastAll, syncNativeCover, syncTheme } from './bus.js';
+import { registerScienceAreaGate } from './areas.js';
 import { openUrlInBrowserPanel } from './links.js';
 import { applyManifestState } from './manifest.js';
+import { applyModeHiddenState, applyModeLayout, getMode, registerPanelAreaToggle, setMode } from './mode.js';
 import { buildSlotIndex, mountAll } from './mount.js';
-import { applyPanelContainerCfg, closePanelMenus, loadPanelShell } from './panel.js';
+import { applyPanelContainerCfg, closePanelMenus, loadPanelShell, setPanelsSuppressed } from './panel.js';
 import { initQueueStatus } from './queue-status.js';
 import { applyPersistedHidden, applyRailOpacity, applySlotHidden, bindRailToggle, buildRail } from './rail.js';
 import { broadcastSessions, updateEmpty } from './sessions.js';
@@ -39,8 +41,22 @@ import { HOST, groupState } from './state.js';
     applyManifestState(manifest);
     await loadPanelShell();   // 取「内置容器」插件的外壳（样式注入 + 结构模板），必须在 mountAll 前
     applyRailOpacity();
+    // 模式布局要在挂载之前落定：work 模式把科研面板标成 hidden，
+    // mountAll 就不会先建一整套科研 iframe 再拆掉。
+    registerPanelAreaToggle(function (hidden) { applySlotHidden('panel', hidden); });
+    // work 模式下面板区没有内容：点白条的「面板」图标 = 进入科研工作台，
+    // 而不是点亮一个空壳（科研是附加能力，但入口要通）。
+    registerScienceAreaGate(function (area) {
+      if (area !== 'panel-container' || getMode() !== 'work') return false;
+      setMode('science');
+      return true;
+    });
     buildSlotIndex();
+    applyModeHiddenState();
+    // work 模式不预建科研面板 iframe：先抑制，再让 applyModeLayout 落定布局
+    setPanelsSuppressed(getMode() === 'work');
     mountAll();
+    applyModeLayout();
     bindRailToggle();
     buildRail();
     applyPanelContainerCfg();

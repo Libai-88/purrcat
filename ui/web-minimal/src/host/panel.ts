@@ -430,8 +430,39 @@ import type { PluginDescriptor, PluginFrame, SlotDef } from './types.js';
     menu.style.top = (r.bottom + 4) + 'px';
     syncNativeCover();
   }
+  // 收起中栏：移除外壳与全部面板 iframe，但不改「标签列表」持久化——
+  // work 模式的语义是「这次不展示科研工作台」，切回 science 时按原标签重建。
+  export function collapsePanel() {
+    if (panelState && panelState.el && panelState.el.parentNode) {
+      notifyUnmount(panelState.el);
+      panelState.el.remove();
+    }
+    panelState = null;
+    HOST.document.body.classList.remove('has-panels');
+    if (panelBar && panelBar.isConnected) panelBar.remove();
+    closePanelMenus();
+    syncNativeCover();
+  }
+
+  // 中栏是否被「模式」整体抑制：work 模式（对话为主）不该为科研面板预建 iframe。
+  // panel.ts 不能反向 import mode.ts，所以由 mode.ts / 宿主通过这个开关注入意图。
+  let panelsSuppressed = false;
+  export function setPanelsSuppressed(v: boolean) {
+    panelsSuppressed = v;
+  }
+
   // 挂载 type=panel 插件：无面板插件则不占位；有则建 .wm-ppanel 并点亮抽屉
   export function mountPanels() {
+    if (panelsSuppressed) {
+      // 用户在白条/菜单里主动打开了某个面板插件（它的 hidden 被关掉）→ 解除抑制，
+      // 否则「点了没反应」比「科研喧宾夺主」更糟。
+      const anyVisible = (slotMap['panel'] || []).some((p) => !railState.hidden?.[p.id]);
+      if (!anyVisible) {
+        if (panelState) collapsePanel();
+        return;
+      }
+      panelsSuppressed = false;
+    }
     // 若已有第三方容器插件（与内置容器等位、同区域互斥）提供中栏容器，
     // 则由该插件渲染：内置容器让位，不再创建 .wm-ppanel（标签列表保留，便于切回）。
     if (thirdPartyContainerPlugin()) {

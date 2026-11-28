@@ -91,6 +91,21 @@ Hook 阶段固定为 `on_build_system_prompt / on_loop_start / on_loop_epoch / o
 
 **切模式不改变已有会话**——工具定义位于请求前缀，动态改 schema 会击穿 KV Cache。老会话缺 `capabilities` 字段一律给全量，切模式只影响之后新建的会话。`Agent._get_tool_schema()` 用 `schemas_for(self.capabilities)`，因此能力域是会话级、不可在轮内变更。
 
+## 双模式与科研降权
+
+科研工作台（数据 / 论文 / 笔记三件套 + 插件市场）是 **附加能力**，不是主界面。work 模式下面是"聊天 + 会话历史"，science 模式才是科研工作台。
+
+宿主侧四处收口，缺一处就会出现"work 模式里科研面板铺满中栏"：
+
+1. `mode.ts` 的 `enterWork()` 同时做三件事：`setContainerHidden(true)`、`applyPanelArea?.(true)`（隐藏 `panel` 插槽）、`setPanelsSuppressed(true)` + `collapsePanel()`（移除 `.wm-ppanel` 外壳，不只 display:none）。
+2. `panel.ts` 的 `mountPanels()` 开头判断 `panelsSuppressed` 就直接 `collapsePanel()` 返回——**work 模式启动不再预建科研 iframe**，这是省内存与省启动时间的主要来源。
+3. `app.ts` boot 顺序固定为 `registerPanelAreaToggle` → `registerScienceAreaGate` → `buildSlotIndex()` → `applyModeHiddenState()` → `setPanelsSuppressed(getMode()==='work')` → `mountAll()` → `applyModeLayout()`。`applyModeHiddenState()` 依赖 `slotMap`，**必须排在 `buildSlotIndex()` 之后**；`reloadManifest` 走同一顺序。
+4. 入口不能死：work 模式点白条上的「工具面板」图标会经 `registerScienceAreaGate` 自动切到 science 模式，而不是点亮一个空壳。若某个面板插件的 `hidden` 被用户显式关掉，`mountPanels()` 会自动解除抑制（"点了没反应"比"科研抢镜"更糟）。
+
+实测（Electron 隐藏窗口，`/minimal`）：work 模式 `.wm-ppanel` 不存在、`body.has-panels=false`、科研 iframe 0 个、`totalFrames` 4（会话历史 / 会话列表 / 插件市场 / 背景）；切 science 后面板 516 px、科研 iframe 3 个；切回 work 全部归零。
+
+别的模式：`mode.ts` 不能反向 import `panel.ts` / `rail.ts`（`rail.ts → mode.ts` 已是单向），跨模块交互一律走 `register*` 注入点。
+
 ## 其它子系统
 
 - DAG：[Graph 开发](../plugins/graph.md)，人工干预节点必须真暂停。

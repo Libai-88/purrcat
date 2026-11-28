@@ -857,7 +857,30 @@
     menu.style.top = r.bottom + 4 + "px";
     syncNativeCover();
   }
+  function collapsePanel() {
+    if (panelState && panelState.el && panelState.el.parentNode) {
+      notifyUnmount(panelState.el);
+      panelState.el.remove();
+    }
+    panelState = null;
+    HOST.document.body.classList.remove("has-panels");
+    if (panelBar && panelBar.isConnected) panelBar.remove();
+    closePanelMenus();
+    syncNativeCover();
+  }
+  var panelsSuppressed = false;
+  function setPanelsSuppressed(v) {
+    panelsSuppressed = v;
+  }
   function mountPanels() {
+    if (panelsSuppressed) {
+      const anyVisible = (slotMap["panel"] || []).some((p) => !railState.hidden?.[p.id]);
+      if (!anyVisible) {
+        if (panelState) collapsePanel();
+        return;
+      }
+      panelsSuppressed = false;
+    }
     if (thirdPartyContainerPlugin()) {
       if (panelState && panelState.el && panelState.el.parentNode) {
         notifyUnmount(panelState.el);
@@ -1103,6 +1126,10 @@
   // ui/web-minimal/src/host/mode.ts
   var mode = "work";
   var listeners = [];
+  var applyPanelArea = null;
+  function registerPanelAreaToggle(fn) {
+    applyPanelArea = fn;
+  }
   var SCIENCE_TABS = ["builtin-paper", "builtin-data", "builtin-notebook"];
   function getMode() {
     return mode;
@@ -1119,13 +1146,28 @@
     });
   }
   function enterScience() {
+    setPanelsSuppressed(false);
     SCIENCE_TABS.forEach((id) => {
       if (groupState.plugins.some((p) => p.id === id)) openPanelTab(id);
     });
     setContainerHidden(false);
+    applyPanelArea?.(false);
+    if (!HOST.document.querySelector('.wm-ppanel[data-pslot="panel"]')) mountPanels();
   }
   function enterWork() {
     setContainerHidden(true);
+    applyPanelArea?.(true);
+    setPanelsSuppressed(true);
+    collapsePanel();
+  }
+  function applyModeHiddenState() {
+    if (!railState.hidden) railState.hidden = {};
+    (slotMap["panel"] || []).forEach((p) => {
+      if (mode === "work") railState.hidden[p.id] = true;
+    });
+    if (mode === "work") (slotMap["panel-container"] || []).forEach((p) => {
+      railState.hidden[p.id] = true;
+    });
   }
   function setMode(next, opts) {
     if (next === mode) return;
@@ -1232,6 +1274,7 @@
     await loadManifest();
     await loadPanelShell();
     buildSlotIndex();
+    applyModeHiddenState();
     mountAll();
     applyPersistedHidden();
     buildRail();
@@ -4650,6 +4693,10 @@
     return AREA_LABEL[area] || area;
   }
   var RAIL_AREA_ORDER = ["session", "panel-container", "popup", "sidebar", "background"];
+  var scienceAreaGate = null;
+  function registerScienceAreaGate(fn) {
+    scienceAreaGate = fn;
+  }
   function railAreaList() {
     const areas = [];
     groupState.plugins.forEach((p) => {
@@ -4723,6 +4770,7 @@
     refreshAreaRail(area);
     btn.addEventListener("click", (ev) => {
       ev.stopPropagation();
+      if (scienceAreaGate && scienceAreaGate(area)) return;
       const cands = areaCandidates(area);
       if (!cands.length) return;
       if (cands.length <= 1) {
@@ -4989,8 +5037,19 @@
     applyManifestState(manifest);
     await loadPanelShell();
     applyRailOpacity();
+    registerPanelAreaToggle(function(hidden) {
+      applySlotHidden("panel", hidden);
+    });
+    registerScienceAreaGate(function(area) {
+      if (area !== "panel-container" || getMode() !== "work") return false;
+      setMode("science");
+      return true;
+    });
     buildSlotIndex();
+    applyModeHiddenState();
+    setPanelsSuppressed(getMode() === "work");
     mountAll();
+    applyModeLayout();
     bindRailToggle();
     buildRail();
     applyPanelContainerCfg();

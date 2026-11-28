@@ -1,7 +1,8 @@
 // 工作模式（work / science）：一套面向任务的全局布局开关
 //
-// 用户的问题不是功能不够，而是 16 个面板平铺没有主次。双模式给信息架构一个
-// 明确的回答：当前在干哪类任务，就该看到哪类工具。
+// 定位提醒：**PurrCat 的核心是通用 Agent（工作模式：对话 + 会话 + 工具），
+// 科研工作台（论文/数据/笔记/连接器…）是附加能力**。所以 work 模式必须把科研
+// 面板整体收起——不是隐藏两个 tab，而是连中栏外壳一起让出，避免附加功能吃掉主界面。
 //
 //   science —— 科研工作台：自动打开论文 / 数据 / 笔记三个标签页，
 //              侧栏（会话/项目）可见。科研能力一次点击可达。
@@ -9,14 +10,22 @@
 //
 // 模式只改「哪些东西可见」，不新建面板、不改插件本身；切换 =
 // 设置几个插件的 hidden 状态 + 打开指定标签页，全部走既有机制。
-import { HOST, groupState } from './state.js';
-import { openPanelTab, setContainerHidden } from './panel.js';
+import { HOST, groupState, railState, slotMap } from './state.js';
+import { collapsePanel, mountPanels, openPanelTab, setContainerHidden, setPanelsSuppressed } from './panel.js';
 import { toast } from './queue-status.js';
 
 export type WorkMode = 'work' | 'science';
 
 let mode: WorkMode = 'work';
 const listeners: Array<(m: WorkMode) => void> = [];
+
+// panel 区域的显隐在 rail.ts（applySlotHidden）；mode.ts 不能反向 import 它，
+// 由宿主启动时注入，保持依赖单向。
+let applyPanelArea: ((hidden: boolean) => void) | null = null;
+
+export function registerPanelAreaToggle(fn: (hidden: boolean) => void): void {
+  applyPanelArea = fn;
+}
 
 // science 模式默认打开的科研三件套（与 SPEC-026..030 的能力一一对应）
 const SCIENCE_TABS = ['builtin-paper', 'builtin-data', 'builtin-notebook'];
@@ -39,16 +48,32 @@ function emit(): void {
 
 /** science 模式：打开科研三件套，其余标签保留但不强制。 */
 function enterScience(): void {
+  setPanelsSuppressed(false);
   SCIENCE_TABS.forEach((id) => {
     if (groupState.plugins.some((p) => p.id === id)) openPanelTab(id);
   });
   setContainerHidden(false);
+  applyPanelArea?.(false);
+  // 外壳在 work 模式下被整体移除过，切回来必须重建（标签列表保留在持久化里）
+  if (!HOST.document.querySelector('.wm-ppanel[data-pslot="panel"]')) mountPanels();
   // 低频科研辅助与系统面板收进容器标签里但不激活；不额外隐藏白条区域
 }
 
-/** work 模式：聊天为主，容器收起。已开的标签保留（回来还在）。 */
+/** work 模式：聊天为主，科研面板整体让位（外壳与标签列表一起收起）。 */
 function enterWork(): void {
   setContainerHidden(true);
+  applyPanelArea?.(true);
+  setPanelsSuppressed(true);
+  collapsePanel();
+}
+
+/** 只改内存里的 hidden 状态，不碰 DOM：供 mountAll 之前调用，避免先建后拆。 */
+export function applyModeHiddenState(): void {
+  if (!railState.hidden) railState.hidden = {};
+  (slotMap['panel'] || []).forEach((p) => {
+    if (mode === 'work') railState.hidden[p.id] = true;
+  });
+  if (mode === 'work') (slotMap['panel-container'] || []).forEach((p) => { railState.hidden[p.id] = true; });
 }
 
 export function setMode(next: WorkMode, opts?: { persist?: boolean }): void {

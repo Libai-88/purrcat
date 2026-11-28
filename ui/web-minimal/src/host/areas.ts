@@ -22,6 +22,12 @@ import type { PluginDescriptor } from './types.js';
   }
   // 白条分区次序：固定写死，插件按其 slot 区域自动归位；未列出的区域排在最后
   export const RAIL_AREA_ORDER = ['session', 'panel-container', 'popup', 'sidebar', 'background'];
+  // 科研专属区域在 work 模式下没有内容：点击应「进入科研模式」而不是点亮一个空面板。
+  // 判定逻辑在宿主（需要 mode.ts），这里只留一个注入点，避免 areas ↔ mode 的循环依赖。
+  let scienceAreaGate: ((area: string) => boolean) | null = null;
+  export function registerScienceAreaGate(fn: (area: string) => boolean): void {
+    scienceAreaGate = fn;
+  }
   // 白条上的区域：除入驻容器（panel）外的全部区域，去重后按固定次序排列
   export function railAreaList(): string[] {
     const areas: string[] = [];
@@ -103,6 +109,7 @@ import type { PluginDescriptor } from './types.js';
     refreshAreaRail(area);
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation();   // 触发按钮自身阻止冒泡，避免被 body 的统一收起立刻关掉菜单
+      if (scienceAreaGate && scienceAreaGate(area)) return;
       const cands = areaCandidates(area);
       if (!cands.length) return;
       if (cands.length <= 1) {

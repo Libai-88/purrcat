@@ -92,6 +92,8 @@ uv run pytest -m l3             # 静态红线
 21. API 默认只绑回环 `127.0.0.1` 且 `/api/*` 全部要凭证；`PURRCAT_BIND` 是唯一的显式放开入口，不得为方便调试把 host 或豁免前缀放宽。
 22. 模型元数据（provider 预设、上下文/限速画像）只在 `src/model/catalog.py` 维护；前端不得另抄一份 provider 表。`suggest()` 会访问 OpenRouter 公共目录，**运行时路径（`normalized_limits`）禁止联网**。
 23. 限速读 `limits.*` 优先、顶层 `rpm/tpm/concurrency` 兜底（`catalog.normalized_limits`）；新增读取点不得再直接 `cfg.get("limits")`。
+24. 科研是附加能力，不得喧宾夺主：work 模式必须收起中栏面板外壳（`.wm-ppanel` 整块移除、不预建科研 iframe），science 模式才挂三件套。改 `panel.ts` / `mode.ts` / `app.ts` 时保持 boot 顺序 `buildSlotIndex → applyModeHiddenState → setPanelsSuppressed → mountAll → applyModeLayout`，否则布局会在首帧错位。
+25. `mode.ts` 不得反向 import `panel.ts` / `rail.ts`；跨模块交互走 `register*` 注入点（`registerPanelAreaToggle`、`registerScienceAreaGate`）。
 
 ## 常见改动落点
 
@@ -103,6 +105,7 @@ uv run pytest -m l3             # 静态红线
 | 会话目录与索引 | `src/agent/session_layout.py` + `session_store.py` |
 | 新增工具 | `src/tool/<name>/` → 在 `src/tool/registry.py` 的 `SPECS` 加一条（唯一事实源，其余表自动派生） |
 | 会话能力域 | `src/agent/capabilities.py`（模式映射 + 会话快照） |
+| 双模式布局（科研降权） | `ui/web-minimal/src/host/{mode,panel,app}.ts` + `areas.ts` 的 `registerScienceAreaGate` |
 | 模型元数据（provider 预设 / 参数画像 / 拉模型 / 参数匹配） | `src/model/catalog.py`（唯一事实源），端点见 `src/server/api/config.py` 的 `/models/*` |
 | 限速参数落地（rpm/tpm 滑窗） | `src/model/manager/rate_limit.py` + `src/model/core/llm_client.py` |
 | 科研技能目录（检索/分类/安装） | `src/utils/research_catalog.py`、`src/tool/search/catalog_search.py`、`src/server/api/research_install.py` |
